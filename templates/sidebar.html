@@ -1,7 +1,9 @@
-<aside class="flex h-screen w-64 flex-col overflow-y-auto border-r bg-white px-5 py-8">
+{% load static %}
+
+<aside class="fixed left-0 top-0 flex h-screen w-64 flex-col overflow-y-auto border-r bg-white px-5 py-8">
   <div class="flex items-center gap-2">
-    <img src="/path-to-your-logo.svg" alt="Logo" class="h-8 w-8" />
-    <span class="text-lg font-semibold">UBD HR System</span>
+    <img src="{% static 'images/logo.png' %}" alt="Logo" class="h-8 w-6" />
+    <span class="text-lg font-semibold">HR System</span>
   </div>
 
   <nav class="mt-8 flex flex-1 flex-col">
@@ -66,3 +68,9 @@
     </div>
   </nav>
 </aside>
+
+<!-- Add margin to main content to prevent overlap -->
+<div class="ml-64">
+  <!-- Your main content goes here -->
+  {% block content %}{% endblock %}
+</div>
