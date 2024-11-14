@@ -1,9 +1,13 @@
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import reverse_lazy
-from django.views.generic import TemplateView, ListView
+from django.views.generic import TemplateView, ListView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from .models import Employee
+from .forms import EmployeeForm
+from django.views.generic.edit import CreateView
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.shortcuts import redirect
 
 class CustomLoginView(LoginView):
     template_name = 'auth/login.html'
@@ -33,3 +37,23 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = 'employees/profile.html'
     login_url = 'login'
+
+class EmployeeCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    model = Employee
+    form_class = EmployeeForm
+    template_name = 'employees/employee_create.html'
+    success_url = reverse_lazy('employees:employee_list')
+    permission_required = 'employees.add_employee'
+    
+    def handle_no_permission(self):
+        messages.error(self.request, "You don't have permission to add employees.")
+        return redirect('employees:employee_list')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, f'Employee created successfully with ID: {self.object.employee_id}')
+        return response
+
+    def form_invalid(self, form):
+        # Handle invalid form
+        return super().form_invalid(form)

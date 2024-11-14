@@ -15,13 +15,12 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from employees.views import (
     CustomLoginView, 
     CustomLogoutView, 
-    EmployeeListView,
     DashboardView,
-    ProfileView
+    ProfileView,
 )
 
 urlpatterns = [
@@ -30,4 +29,5 @@ urlpatterns = [
     path('logout/', CustomLogoutView.as_view(), name='logout'),
     path('', DashboardView.as_view(), name='dashboard'),  # or your dashboard
     path('profile/', ProfileView.as_view(), name='profile'),
+    path('employees/', include('employees.urls', namespace='employees')),
 ]

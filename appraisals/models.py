@@ -2,6 +2,7 @@ from django.db import models
 from employees.models import Employee
 
 class Appraisal(models.Model):
+    
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     review_period_start = models.DateField()
     review_period_end = models.DateField()

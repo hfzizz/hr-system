@@ -8,6 +8,7 @@ class Department(models.Model):
         return self.name
 
 class Employee(models.Model):
+    employee_id = models.CharField(max_length=10, unique=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
@@ -22,6 +23,20 @@ class Employee(models.Model):
     roles = models.ManyToManyField('auth.Group', blank=True)
     address = models.TextField()
     profile_picture = models.ImageField(upload_to='employee_pics/', blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.employee_id:
+            last_employee = Employee.objects.order_by('-employee_id').first()
+            
+            if last_employee:
+                last_id = int(last_employee.employee_id[3:])
+                new_id = last_id + 1
+            else:
+                new_id = 1
+            
+            self.employee_id = f'EMP{new_id:03d}'
+            
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"

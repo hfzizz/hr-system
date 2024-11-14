@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Add Employee - HR System{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-900">Add New Employee</h1>
+        <a href="{% url 'employees:employee_list' %}" 
+           class="rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-200">
+            Back to List
+        </a>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-lg">
+        <form method="post" enctype="multipart/form-data" class="space-y-8 p-6">
+            {% csrf_token %}
+            
+            <!-- Employee ID Section -->
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+                    <div>
+                        <label for="id_employee_id" class="block text-sm font-medium text-gray-700">Employee ID</label>
+                        {% render_field form.employee_id class="block w-full rounded-md border-0 py-1.5 text-gray-900 bg-gray-50 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" readonly="readonly" %}
+                        <p class="mt-1 text-sm text-gray-500">Auto-generated employee ID</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Account Section -->
+            <div class="space-y-6">
+                <h3 class="text-lg font-medium leading-6 text-gray-900">User Account Details</h3>
+                <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+                    <div>
+                        <label for="id_username" class="block text-sm font-medium text-gray-700">Username</label>
+                        {% render_field form.username class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.username.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.username.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="id_password" class="block text-sm font-medium text-gray-700">Password</label>
+                        {% render_field form.password class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.password.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.password.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="id_confirm_password" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                        {% render_field form.confirm_password class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.confirm_password.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.confirm_password.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employee Information -->
+            <div class="space-y-6">
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Employee Information</h3>
+                <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+                    <!-- Rest of the form fields -->
+                    {% for field in form %}
+                        {% if field.name not in 'employee_id,username,password,confirm_password' %}
+                            <div {% if field.name in 'address,roles' %}class="sm:col-span-2"{% endif %}>
+                                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                    {{ field.label }}
+                                </label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ field.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Form Errors -->
+            {% if form.non_field_errors %}
+            <div class="rounded-md bg-red-50 p-4">
+                <div class="flex">
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">There were errors with your submission</h3>
+                        <div class="mt-2 text-sm text-red-700">
+                            <ul class="list-disc pl-5 space-y-1">
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Submit Buttons -->
+            <div class="flex justify-end gap-x-3">
+                <a href="{% url 'employees:employee_list' %}" 
+                   class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    Cancel
+                </a>
+                <button type="submit"
+                    class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    Create Employee
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 
