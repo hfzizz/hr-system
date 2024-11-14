@@ -7,7 +7,7 @@ class EmployeeForm(forms.ModelForm):
         disabled=True,
         required=False,
         widget=forms.TextInput(attrs={
-            'class': 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 bg-gray-50',
+            'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 bg-gray-50',
         })
     )
     username = forms.CharField(max_length=150)
@@ -50,11 +50,11 @@ class EmployeeForm(forms.ModelForm):
                 next_id = 1
             self.initial['employee_id'] = f'EMP{next_id:03d}'
 
-        # Add Bootstrap classes to all fields
+        # Add classes to all fields
         for field in self.fields:
             if field != 'employee_id':  # Skip employee_id as it has its own styling
                 self.fields[field].widget.attrs.update({
-                    'class': 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
                 })
 
     def clean(self):
