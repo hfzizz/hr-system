@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Employees - HR System{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-900">Employees</h1>
+        <a href="{% url 'login' %}" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+            Add Employee
+        </a>
+    </div>
+
+    <!-- Employee Table -->
+    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-lg">
+        <table class="min-w-full divide-y divide-gray-300">
+            <thead>
+                <tr>
+                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Name</th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Position</th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Department</th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Email</th>
+                    <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                        <span class="sr-only">Actions</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for employee in employees %}
+                <tr>
+                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm">
+                        <div class="flex items-center">
+                            <div class="h-10 w-10 flex-shrink-0">
+                                <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                    <span class="text-gray-500 font-medium">{{ employee.first_name|first }}{{ employee.last_name|first }}</span>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <div class="font-medium text-gray-900">{{ employee.first_name }} {{ employee.last_name }}</div>
+                                <div class="text-gray-500">ID: {{ employee.employee_id }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.position }}</td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.department }}</td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.email }}</td>
+                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                        <a href="#" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-3 py-4 text-sm text-gray-500 text-center">No employees found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %} 
