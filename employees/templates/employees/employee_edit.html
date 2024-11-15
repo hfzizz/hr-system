@@ -124,6 +124,34 @@
                         {% endif %}
                     </div>
 
+                    <!-- Roles - Checkbox Group with 2 Columns -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Roles
+                        </label>
+                        <div class="max-h-48 overflow-y-auto p-3 bg-white rounded-md border border-gray-300">
+                            <div class="grid grid-cols-2 gap-4">
+                                {% for choice in form.roles.field.queryset %}
+                                <div class="flex items-center">
+                                    <input type="checkbox" 
+                                        name="roles" 
+                                        value="{{ choice.id }}" 
+                                        id="role_{{ choice.id }}"
+                                        {% if choice in form.roles.value %}checked{% endif %}
+                                        class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
+                                    <label for="role_{{ choice.id }}" class="ml-2 text-sm text-gray-900 truncate">
+                                        {{ choice.name }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% if form.roles.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.roles.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">Select all applicable roles</p>
+                    </div>
+
                     <!-- Address -->
                     <div class="sm:col-span-2">
                         <label for="id_address" class="block text-sm font-medium text-gray-700">Address</label>

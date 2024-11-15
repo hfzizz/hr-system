@@ -64,20 +64,141 @@
             <div class="space-y-6">
                 <h3 class="text-lg font-medium leading-6 text-gray-900">Employee Information</h3>
                 <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                    <!-- Rest of the form fields -->
-                    {% for field in form %}
-                        {% if field.name not in 'employee_id,username,password,confirm_password' %}
-                            <div {% if field.name in 'address,roles' %}class="sm:col-span-2"{% endif %}>
-                                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                    {{ field.label }}
-                                </label>
-                                {{ field }}
-                                {% if field.errors %}
-                                    <p class="mt-2 text-sm text-red-600">{{ field.errors.0 }}</p>
-                                {% endif %}
-                            </div>
+                    <!-- First Name -->
+                    <div>
+                        <label for="id_first_name" class="block text-sm font-medium text-gray-700">First Name</label>
+                        {% render_field form.first_name class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.first_name.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.first_name.errors.0 }}</p>
                         {% endif %}
-                    {% endfor %}
+                    </div>
+
+                    <!-- Last Name -->
+                    <div>
+                        <label for="id_last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
+                        {% render_field form.last_name class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.last_name.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.last_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label for="id_email" class="block text-sm font-medium text-gray-700">Email</label>
+                        {% render_field form.email class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.email.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div>
+                        <label for="id_phone_number" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                        {% render_field form.phone_number class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.phone_number.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.phone_number.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Date of Birth -->
+                    <div>
+                        <label for="id_date_of_birth" class="block text-sm font-medium text-gray-700">Date of Birth</label>
+                        {% render_field form.date_of_birth type="date" class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.date_of_birth.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.date_of_birth.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Hire Date -->
+                    <div>
+                        <label for="id_hire_date" class="block text-sm font-medium text-gray-700">Hire Date</label>
+                        {% render_field form.hire_date type="date" class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.hire_date.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.hire_date.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Position -->
+                    <div>
+                        <label for="id_position" class="block text-sm font-medium text-gray-700">Position</label>
+                        {% render_field form.position class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.position.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.position.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Department -->
+                    <div>
+                        <label for="id_department" class="block text-sm font-medium text-gray-700">Department</label>
+                        {% render_field form.department class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.department.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.department.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Salary -->
+                    <div>
+                        <label for="id_salary" class="block text-sm font-medium text-gray-700">Salary</label>
+                        {% render_field form.salary class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.salary.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.salary.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Employee Status -->
+                    <div>
+                        <label for="id_employee_status" class="block text-sm font-medium text-gray-700">Status</label>
+                        {% render_field form.employee_status class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.employee_status.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.employee_status.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Roles - Checkbox Group with 2 Columns -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Roles
+                        </label>
+                        <div class="max-h-48 overflow-y-auto p-3 bg-white rounded-md border border-gray-300">
+                            <div class="grid grid-cols-2 gap-4">
+                                {% for choice in form.roles.field.queryset %}
+                                <div class="flex items-center">
+                                    <input type="checkbox" 
+                                        name="roles" 
+                                        value="{{ choice.id }}" 
+                                        id="role_{{ choice.id }}"
+                                        {% if choice in form.roles.value %}checked{% endif %}
+                                        class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
+                                    <label for="role_{{ choice.id }}" class="ml-2 text-sm text-gray-900 truncate">
+                                        {{ choice.name }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% if form.roles.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.roles.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">Select all applicable roles</p>
+                    </div>
+
+                    <!-- Address -->
+                    <div class="sm:col-span-2">
+                        <label for="id_address" class="block text-sm font-medium text-gray-700">Address</label>
+                        {% render_field form.address class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" rows="3" %}
+                        {% if form.address.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.address.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Profile Picture -->
+                    <div class="sm:col-span-2">
+                        <label for="id_profile_picture" class="block text-sm font-medium text-gray-700">Profile Picture</label>
+                        {% render_field form.profile_picture class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none" %}
+                        {% if form.profile_picture.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.profile_picture.errors.0 }}</p>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
