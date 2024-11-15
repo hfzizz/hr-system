@@ -42,13 +42,25 @@ class EmployeeForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Generate next employee ID if this is a new employee
         if not self.instance.pk:
-            last_employee = Employee.objects.order_by('-employee_id').first()
-            if last_employee:
-                last_id = int(last_employee.employee_id[3:])
-                next_id = last_id + 1
-            else:
-                next_id = 1
-            self.initial['employee_id'] = f'EMP{next_id:03d}'
+            try:
+                # Get the last valid employee ID
+                last_employee = Employee.objects.filter(
+                    employee_id__regex=r'^\d+$'  # Match only numbers
+                ).order_by('-employee_id').first()
+
+                if last_employee and last_employee.employee_id:
+                    # Get the number and increment
+                    try:
+                        next_id = int(last_employee.employee_id) + 1
+                    except ValueError:
+                        next_id = 1
+                else:
+                    next_id = 1
+
+                self.initial['employee_id'] = f'{next_id:04d}'  # Format as 0001, 0002, etc.
+            except Exception as e:
+                print(f"Error generating employee_id: {e}")
+                self.initial['employee_id'] = '0001'  # Fallback value
 
         # Add classes to all fields
         for field in self.fields:

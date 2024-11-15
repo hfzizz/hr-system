@@ -8,6 +8,8 @@ from .forms import EmployeeForm
 from django.views.generic.edit import CreateView
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import redirect
+from django.views.generic.edit import UpdateView
+from django.contrib.messages.views import SuccessMessageMixin
 
 class CustomLoginView(LoginView):
     template_name = 'auth/login.html'
@@ -57,3 +59,22 @@ class EmployeeCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView
     def form_invalid(self, form):
         # Handle invalid form
         return super().form_invalid(form)
+
+class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = Employee
+    form_class = EmployeeForm
+    template_name = 'employees/employee_edit.html'
+    success_url = reverse_lazy('employees:employee_list')
+    permission_required = 'employees.change_employee'
+    success_message = "Employee updated successfully"
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        # Remove password fields for edit form
+        if form.fields.get('password'):
+            del form.fields['password']
+        if form.fields.get('confirm_password'):
+            del form.fields['confirm_password']
+        if form.fields.get('username'):
+            del form.fields['username']
+        return form
