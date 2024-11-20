@@ -1,27 +1,88 @@
 {% extends "base.html" %}
 
-{% block title %}Profile - Your App{% endblock %}
+{% block title %}Profile - HR System{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">Profile</h1>
+        <a href="{% url 'employees:profile_edit' %}" 
+           class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+            Edit Profile
+        </a>
     </div>
 
     <div class="bg-white shadow rounded-lg">
         <div class="px-4 py-5 sm:p-6">
-            <div class="flex items-center space-x-6">
+            <!-- Profile Header -->
+            <div class="flex items-center space-x-6 mb-6">
                 <div class="flex-shrink-0">
-                    <img class="h-24 w-24 rounded-full" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Profile photo">
+                    {% if employee.profile_picture %}
+                        <img class="h-24 w-24 rounded-full object-cover" src="{{ employee.profile_picture.url }}" alt="Profile photo">
+                    {% else %}
+                        <div class="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center">
+                            <span class="text-2xl text-gray-500">{{ employee.first_name|first }}{{ employee.last_name|first }}</span>
+                        </div>
+                    {% endif %}
                 </div>
                 <div>
-                    <h3 class="text-lg font-medium leading-6 text-gray-900">John Doe</h3>
-                    <p class="text-sm text-gray-500">john@example.com</p>
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">{{ employee.first_name }} {{ employee.last_name }}</h3>
+                    <p class="text-sm text-gray-500">{{ employee.email }}</p>
+                    <p class="text-sm text-gray-500 mt-1">Employee ID: {{ employee.employee_id }}</p>
                 </div>
             </div>
 
-            <div class="mt-6 border-t border-gray-200 pt-6">
-                <!-- Add profile details and edit form here -->
+            <!-- Profile Information -->
+            <div class="border-t border-gray-200 pt-6">
+                <dl class="divide-y divide-gray-200">
+                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+                        <dt class="text-sm font-medium text-gray-500">Full name</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                            {{ employee.first_name }} {{ employee.last_name }}
+                        </dd>
+                    </div>
+
+                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+                        <dt class="text-sm font-medium text-gray-500">Email address</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ employee.email }}</dd>
+                    </div>
+
+                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+                        <dt class="text-sm font-medium text-gray-500">Phone number</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ employee.phone_number }}</dd>
+                    </div>
+
+                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+                        <dt class="text-sm font-medium text-gray-500">Department</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ employee.department }}</dd>
+                    </div>
+
+                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+                        <dt class="text-sm font-medium text-gray-500">Position</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ employee.position }}</dd>
+                    </div>
+
+                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+                        <dt class="text-sm font-medium text-gray-500">Roles</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                            {% for role in employee.roles.all %}
+                                <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 mr-2">
+                                    {{ role.name }}
+                                </span>
+                            {% endfor %}
+                        </dd>
+                    </div>
+
+                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+                        <dt class="text-sm font-medium text-gray-500">Address</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ employee.address }}</dd>
+                    </div>
+
+                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+                        <dt class="text-sm font-medium text-gray-500">Hire date</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ employee.hire_date }}</dd>
+                    </div>
+                </dl>
             </div>
         </div>
     </div>

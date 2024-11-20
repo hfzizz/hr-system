@@ -20,7 +20,7 @@ from employees.views import (
     CustomLoginView, 
     CustomLogoutView, 
     DashboardView,
-    ProfileView,
+    EmployeeProfileView,    
 )
 
 urlpatterns = [
@@ -28,6 +28,6 @@ urlpatterns = [
     path('login/', CustomLoginView.as_view(), name='login'),
     path('logout/', CustomLogoutView.as_view(), name='logout'),
     path('', DashboardView.as_view(), name='dashboard'),  # or your dashboard
-    path('profile/', ProfileView.as_view(), name='profile'),
     path('employees/', include('employees.urls', namespace='employees')),
+    path('profile/', EmployeeProfileView.as_view(), name='profile'),
 ]

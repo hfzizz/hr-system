@@ -98,3 +98,26 @@ class EmployeeForm(forms.ModelForm):
             self.save_m2m()
         
         return employee
+
+class EmployeeProfileForm(forms.ModelForm):
+    class Meta:
+        model = Employee
+        fields = [
+            'first_name',
+            'last_name',
+            'email',
+            'phone_number',
+            'address',
+            'profile_picture'
+        ]
+
+    def save(self, commit=True):
+        employee = super().save(commit=False)
+        if employee.user:
+            employee.user.first_name = employee.first_name
+            employee.user.last_name = employee.last_name
+            employee.user.email = employee.email
+            employee.user.save()
+        if commit:
+            employee.save()
+        return employee

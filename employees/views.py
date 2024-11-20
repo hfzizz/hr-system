@@ -1,10 +1,10 @@
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import reverse_lazy
-from django.views.generic import TemplateView, ListView, CreateView
+from django.views.generic import TemplateView, ListView, CreateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from .models import Employee
-from .forms import EmployeeForm
+from .forms import EmployeeForm, EmployeeProfileForm
 from django.views.generic.edit import CreateView
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import redirect
@@ -78,3 +78,24 @@ class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMes
         if form.fields.get('username'):
             del form.fields['username']
         return form
+
+class EmployeeProfileView(LoginRequiredMixin, DetailView):
+    model = Employee
+    template_name = 'employees/profile.html'
+    context_object_name = 'employee'
+
+    def get_object(self, queryset=None):
+        return self.request.user.employee
+
+class EmployeeProfileEditView(LoginRequiredMixin, UpdateView):
+    model = Employee
+    form_class = EmployeeProfileForm
+    template_name = 'employees/profile_edit.html'
+    success_url = reverse_lazy('employees:profile')
+
+    def get_object(self, queryset=None):
+        return self.request.user.employee
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Profile updated successfully!')
+        return super().form_valid(form)
