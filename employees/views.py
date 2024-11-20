@@ -79,6 +79,13 @@ class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMes
             del form.fields['username']
         return form
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.object:
+            # Add current roles to context
+            context['current_roles'] = self.object.roles.all()
+        return context
+
 class EmployeeProfileView(LoginRequiredMixin, DetailView):
     model = Employee
     template_name = 'employees/profile.html'

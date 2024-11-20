@@ -137,7 +137,7 @@
                                         name="roles" 
                                         value="{{ choice.id }}" 
                                         id="role_{{ choice.id }}"
-                                        {% if choice in form.roles.value %}checked{% endif %}
+                                        {% if choice in form.instance.roles.all %}checked{% endif %}
                                         class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
                                     <label for="role_{{ choice.id }}" class="ml-2 text-sm text-gray-900 truncate">
                                         {{ choice.name }}

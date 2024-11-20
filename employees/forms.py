@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from .models import Employee
 
 class EmployeeForm(forms.ModelForm):
@@ -10,9 +10,9 @@ class EmployeeForm(forms.ModelForm):
             'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 bg-gray-50',
         })
     )
-    username = forms.CharField(max_length=150)
-    password = forms.CharField(widget=forms.PasswordInput())
-    confirm_password = forms.CharField(widget=forms.PasswordInput())
+    username = forms.CharField(max_length=150, required=False)
+    password = forms.CharField(widget=forms.PasswordInput(), required=False)
+    confirm_password = forms.CharField(widget=forms.PasswordInput(), required=False)
 
     class Meta:
         model = Employee
@@ -36,6 +36,9 @@ class EmployeeForm(forms.ModelForm):
             'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
             'hire_date': forms.DateInput(attrs={'type': 'date'}),
             'address': forms.Textarea(attrs={'rows': 3}),
+            'roles': forms.CheckboxSelectMultiple(attrs={
+                'class': 'h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600'
+            })
         }
 
     def __init__(self, *args, **kwargs):
@@ -69,6 +72,12 @@ class EmployeeForm(forms.ModelForm):
                     'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
                 })
 
+        # If this is an existing employee, pre-select their roles
+        if self.instance and self.instance.pk:
+            # Set initial values for roles
+            self.initial['roles'] = [role.id for role in self.instance.roles.all()]
+            self.fields['roles'].initial = self.instance.roles.all()
+
     def clean(self):
         cleaned_data = super().clean()
         password = cleaned_data.get('password')
@@ -80,23 +89,25 @@ class EmployeeForm(forms.ModelForm):
         return cleaned_data
 
     def save(self, commit=True):
-        # Create User instance
-        user = User.objects.create_user(
-            username=self.cleaned_data['username'],
-            password=self.cleaned_data['password'],
-            email=self.cleaned_data['email'],
-            first_name=self.cleaned_data['first_name'],
-            last_name=self.cleaned_data['last_name']
-        )
-        
-        # Create Employee instance
         employee = super().save(commit=False)
-        employee.user = user
         
+        if employee.user:
+            # Update user information
+            employee.user.first_name = self.cleaned_data['first_name']
+            employee.user.last_name = self.cleaned_data['last_name']
+            employee.user.email = self.cleaned_data['email']
+            employee.user.save()
+
+            # Sync groups with roles
+            employee.user.groups.clear()
+            for role in self.cleaned_data['roles']:
+                group, created = Group.objects.get_or_create(name=role.name)
+                employee.user.groups.add(group)
+
         if commit:
             employee.save()
-            self.save_m2m()
-        
+            self.save_m2m()  # Save many-to-many relationships
+            
         return employee
 
 class EmployeeProfileForm(forms.ModelForm):
@@ -114,10 +125,20 @@ class EmployeeProfileForm(forms.ModelForm):
     def save(self, commit=True):
         employee = super().save(commit=False)
         if employee.user:
+            # Sync user information
             employee.user.first_name = employee.first_name
             employee.user.last_name = employee.last_name
             employee.user.email = employee.email
             employee.user.save()
+
+            # Sync groups with roles
+            employee.user.groups.clear()
+            for role in employee.roles.all():
+                group, created = Group.objects.get_or_create(name=role.name)
+                employee.user.groups.add(group)
+
         if commit:
             employee.save()
         return employee
+
+
