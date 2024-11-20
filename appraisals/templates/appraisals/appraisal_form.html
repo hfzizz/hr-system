@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}
+    {% if form.instance.pk %}Edit{% else %}Create{% endif %} Appraisal - HR System
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-900">
+            {% if form.instance.pk %}Edit{% else %}Create{% endif %} Appraisal
+        </h1>
+        <a href="{% url 'appraisals:appraisal_list' %}" 
+           class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+            Back to List
+        </a>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
+        <form method="post" class="space-y-8 p-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="rounded-md bg-red-50 p-4">
+                <div class="flex">
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">There were errors with your submission</h3>
+                        <div class="mt-2 text-sm text-red-700">
+                            <ul class="list-disc space-y-1 pl-5">
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Basic Information -->
+            <div>
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Basic Information</h3>
+                <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                    <!-- Employee Selection -->
+                    <div class="sm:col-span-3">
+                        <label for="{{ form.employee.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Employee
+                        </label>
+                        <div class="mt-1">
+                            {% render_field form.employee class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %}
+                        </div>
+                        {% if form.employee.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.employee.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Review Period -->
+                    <div class="sm:col-span-3">
+                        <label for="{{ form.review_period_start.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Review Period Start
+                        </label>
+                        <div class="mt-1">
+                            {% render_field form.review_period_start class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %}
+                        </div>
+                        {% if form.review_period_start.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.review_period_start.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="sm:col-span-3">
+                        <label for="{{ form.review_period_end.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Review Period End
+                        </label>
+                        <div class="mt-1">
+                            {% render_field form.review_period_end class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %}
+                        </div>
+                        {% if form.review_period_end.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.review_period_end.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Ratings -->
+            <div>
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Performance Ratings</h3>
+                <p class="mt-1 text-sm text-gray-500">Rate on a scale of 1-5 (1 being lowest, 5 being highest)</p>
+                <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-5">
+                    <!-- Job Knowledge -->
+                    <div>
+                        <label for="{{ form.job_knowledge.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Job Knowledge
+                        </label>
+                        <div class="mt-1">
+                            {% render_field form.job_knowledge class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %}
+                        </div>
+                        {% if form.job_knowledge.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.job_knowledge.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Work Quality -->
+                    <div>
+                        <label for="{{ form.work_quality.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Work Quality
+                        </label>
+                        <div class="mt-1">
+                            {% render_field form.work_quality class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %}
+                        </div>
+                        {% if form.work_quality.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.work_quality.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Attendance -->
+                    <div>
+                        <label for="{{ form.attendance.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Attendance
+                        </label>
+                        <div class="mt-1">
+                            {% render_field form.attendance class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %}
+                        </div>
+                        {% if form.attendance.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.attendance.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Communication -->
+                    <div>
+                        <label for="{{ form.communication.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Communication
+                        </label>
+                        <div class="mt-1">
+                            {% render_field form.communication class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %}
+                        </div>
+                        {% if form.communication.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.communication.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Teamwork -->
+                    <div>
+                        <label for="{{ form.teamwork.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Teamwork
+                        </label>
+                        <div class="mt-1">
+                            {% render_field form.teamwork class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %}
+                        </div>
+                        {% if form.teamwork.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.teamwork.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comments and Goals -->
+            <div>
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Comments and Goals</h3>
+                <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4">
+                    <!-- Achievements -->
+                    <div>
+                        <label for="{{ form.achievements.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Achievements
+                        </label>
+                        <div class="mt-1">
+                            {% render_field form.achievements class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" rows="3" %}
+                        </div>
+                        {% if form.achievements.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.achievements.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Areas for Improvement -->
+                    <div>
+                        <label for="{{ form.areas_for_improvement.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Areas for Improvement
+                        </label>
+                        <div class="mt-1">
+                            {% render_field form.areas_for_improvement class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" rows="3" %}
+                        </div>
+                        {% if form.areas_for_improvement.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.areas_for_improvement.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Comments -->
+                    <div>
+                        <label for="{{ form.comments.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Comments
+                        </label>
+                        <div class="mt-1">
+                            {% render_field form.comments class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" rows="3" %}
+                        </div>
+                        {% if form.comments.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.comments.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Goals -->
+                    <div>
+                        <label for="{{ form.goals.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Goals
+                        </label>
+                        <div class="mt-1">
+                            {% render_field form.goals class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" rows="3" %}
+                        </div>
+                        {% if form.goals.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.goals.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex justify-end gap-x-3">
+                <a href="{% url 'appraisals:appraisal_list' %}"
+                   class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    Cancel
+                </a>
+                <button type="submit"
+                    class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    {% if form.instance.pk %}Update{% else %}Create{% endif %} Appraisal
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 

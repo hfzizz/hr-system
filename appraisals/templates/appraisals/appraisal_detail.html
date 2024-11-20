@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Appraisal Details - HR System{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-900">Appraisal Details</h1>
+        <div class="flex space-x-4">
+            <a href="{% url 'appraisals:appraisal_list' %}" 
+               class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                Back to List
+            </a>
+            {% if perms.appraisals.change_appraisal %}
+            <a href="{% url 'appraisals:appraisal_edit' appraisal.pk %}" 
+               class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                Edit Appraisal
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="bg-white shadow sm:rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <!-- Basic Information -->
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Basic Information</h3>
+                    <dl class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Employee</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.employee.first_name }} {{ appraisal.employee.last_name }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Appraiser</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.appraiser.first_name }} {{ appraisal.appraiser.last_name }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Review Period</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {{ appraisal.review_period_start|date:"M d, Y" }} - {{ appraisal.review_period_end|date:"M d, Y" }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Status</dt>
+                            <dd class="mt-1">
+                                <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium
+                                    {% if appraisal.status == 'completed' %}
+                                        bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20
+                                    {% elif appraisal.status == 'in_progress' %}
+                                        bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-600/20
+                                    {% else %}
+                                        bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20
+                                    {% endif %}">
+                                    {{ appraisal.get_status_display }}
+                                </span>
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <!-- Performance Ratings -->
+                <div>
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Performance Ratings</h3>
+                    <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                            <dt class="truncate text-sm font-medium text-gray-500">Job Knowledge</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.job_knowledge }}</dd>
+                        </div>
+                        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                            <dt class="truncate text-sm font-medium text-gray-500">Communication Skills</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.communication_skills }}</dd>
+                        </div>
+                        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                            <dt class="truncate text-sm font-medium text-gray-500">Problem Solving</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.problem_solving }}</dd>
+                        </div>
+                        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                            <dt class="truncate text-sm font-medium text-gray-500">Leadership</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.leadership }}</dd>
+                        </div>
+                        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                            <dt class="truncate text-sm font-medium text-gray-500">Teamwork</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.teamwork }}</dd>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -30,4 +30,5 @@ urlpatterns = [
     path('', DashboardView.as_view(), name='dashboard'),  # or your dashboard
     path('employees/', include('employees.urls', namespace='employees')),
     path('profile/', EmployeeProfileView.as_view(), name='profile'),
+    path('appraisals/', include('appraisals.urls', namespace='appraisals')),
 ]

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Appraisals - HR System{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-900">Appraisals</h1>
+        {% if perms.appraisals.add_appraisal %}
+        <a href="{% url 'appraisals:appraisal_create' %}" 
+           class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+            Create New Appraisal
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Appraisals List -->
+    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
+        {% if appraisals %}
+        <table class="min-w-full divide-y divide-gray-300">
+            <thead>
+                <tr>
+                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Employee</th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Review Period</th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Average Rating</th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Appraiser</th>
+                    <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                        <span class="sr-only">Actions</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for appraisal in appraisals %}
+                <tr>
+                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                        {{ appraisal.employee.first_name }} {{ appraisal.employee.last_name }}
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {{ appraisal.review_period_start|date:"M d, Y" }} - {{ appraisal.review_period_end|date:"M d, Y" }}
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium
+                            {% if appraisal.status == 'completed' %}
+                                bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20
+                            {% elif appraisal.status == 'in_progress' %}
+                                bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-600/20
+                            {% else %}
+                                bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20
+                            {% endif %}">
+                            {{ appraisal.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {% if appraisal.calculate_average_rating %}
+                            {{ appraisal.calculate_average_rating|floatformat:1 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {{ appraisal.appraiser.first_name }} {{ appraisal.appraiser.last_name }}
+                    </td>
+                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                        <a href="{% url 'appraisals:appraisal_detail' appraisal.pk %}" 
+                           class="text-indigo-600 hover:text-indigo-900">View</a>
+                        {% if perms.appraisals.change_appraisal %}
+                        <a href="{% url 'appraisals:appraisal_edit' appraisal.pk %}" 
+                           class="ml-4 text-indigo-600 hover:text-indigo-900">Edit</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center py-12">
+            <p class="text-sm text-gray-500">No appraisals found.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 
