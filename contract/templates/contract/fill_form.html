@@ -1,0 +1,164 @@
+<<<<<<< HEAD
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .employee-field {
+        background-color: #ffffff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-4">{{ template.name }}</h1>
+    <p class="mb-4">{{ template.description }}</p>
+
+    <form method="post" enctype="multipart/form-data" class="space-y-4" id="dynamic-form">
+        {% csrf_token %}
+        
+        {% if template.requires_employee %}
+        <!-- Employee Selection Section -->
+        <div class="bg-gray-50 p-4 rounded-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Employee Information</h2>
+            
+            <!-- Employee Selection -->
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                    {{ form.employee.label }}
+                </label>
+                {{ form.employee }}
+                {% if form.employee.errors %}
+                <p class="text-red-500 text-xs italic">{{ form.employee.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Employee Details Grid -->
+            <div id="employee-details" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Fields will be populated by JavaScript -->
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Dynamic Form Fields -->
+        <div class="bg-white p-4 rounded-lg">
+            <h2 class="text-xl font-semibold mb-4">Form Fields</h2>
+            {% for field in form %}
+                {% if field.name != 'employee' and field.name != 'employee_id' and field.name != 'first_name' and field.name != 'last_name' and field.name != 'email' and field.name != 'phone_number' and field.name != 'position' %}
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">
+                        {{ field.label }}
+                        {% if field.field.required %}
+                            <span class="text-red-500">*</span>
+                        {% endif %}
+                    </label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <p class="text-gray-600 text-xs italic">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% if field.errors %}
+                    <p class="text-red-500 text-xs italic">{{ field.errors }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Submit Form
+        </button>
+    </form>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const employeeSelect = document.getElementById('employee-select');
+    const employeeDetails = document.getElementById('employee-details');
+    
+    function createField(label, value, id) {
+        return `
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">${label}</label>
+                <input type="text" id="${id}" name="${id}" value="${value || ''}" 
+                    class="form-control employee-field w-full px-3 py-2 border rounded">
+            </div>
+        `;
+    }
+
+    function updateDynamicFields(employee) {
+        const dynamicFields = document.querySelectorAll('[id^="dynamic-field_"]');
+        dynamicFields.forEach(field => {
+            const label = field.closest('div').querySelector('label').textContent.toLowerCase().trim();
+            
+            // Map field labels to employee data
+            if (label.includes('address')) field.value = employee.address || '';
+            if (label.includes('date of birth')) field.value = employee.date_of_birth || '';
+            if (label.includes('hire date')) field.value = employee.hire_date || '';
+            if (label.includes('salary')) field.value = employee.salary || '';
+            if (label.includes('department')) field.value = employee.department || '';
+        });
+    }
+
+    if (employeeSelect) {
+        employeeSelect.addEventListener('change', function() {
+            const employeeId = this.value;
+            if (employeeId) {
+                fetch(`/contracts/api/employees/${employeeId}/`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(employee => {
+                        // Update employee details section with editable fields
+                        employeeDetails.innerHTML = `
+                            ${createField('Employee ID', employee.employee_id, 'employee-id')}
+                            ${createField('First Name', employee.first_name, 'employee-first-name')}
+                            ${createField('Last Name', employee.last_name, 'employee-last-name')}
+                            ${createField('Email', employee.email, 'employee-email')}
+                            ${createField('Phone', employee.phone_number, 'employee-phone')}
+                            ${createField('Position', employee.position, 'employee-position')}
+                        `;
+
+                        // Update dynamic fields
+                        updateDynamicFields(employee);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        employeeDetails.innerHTML = `
+                            <div class="col-span-3">
+                                <p class="text-red-500">Error loading employee details: ${error.message}</p>
+                            </div>
+                        `;
+                    });
+            } else {
+                // Clear all fields if no employee is selected
+                employeeDetails.innerHTML = '';
+                const dynamicFields = document.querySelectorAll('[id^="dynamic-field_"]');
+                dynamicFields.forEach(field => field.value = '');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+
+=======
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ template.name }}</h2>
+    <p class="text-muted">{{ template.description }}</p>
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
+>>>>>>> 991468ee1458877423928edfaf88cf3290d54d9a
+{% endblock %}

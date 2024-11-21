@@ -1,0 +1,92 @@
+<<<<<<< HEAD
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-900">Create Template</h1>
+        <a href="{% url 'contract_renewal:template_list' %}" class="btn btn-secondary">
+            Back to Templates
+        </a>
+    </div>
+
+    <div class="mt-4">
+        <form method="POST">
+            {% csrf_token %}
+            <div class="card">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Template Name</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        <div class="text-danger">
+                            {{ form.name.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                        <div class="text-danger">
+                            {{ form.description.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Create Template</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+=======
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-900">Create Template</h1>
+        <a href="{% url 'contract_renewal:template_list' %}" class="btn btn-secondary">
+            Back to Templates
+        </a>
+    </div>
+
+    <div class="mt-4">
+        <form method="POST">
+            {% csrf_token %}
+            <div class="card">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Template Name</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        <div class="text-danger">
+                            {{ form.name.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                        <div class="text-danger">
+                            {{ form.description.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Create Template</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+>>>>>>> 991468ee1458877423928edfaf88cf3290d54d9a
+{% endblock %}
