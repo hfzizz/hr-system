@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 from employees.models import Employee
 from django.utils import timezone
 
@@ -9,7 +10,11 @@ class Appraisal(models.Model):
         ('completed', 'Completed')
     ]
 
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='appraisals')
+    employee = models.ForeignKey(
+        Employee, 
+        on_delete=models.CASCADE, 
+        related_name='appraisals'
+    )
     appraiser = models.ForeignKey(
         Employee, 
         on_delete=models.CASCADE, 
@@ -20,7 +25,11 @@ class Appraisal(models.Model):
     date_created = models.DateTimeField(default=timezone.now)
     review_period_start = models.DateField()
     review_period_end = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES, 
+        default='pending'
+    )
     
     # Performance Ratings (1-5 scale)
     job_knowledge = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)], null=True, blank=True)
@@ -47,6 +56,26 @@ class Appraisal(models.Model):
     def __str__(self):
         return f"Appraisal for {self.employee.first_name} {self.employee.last_name} ({self.date_created.date()})"
 
+    def clean(self):
+        # Validate review period dates
+        if self.review_period_start and self.review_period_end:
+            if self.review_period_start > self.review_period_end:
+                raise ValidationError({
+                    'review_period_end': 'Review period end date must be after start date.'
+                })
+
+        # Validate that appraiser is not the same as employee
+        if self.appraiser and self.employee and self.appraiser == self.employee:
+            raise ValidationError({
+                'appraiser': 'Appraiser cannot be the same as the employee being appraised.'
+            })
+
+        super().clean()
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     def calculate_average_rating(self):
         ratings = [
             self.job_knowledge,
@@ -57,3 +86,11 @@ class Appraisal(models.Model):
         ]
         valid_ratings = [r for r in ratings if r is not None]
         return sum(valid_ratings) / len(valid_ratings) if valid_ratings else None
+
+    @property
+    def is_complete(self):
+        return self.status == 'completed'
+
+    @property
+    def can_be_edited(self):
+        return self.status != 'completed'
