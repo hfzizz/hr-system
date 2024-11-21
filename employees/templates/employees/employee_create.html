@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 {% load widget_tweaks %}
 
-{% block title %}Add Employee - HR System{% endblock %}
+{% block title %}Create Employee - HR System{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-900">Add New Employee</h1>
+        <h1 class="text-2xl font-bold text-gray-900">Create New Employee</h1>
         <a href="{% url 'employees:employee_list' %}" 
            class="rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-200">
-            Back to List
+            Back to Employee List
         </a>
     </div>
 
@@ -19,21 +19,48 @@
         <form method="post" enctype="multipart/form-data" class="space-y-8 p-6">
             {% csrf_token %}
             
+            <!-- Add this right after the form opening tag -->
+            {% if form.errors %}
+            <div class="rounded-md bg-red-50 p-4 mb-6">
+                <div class="flex">
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">Please correct the following errors:</h3>
+                        <div class="mt-2 text-sm text-red-700">
+                            <ul class="list-disc pl-5 space-y-1">
+                                {% for field, errors in form.errors.items %}
+                                    {% if field == '__all__' %}
+                                        {% for error in errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    {% else %}
+                                        {% for error in errors %}
+                                            <li>{{ field }}: {{ error }}</li>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
             <!-- Employee ID Section -->
             <div class="space-y-6">
                 <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                     <div>
                         <label for="id_employee_id" class="block text-sm font-medium text-gray-700">Employee ID</label>
                         {% render_field form.employee_id class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 bg-gray-50 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" readonly="readonly" %}
-                        <p class="mt-1 text-sm text-gray-500">Auto-generated employee ID</p>
+                        <p class="mt-1 text-sm text-gray-500">Employee ID is automatically generated</p>
                     </div>
                 </div>
             </div>
 
-            <!-- User Account Section -->
+            <!-- Employee Information -->
             <div class="space-y-6">
-                <h3 class="text-lg font-medium leading-6 text-gray-900">User Account Details</h3>
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Employee Information</h3>
                 <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+                    <!-- Username and Password Section -->
                     <div>
                         <label for="id_username" class="block text-sm font-medium text-gray-700">Username</label>
                         {% render_field form.username class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
@@ -44,27 +71,37 @@
 
                     <div>
                         <label for="id_password" class="block text-sm font-medium text-gray-700">Password</label>
-                        {% render_field form.password class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
-                        {% if form.password.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.password.errors.0 }}</p>
-                        {% endif %}
+                        <div class="mt-1 space-y-2">
+                            <div class="flex space-x-2">
+                                {% render_field form.password class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" type="password" %}
+                                <button type="button" 
+                                        id="toggle_password"
+                                        onclick="togglePasswordVisibility()"
+                                        class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    Show
+                                </button>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button type="button"
+                                        onclick="generatePassword()"
+                                        class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    Generate Password
+                                </button>
+                                <button type="button"
+                                        id="copy_password"
+                                        onclick="copyPassword()"
+                                        class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    Copy
+                                </button>
+                            </div>
+                            <p class="mt-1 text-sm text-gray-500">Leave blank to generate a random password</p>
+                            {% if form.password.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.password.errors.0 }}</p>
+                            {% endif %}
+                        </div>
                     </div>
 
-                    <div>
-                        <label for="id_confirm_password" class="block text-sm font-medium text-gray-700">Confirm Password</label>
-                        {% render_field form.confirm_password class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
-                        {% if form.confirm_password.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.confirm_password.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Employee Information -->
-            <div class="space-y-6">
-                <h3 class="text-lg font-medium leading-6 text-gray-900">Employee Information</h3>
-                <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                    <!-- First Name -->
+                    <!-- Personal Information -->
                     <div>
                         <label for="id_first_name" class="block text-sm font-medium text-gray-700">First Name</label>
                         {% render_field form.first_name class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
@@ -73,7 +110,6 @@
                         {% endif %}
                     </div>
 
-                    <!-- Last Name -->
                     <div>
                         <label for="id_last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
                         {% render_field form.last_name class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
@@ -82,7 +118,6 @@
                         {% endif %}
                     </div>
 
-                    <!-- Email -->
                     <div>
                         <label for="id_email" class="block text-sm font-medium text-gray-700">Email</label>
                         {% render_field form.email class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
@@ -91,7 +126,6 @@
                         {% endif %}
                     </div>
 
-                    <!-- Phone Number -->
                     <div>
                         <label for="id_phone_number" class="block text-sm font-medium text-gray-700">Phone Number</label>
                         {% render_field form.phone_number class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
@@ -100,34 +134,29 @@
                         {% endif %}
                     </div>
 
-                    <!-- Date of Birth -->
                     <div>
                         <label for="id_date_of_birth" class="block text-sm font-medium text-gray-700">Date of Birth</label>
-                        {% render_field form.date_of_birth type="date" class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% render_field form.date_of_birth class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" type="date" %}
                         {% if form.date_of_birth.errors %}
                             <p class="mt-2 text-sm text-red-600">{{ form.date_of_birth.errors.0 }}</p>
                         {% endif %}
                     </div>
 
-                    <!-- Hire Date -->
                     <div>
-                        <label for="id_hire_date" class="block text-sm font-medium text-gray-700">Hire Date</label>
-                        {% render_field form.hire_date type="date" class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
-                        {% if form.hire_date.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.hire_date.errors.0 }}</p>
+                        <label for="id_gender" class="block text-sm font-medium text-gray-700">Gender</label>
+                        <select id="id_gender" name="gender" class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                            <option value="">Select Gender</option>
+                            <option value="M">Male</option>
+                            <option value="F">Female</option>
+                            <option value="O">Other</option>
+                            <option value="N">Prefer not to say</option>
+                        </select>
+                        {% if form.gender.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.gender.errors.0 }}</p>
                         {% endif %}
                     </div>
 
-                    <!-- Position -->
-                    <div>
-                        <label for="id_position" class="block text-sm font-medium text-gray-700">Position</label>
-                        {% render_field form.position class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
-                        {% if form.position.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.position.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Department -->
+                    <!-- Employment Information -->
                     <div>
                         <label for="id_department" class="block text-sm font-medium text-gray-700">Department</label>
                         {% render_field form.department class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
@@ -136,7 +165,22 @@
                         {% endif %}
                     </div>
 
-                    <!-- Salary -->
+                    <div>
+                        <label for="id_position" class="block text-sm font-medium text-gray-700">Position</label>
+                        {% render_field form.position class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.position.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.position.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="id_hire_date" class="block text-sm font-medium text-gray-700">Hire Date</label>
+                        {% render_field form.hire_date class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" type="date" %}
+                        {% if form.hire_date.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.hire_date.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
                     <div>
                         <label for="id_salary" class="block text-sm font-medium text-gray-700">Salary</label>
                         {% render_field form.salary class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
@@ -145,7 +189,6 @@
                         {% endif %}
                     </div>
 
-                    <!-- Employee Status -->
                     <div>
                         <label for="id_employee_status" class="block text-sm font-medium text-gray-700">Status</label>
                         {% render_field form.employee_status class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
@@ -154,11 +197,10 @@
                         {% endif %}
                     </div>
 
-                    <!-- Roles - Checkbox Group with 2 Columns -->
+                    <!-- Full Width Fields -->
+                    <!-- Roles -->
                     <div class="sm:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Roles
-                        </label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Roles</label>
                         <div class="max-h-48 overflow-y-auto p-3 bg-white rounded-md border border-gray-300">
                             <div class="grid grid-cols-2 gap-4">
                                 {% for choice in form.roles.field.queryset %}
@@ -167,7 +209,6 @@
                                         name="roles" 
                                         value="{{ choice.id }}" 
                                         id="role_{{ choice.id }}"
-                                        {% if choice in form.roles.value %}checked{% endif %}
                                         class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
                                     <label for="role_{{ choice.id }}" class="ml-2 text-sm text-gray-900 truncate">
                                         {{ choice.name }}
@@ -190,17 +231,6 @@
                             <p class="mt-2 text-sm text-red-600">{{ form.address.errors.0 }}</p>
                         {% endif %}
                     </div>
-
-                    <!-- Profile Picture -->
-                    <div class="sm:col-span-2">
-                        <label for="id_profile_picture" class="block text-sm font-medium text-gray-700">Profile Picture</label>
-                        {% render_field form.profile_picture class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none" %}
-                        {% if form.profile_picture.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.profile_picture.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
 
             <!-- Form Errors -->
             {% if form.non_field_errors %}
@@ -234,4 +264,58 @@
         </form>
     </div>
 </div>
+<script>
+    function generatePassword() {
+        // Generate a random password
+        const length = 12;
+        const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+        let password = "";
+        for (let i = 0; i < length; i++) {
+            password += charset.charAt(Math.floor(Math.random() * charset.length));
+        }
+        
+        // Set the password in the input field
+        document.getElementById('id_password').value = password;
+        // Show the password in the display field
+        document.getElementById('password_display').value = password;
+    }
+    
+    function togglePasswordVisibility() {
+        const passwordInput = document.getElementById('id_password');
+        const toggleButton = document.getElementById('toggle_password');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleButton.textContent = 'Hide';
+        } else {
+            passwordInput.type = 'text';
+            toggleButton.textContent = 'Show';
+        }
+    }
+    
+    function copyPassword() {
+        const passwordInput = document.getElementById('id_password');
+        
+        // Create a temporary input element
+        const tempInput = document.createElement('input');
+        tempInput.value = passwordInput.value;
+        document.body.appendChild(tempInput);
+        
+        // Select and copy the password
+        tempInput.select();
+        document.execCommand('copy');
+        
+        // Remove the temporary element
+        document.body.removeChild(tempInput);
+        
+        // Show feedback
+        const copyButton = document.getElementById('copy_password');
+        const originalText = copyButton.textContent;
+        copyButton.textContent = 'Copied!';
+        setTimeout(() => {
+            copyButton.textContent = originalText;
+        }, 2000);
+    }
+    </script>
+    
 {% endblock %} 

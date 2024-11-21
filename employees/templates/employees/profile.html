@@ -20,8 +20,8 @@
                     {% if employee.profile_picture %}
                         <img class="h-24 w-24 rounded-full object-cover" src="{{ employee.profile_picture.url }}" alt="Profile photo">
                     {% else %}
-                        <div class="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center">
-                            <span class="text-2xl text-gray-500">{{ employee.first_name|first }}{{ employee.last_name|first }}</span>
+                        <div class="h-24 w-24 rounded-full bg-indigo-100 flex items-center justify-center">
+                            <span class="text-2xl text-indigo-700 font-medium">{{ employee.user.username|first|upper }}</span>
                         </div>
                     {% endif %}
                 </div>
@@ -35,6 +35,14 @@
             <!-- Profile Information -->
             <div class="border-t border-gray-200 pt-6">
                 <dl class="divide-y divide-gray-200">
+                    <!-- Username (New) -->
+                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+                        <dt class="text-sm font-medium text-gray-500">Username</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                            {{ employee.user.username }}
+                        </dd>
+                    </div>
+
                     <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
                         <dt class="text-sm font-medium text-gray-500">Full name</dt>
                         <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">

@@ -1,5 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.auth.backends import ModelBackend
+from django.contrib.auth import get_user_model
+from django.db.models import Q
 
 class Department(models.Model):
     name = models.CharField(max_length=100)
@@ -9,6 +12,19 @@ class Department(models.Model):
         return self.name
 
 class Employee(models.Model):
+    GENDER_CHOICES = [
+        ('M', 'Male'),
+        ('F', 'Female'),
+        ('O', 'Other'),
+        ('N', 'Prefer not to say'),
+    ]
+    
+    gender = models.CharField(
+        max_length=1,
+        choices=GENDER_CHOICES,
+        blank=True,
+        null=True
+    )
     employee_id = models.CharField(max_length=10, unique=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     first_name = models.CharField(max_length=100)
@@ -40,4 +56,7 @@ class Employee(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
+        return f"{self.first_name} {self.last_name}"
+
+    def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
