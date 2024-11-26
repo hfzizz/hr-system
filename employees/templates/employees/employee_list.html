@@ -7,20 +7,144 @@
     <!-- Header -->
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">Employees</h1>
-        <a href="{% url 'employees:employee_create' %}" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
-            Add Employee
-        </a>
+        <div class="flex gap-4">
+            <!-- Column Selector Dropdown -->
+            <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    Show/Hide Columns
+                </button>
+                <div x-show="open" @click.away="open = false" class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5">
+                    <div class="p-4 space-y-2">
+                        <!-- Group: Basic Info -->
+                        <div class="mb-2">
+                            <div class="font-medium text-gray-700 mb-1 text-sm">Basic Info</div>
+                            <div class="space-y-1">
+                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                    <input type="checkbox" checked data-column="employee_id" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-sm text-gray-900">Employee ID</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                    <input type="checkbox" checked data-column="name" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-sm text-gray-900">Name</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                    <input type="checkbox" checked data-column="email" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-sm text-gray-900">Email</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                    <input type="checkbox" checked data-column="phone" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-sm text-gray-900">Phone</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Group: Work Info -->
+                        <div class="mb-2">
+                            <div class="font-medium text-gray-700 mb-1 text-sm">Work Info</div>
+                            <div class="space-y-1">
+                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                    <input type="checkbox" checked data-column="position" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-sm text-gray-900">Position</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                    <input type="checkbox" checked data-column="department" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-sm text-gray-900">Department</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                    <input type="checkbox" checked data-column="status" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-sm text-gray-900">Status</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                    <input type="checkbox" checked data-column="salary" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-sm text-gray-900">Salary</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Group: Dates -->
+                        <div class="mb-2">
+                            <div class="font-medium text-gray-700 mb-1 text-sm">Dates</div>
+                            <div class="space-y-1">
+                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                    <input type="checkbox" checked data-column="hire_date" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-sm text-gray-900">Hire Date</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                    <input type="checkbox" checked data-column="dob" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-sm text-gray-900">Date of Birth</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <a href="{% url 'employees:employee_create' %}" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                Add Employee
+            </a>
+        </div>
+    </div>
+
+    <!-- Add this right after the header section, before the table -->
+    <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <!-- Search Box -->
+        <div class="relative">
+            <input 
+                type="text" 
+                id="search-input"
+                placeholder="Search employees..."
+                class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            >
+            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <svg class="w-5 h-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                </svg>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div>
+            <select id="department-filter" class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                <option value="">All Departments</option>
+                {% for department in departments %}
+                <option value="{{ department.name }}">{{ department.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <select id="status-filter" class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="on_leave">On Leave</option>
+                <option value="inactive">Inactive</option>
+            </select>
+        </div>
+
+        <div>
+            <select id="position-filter" class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                <option value="">All Positions</option>
+                {% for position in positions %}
+                <option value="{{ position }}">{{ position }}</option>
+                {% endfor %}
+            </select>
+        </div>
     </div>
 
     <!-- Employee Table -->
     <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-lg">
-        <table class="min-w-full divide-y divide-gray-300">
+        <table class="min-w-full divide-y divide-gray-300" id="employee-table">
             <thead>
                 <tr>
-                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Name</th>
-                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Position</th>
-                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Department</th>
-                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Email</th>
+                    <th scope="col" data-column="employee_id" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Employee ID</th>
+                    <th scope="col" data-column="name" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Name</th>
+                    <th scope="col" data-column="email" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Email</th>
+                    <th scope="col" data-column="phone" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Phone</th>
+                    <th scope="col" data-column="position" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Position</th>
+                    <th scope="col" data-column="department" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Department</th>
+                    <th scope="col" data-column="status" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
+                    <th scope="col" data-column="salary" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Salary</th>
+                    <th scope="col" data-column="hire_date" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Hire Date</th>
+                    <th scope="col" data-column="dob" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Date of Birth</th>
                     <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
                         <span class="sr-only">Actions</span>
                     </th>
@@ -29,33 +153,177 @@
             <tbody class="divide-y divide-gray-200">
                 {% for employee in employees %}
                 <tr>
-                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm">
+                    <td data-column="employee_id" class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500">{{ employee.employee_id }}</td>
+                    <td data-column="name" class="whitespace-nowrap py-4 pl-4 pr-3 text-sm">
                         <div class="flex items-center">
                             <div class="h-10 w-10 flex-shrink-0">
-                                <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                    <span class="text-gray-500 font-medium">{{ employee.first_name|first }}{{ employee.last_name|first }}</span>
-                                </div>
+                                {% if employee.profile_picture %}
+                                    <img class="h-10 w-10 rounded-full" src="{{ employee.profile_picture.url }}" alt="">
+                                {% else %}
+                                    <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                        <span class="text-gray-500 font-medium">{{ employee.first_name|first }}{{ employee.last_name|first }}</span>
+                                    </div>
+                                {% endif %}
                             </div>
                             <div class="ml-4">
                                 <div class="font-medium text-gray-900">{{ employee.first_name }} {{ employee.last_name }}</div>
-                                <div class="text-gray-500">ID: {{ employee.employee_id }}</div>
                             </div>
                         </div>
                     </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.position }}</td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.department }}</td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.email }}</td>
+                    <td data-column="email" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.email }}</td>
+                    <td data-column="phone" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.phone_number }}</td>
+                    <td data-column="position" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.position }}</td>
+                    <td data-column="department" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.department.name }}</td>
+                    <td data-column="status" class="whitespace-nowrap px-3 py-4 text-sm">
+                        <span class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 
+                            {% if employee.employee_status == 'active' %}bg-green-100 text-green-800
+                            {% elif employee.employee_status == 'on_leave' %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ employee.get_employee_status_display }}
+                        </span>
+                    </td>
+                    <td data-column="salary" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">${{ employee.salary }}</td>
+                    <td data-column="hire_date" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.hire_date|date:"M d, Y" }}</td>
+                    <td data-column="dob" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.date_of_birth|date:"M d, Y" }}</td>
                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                         <a href="{% url 'employees:employee_edit' employee.id %}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" class="px-3 py-4 text-sm text-gray-500 text-center">No employees found.</td>
+                    <td colspan="11" class="px-3 py-4 text-sm text-gray-500 text-center">No employees found.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load saved column preferences or set defaults
+    loadColumnPreferences();
+
+    // Handle column toggle changes
+    document.querySelectorAll('.column-toggle').forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const column = this.dataset.column;
+            const isVisible = this.checked;
+            
+            // Toggle visibility of cells
+            document.querySelectorAll(`[data-column="${column}"]`).forEach(cell => {
+                if (isVisible) {
+                    cell.classList.remove('hidden');
+                } else {
+                    cell.classList.add('hidden');
+                }
+            });
+            
+            // Save preferences
+            saveColumnPreferences();
+        });
+    });
+
+    function loadColumnPreferences() {
+        const preferences = JSON.parse(localStorage.getItem('employeeTableColumns') || '{}');
+        
+        document.querySelectorAll('.column-toggle').forEach(toggle => {
+            const column = toggle.dataset.column;
+            // If preference exists, use it; otherwise default to checked
+            const isVisible = preferences.hasOwnProperty(column) ? preferences[column] : true;
+            
+            // Set checkbox state
+            toggle.checked = isVisible;
+            
+            // Set initial visibility
+            document.querySelectorAll(`[data-column="${column}"]`).forEach(cell => {
+                if (!isVisible) {
+                    cell.classList.add('hidden');
+                }
+            });
+        });
+    }
+
+    function saveColumnPreferences() {
+        const preferences = {};
+        document.querySelectorAll('.column-toggle').forEach(toggle => {
+            preferences[toggle.dataset.column] = toggle.checked;
+        });
+        localStorage.setItem('employeeTableColumns', JSON.stringify(preferences));
+    }
+
+    // Search and Filter Functionality
+    const searchInput = document.getElementById('search-input');
+    const departmentFilter = document.getElementById('department-filter');
+    const statusFilter = document.getElementById('status-filter');
+    const positionFilter = document.getElementById('position-filter');
+    const tableRows = document.querySelectorAll('#employee-table tbody tr');
+
+    function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const departmentValue = departmentFilter.value.toLowerCase();
+        const statusValue = statusFilter.value.toLowerCase();
+        const positionValue = positionFilter.value.toLowerCase();
+
+        tableRows.forEach(row => {
+            if (row.classList.contains('empty-row')) return; // Skip the "No employees found" row
+
+            const name = row.querySelector('[data-column="name"]').textContent.toLowerCase();
+            const email = row.querySelector('[data-column="email"]').textContent.toLowerCase();
+            const department = row.querySelector('[data-column="department"]').textContent.toLowerCase();
+            const status = row.querySelector('[data-column="status"]').textContent.toLowerCase();
+            const position = row.querySelector('[data-column="position"]').textContent.toLowerCase();
+            const employeeId = row.querySelector('[data-column="employee_id"]').textContent.toLowerCase();
+
+            const matchesSearch = searchTerm === '' || 
+                name.includes(searchTerm) || 
+                email.includes(searchTerm) || 
+                employeeId.includes(searchTerm);
+
+            const matchesDepartment = departmentValue === '' || department === departmentValue;
+            const matchesStatus = statusValue === '' || status.includes(statusValue);
+            const matchesPosition = positionValue === '' || position === positionValue;
+
+            if (matchesSearch && matchesDepartment && matchesStatus && matchesPosition) {
+                row.classList.remove('hidden');
+            } else {
+                row.classList.add('hidden');
+            }
+        });
+
+        // Show/hide empty state message
+        const visibleRows = document.querySelectorAll('#employee-table tbody tr:not(.hidden):not(.empty-row)');
+        const emptyMessage = document.querySelector('.empty-row');
+        if (visibleRows.length === 0 && emptyMessage) {
+            emptyMessage.classList.remove('hidden');
+        } else if (emptyMessage) {
+            emptyMessage.classList.add('hidden');
+        }
+    }
+
+    // Add event listeners
+    searchInput.addEventListener('input', filterTable);
+    departmentFilter.addEventListener('change', filterTable);
+    statusFilter.addEventListener('change', filterTable);
+    positionFilter.addEventListener('change', filterTable);
+
+    // Add debounce to search for better performance
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    const debouncedSearch = debounce(() => filterTable(), 300);
+    searchInput.addEventListener('input', debouncedSearch);
+});
+</script>
+{% endblock %}
 {% endblock %} 
