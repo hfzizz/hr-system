@@ -3,6 +3,43 @@ from django.core.exceptions import ValidationError
 from employees.models import Employee
 from django.utils import timezone
 
+class Appointment(models.Model):
+    type_of_appointment = models.CharField(max_length=50, choices=[
+        ('Permanent', 'Permanent'),
+        ('Contract', 'Contract'),
+        ('Month-to-Month', 'Month-to-Month'),
+        ('Daily Rated', 'Daily Rated')
+    ])
+    first_appointment_govt = models.DateField(null=True, blank=True)
+    first_appointment_ubd = models.DateField(null=True, blank=True)
+    post = models.CharField(max_length=100)
+    faculty_programme = models.CharField(max_length=100)
+    from_date = models.DateField()
+    to_date = models.DateField()
+
+class Qualification(models.Model):
+    degree_diploma = models.CharField(max_length=100)
+    university_college = models.CharField(max_length=100)
+    from_date = models.DateField()
+    to_date = models.DateField()
+
+class Module(models.Model):
+    title = models.CharField(max_length=100)
+    level = models.CharField(max_length=50)
+    language_medium = models.CharField(max_length=50)
+    no_of_students = models.IntegerField()
+    percentage_jointly_taught = models.FloatField()
+    hours_weekly = models.FloatField()
+
+class Membership(models.Model):
+    category = models.CharField(max_length=50, choices=[
+        ('University Committees', 'University Committees'),
+        ('Outside University', 'Outside University')
+    ])
+    position = models.CharField(max_length=100)
+    from_date = models.DateField()
+    to_date = models.DateField()
+
 class Appraisal(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -31,20 +68,30 @@ class Appraisal(models.Model):
         default='pending'
     )
     
-    # Performance Ratings (1-5 scale)
-    job_knowledge = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)], null=True, blank=True)
-    work_quality = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)], null=True, blank=True)
-    attendance = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)], null=True, blank=True)
-    communication = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)], null=True, blank=True)
-    teamwork = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)], null=True, blank=True)
-    
-    # Comments
-    achievements = models.TextField(blank=True, default="")
-    areas_for_improvement = models.TextField(blank=True, default="")
-    comments = models.TextField(blank=True, default="")
-    
-    # Goals
-    goals = models.TextField(blank=True, default="")
+    appointments = models.ManyToManyField(Appointment, blank=True)
+    present_post = models.CharField(max_length=100, null=True, blank=True)
+    salary_scale_division = models.CharField(max_length=50, null=True, blank=True)
+    incremental_date = models.DateField(null=True, blank=True)
+    date_of_last_appraisal = models.DateField(null=True, blank=True)
+    academic_qualifications_text = models.TextField(
+        blank=True,
+        help_text="Academic qualifications details"
+    )
+    current_enrollment = models.TextField(blank=True, null=True)
+    modules_taught = models.ManyToManyField(Module, blank=True)
+    higher_degree_students_supervised = models.TextField(blank=True, null=True)
+    last_research = models.TextField(blank=True, null=True)
+    ongoing_research = models.TextField(blank=True, null=True)
+    publications = models.TextField(blank=True, null=True)
+    attendance = models.TextField(blank=True, null=True)
+    conference_papers = models.TextField(blank=True, null=True)
+    consultancy_work = models.TextField(blank=True, null=True)
+    administrative_posts = models.TextField(blank=True, null=True)
+    memberships = models.ManyToManyField(Membership, blank=True)
+    participation_within_university = models.TextField(blank=True, null=True)
+    participation_outside_university = models.TextField(blank=True, null=True)
+    objectives_next_year = models.TextField(blank=True, null=True)
+    appraiser_comments = models.TextField(blank=True, null=True)
     
     class Meta:
         ordering = ['-date_created']
@@ -57,14 +104,12 @@ class Appraisal(models.Model):
         return f"Appraisal for {self.employee.first_name} {self.employee.last_name} ({self.date_created.date()})"
 
     def clean(self):
-        # Validate review period dates
         if self.review_period_start and self.review_period_end:
             if self.review_period_start > self.review_period_end:
                 raise ValidationError({
                     'review_period_end': 'Review period end date must be after start date.'
                 })
 
-        # Validate that appraiser is not the same as employee
         if self.appraiser and self.employee and self.appraiser == self.employee:
             raise ValidationError({
                 'appraiser': 'Appraiser cannot be the same as the employee being appraised.'
@@ -76,24 +121,17 @@ class Appraisal(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
-    def calculate_average_rating(self):
-        ratings = [
-            self.job_knowledge,
-            self.work_quality,
-            self.attendance,
-            self.communication,
-            self.teamwork
-        ]
-        valid_ratings = [r for r in ratings if r is not None]
-        return sum(valid_ratings) / len(valid_ratings) if valid_ratings else None
+    def get_employee_name(self):
+        """Get employee's full name"""
+        return self.employee.get_full_name()
 
-    @property
-    def is_complete(self):
-        return self.status == 'completed'
+    def get_employee_ic_details(self):
+        """Get employee's IC details"""
+        return f"{self.employee.ic_no} ({self.employee.ic_colour})"
 
-    @property
-    def can_be_edited(self):
-        return self.status != 'completed'
+    def get_employee_appointment_type(self):
+        """Get employee's appointment type"""
+        return self.employee.type_of_appointment
 
 class AppraisalPeriod(models.Model):
     start_date = models.DateField()
@@ -141,3 +179,20 @@ class AppraisalPeriod(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+class AcademicQualification(models.Model):
+    appraisal = models.ForeignKey(
+        'Appraisal',
+        on_delete=models.CASCADE,
+        related_name='qualifications'
+    )
+    degree_diploma = models.CharField(max_length=255)
+    university_college = models.CharField(max_length=255)
+    from_date = models.DateField()
+    to_date = models.DateField()
+
+    class Meta:
+        ordering = ['-to_date']
+
+    def __str__(self):
+        return f"{self.degree_diploma} from {self.university_college}"

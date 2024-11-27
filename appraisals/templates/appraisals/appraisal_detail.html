@@ -24,18 +24,26 @@
     <!-- Content -->
     <div class="bg-white shadow sm:rounded-lg">
         <div class="px-4 py-5 sm:p-6">
-            <!-- Basic Information -->
+            <!-- Core Information -->
             <div class="space-y-6">
                 <div>
-                    <h3 class="text-lg font-medium leading-6 text-gray-900">Basic Information</h3>
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Core Information</h3>
                     <dl class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Employee</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.employee.first_name }} {{ appraisal.employee.last_name }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.get_employee_name }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">IC Details</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.get_employee_ic_details }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Appointment Type</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.get_employee_appointment_type }}</dd>
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Appraiser</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.appraiser.first_name }} {{ appraisal.appraiser.last_name }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.appraiser.get_full_name }}</dd>
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Review Period</dt>
@@ -61,32 +69,217 @@
                     </dl>
                 </div>
 
-                <!-- Performance Ratings -->
+                <!-- Employment Details -->
                 <div>
-                    <h3 class="text-lg font-medium leading-6 text-gray-900">Performance Ratings</h3>
-                    <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-                            <dt class="truncate text-sm font-medium text-gray-500">Job Knowledge</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.job_knowledge }}</dd>
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Employment Details</h3>
+                    <dl class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Present Post</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.present_post }}</dd>
                         </div>
-                        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-                            <dt class="truncate text-sm font-medium text-gray-500">Communication Skills</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.communication_skills }}</dd>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Salary Scale/Division</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.salary_scale_division }}</dd>
                         </div>
-                        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-                            <dt class="truncate text-sm font-medium text-gray-500">Problem Solving</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.problem_solving }}</dd>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Incremental Date</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.incremental_date|date:"M d, Y" }}</dd>
                         </div>
-                        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-                            <dt class="truncate text-sm font-medium text-gray-500">Leadership</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.leadership }}</dd>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Date of Last Appraisal</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.date_of_last_appraisal|date:"M d, Y" }}</dd>
                         </div>
-                        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-                            <dt class="truncate text-sm font-medium text-gray-500">Teamwork</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.teamwork }}</dd>
+                    </dl>
+                </div>
+
+                <!-- Academic Qualifications -->
+                <div>
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Academic Qualifications</h3>
+                    <div class="mt-4 overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead>
+                                <tr>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Degree/Diploma</th>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">University/College</th>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Period</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                {% for qual in appraisal.academic_qualifications.all %}
+                                <tr>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ qual.degree_diploma }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ qual.university_college }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        {{ qual.from_date|date:"M Y" }} - {{ qual.to_date|date:"M Y" }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Current Enrollment -->
+                <div>
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Currently Enrolled in Higher/Professional Qualifications</h3>
+                    <div class="mt-4">
+                        <p class="text-sm text-gray-900">{{ appraisal.current_enrollment|linebreaks }}</p>
+                    </div>
+                </div>
+
+                <!-- Modules Taught -->
+                <div>
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Modules Taught</h3>
+                    <div class="mt-4 overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead>
+                                <tr>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Title</th>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Level</th>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Language Medium</th>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">No. of Students</th>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">% Jointly Taught</th>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Hours Weekly</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                {% for module in appraisal.modules_taught.all %}
+                                <tr>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ module.title }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ module.level }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ module.language_medium }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ module.no_of_students }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ module.percentage_jointly_taught }}%</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ module.hours_weekly }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Research and Publications -->
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Higher Degree Students Supervised</h3>
+                        <div class="mt-4">
+                            <p class="text-sm text-gray-900">{{ appraisal.higher_degree_students_supervised|linebreaks }}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Last Research Undertaken</h3>
+                        <div class="mt-4">
+                            <p class="text-sm text-gray-900">{{ appraisal.last_research|linebreaks }}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">On-Going Research</h3>
+                        <div class="mt-4">
+                            <p class="text-sm text-gray-900">{{ appraisal.ongoing_research|linebreaks }}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Publications</h3>
+                        <div class="mt-4">
+                            <p class="text-sm text-gray-900">{{ appraisal.publications|linebreaks }}</p>
                         </div>
                     </div>
                 </div>
+
+                <!-- Conference and Consultancy -->
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Attendance at Conferences, Seminars, Workshops</h3>
+                        <div class="mt-4">
+                            <p class="text-sm text-gray-900">{{ appraisal.attendance|linebreaks }}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Conference Papers</h3>
+                        <div class="mt-4">
+                            <p class="text-sm text-gray-900">{{ appraisal.conference_papers|linebreaks }}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Consultancy Work</h3>
+                        <div class="mt-4">
+                            <p class="text-sm text-gray-900">{{ appraisal.consultancy_work|linebreaks }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Administrative and Committee Work -->
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Administrative Posts Held</h3>
+                        <div class="mt-4">
+                            <p class="text-sm text-gray-900">{{ appraisal.administrative_posts|linebreaks }}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Memberships of Committees</h3>
+                        <div class="mt-4 overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-300">
+                                <thead>
+                                    <tr>
+                                        <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Category</th>
+                                        <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Position</th>
+                                        <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Period</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    {% for membership in appraisal.memberships.all %}
+                                    <tr>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ membership.category }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ membership.position }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                            {{ membership.from_date|date:"M Y" }} - {{ membership.to_date|date:"M Y" }}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Participation and Objectives -->
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Participation in Activities Within University</h3>
+                        <div class="mt-4">
+                            <p class="text-sm text-gray-900">{{ appraisal.participation_within_university|linebreaks }}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Participation in Activities Outside University</h3>
+                        <div class="mt-4">
+                            <p class="text-sm text-gray-900">{{ appraisal.participation_outside_university|linebreaks }}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Teaching and Research Objectives for Next Year</h3>
+                        <div class="mt-4">
+                            <p class="text-sm text-gray-900">{{ appraisal.objectives_next_year|linebreaks }}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Appraiser's Comments</h3>
+                        <div class="mt-4">
+                            <p class="text-sm text-gray-900">{{ appraisal.appraiser_comments|linebreaks }}</p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>

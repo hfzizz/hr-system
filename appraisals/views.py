@@ -5,10 +5,10 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.db.models import Q
 from django.contrib.auth.models import Group
-from .models import Appraisal, AppraisalPeriod
+from .models import Appraisal, AppraisalPeriod, AcademicQualification
 from employees.models import Employee
 from django.http import JsonResponse
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404, render
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from django.core.exceptions import ValidationError
@@ -16,6 +16,7 @@ import logging
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 import json
+from .forms import AppraisalForm, AcademicQualificationFormSet
 
 logger = logging.getLogger(__name__)
 
@@ -145,25 +146,34 @@ class AppraisalDetailView(DetailView):
     template_name = 'appraisals/appraisal_detail.html'
     context_object_name = 'appraisal'
 
-class AppraisalUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class AppraisalUpdateView(UpdateView):
     model = Appraisal
+    form_class = AppraisalForm
     template_name = 'appraisals/appraisal_form.html'
-    permission_required = 'appraisals.change_appraisal'
-    fields = [
-        'job_knowledge', 'work_quality', 'attendance', 'communication', 'teamwork',
-        'achievements', 'areas_for_improvement', 'comments', 'goals', 'status'
-    ]
+    success_url = reverse_lazy('appraisals:appraisal_list')
 
-    def get_success_url(self):
-        return reverse_lazy('appraisals:appraisal_detail', kwargs={'pk': self.object.pk})
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['academic_formset'] = AcademicQualificationFormSet(
+                self.request.POST,
+                instance=self.object
+            )
+        else:
+            context['academic_formset'] = AcademicQualificationFormSet(
+                instance=self.object
+            )
+        return context
 
-    def has_permission(self):
-        appraisal = self.get_object()
-        return (
-            super().has_permission() and 
-            (self.request.user.groups.filter(name='HR').exists() or 
-             appraisal.appraiser.user == self.request.user)
-        )
+    def form_valid(self, form):
+        context = self.get_context_data()
+        academic_formset = context['academic_formset']
+        if form.is_valid() and academic_formset.is_valid():
+            self.object = form.save()
+            academic_formset.instance = self.object
+            academic_formset.save()
+            return super().form_valid(form)
+        return self.render_to_response(self.get_context_data(form=form))
 
 class AppraisalPeriodListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     model = AppraisalPeriod
@@ -262,3 +272,18 @@ def toggle_period(request, pk):
             'status': 'error',
             'message': 'An error occurred while updating the period'
         }, status=500)
+
+def appraisal_update_view(request, pk):
+    appraisal = get_object_or_404(Appraisal, pk=pk)
+    if request.method == 'POST':
+        form = AppraisalForm(request.POST, instance=appraisal)
+        formset = AcademicQualificationFormSet(request.POST, queryset=appraisal.academic_qualifications.all())
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            # Redirect or render success message
+    else:
+        form = AppraisalForm(instance=appraisal)
+        formset = AcademicQualificationFormSet(queryset=appraisal.academic_qualifications.all())
+
+    return render(request, 'appraisals/appraisal_form.html', {'form': form, 'formset': formset})
