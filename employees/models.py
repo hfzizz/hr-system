@@ -19,6 +19,20 @@ class Employee(models.Model):
         ('N', 'Prefer not to say'),
     ]
     
+    IC_COLOUR_CHOICES = [
+        ('Y', 'Yellow'),
+        ('P', 'Purple'),
+        ('G', 'Green'),
+        ('R', 'Red'),
+    ]
+    
+    APPOINTMENT_TYPE_CHOICES = [
+        ('Permanent', 'Permanent'),
+        ('Contract', 'Contract'),
+        ('Month-to-Month', 'Month-to-Month'),
+        ('Daily Rated', 'Daily Rated'),
+    ]
+    
     gender = models.CharField(
         max_length=1,
         choices=GENDER_CHOICES,
@@ -40,6 +54,9 @@ class Employee(models.Model):
     roles = models.ManyToManyField('auth.Group', blank=True)
     address = models.TextField()
     profile_picture = models.ImageField(upload_to='employee_pics/', blank=True, null=True)
+    ic_no = models.CharField(max_length=20, unique=True, verbose_name="IC Number", null=True, blank=True)
+    ic_colour = models.CharField(max_length=1, choices=IC_COLOUR_CHOICES, verbose_name="IC Colour", null=True, blank=True)
+    type_of_appointment = models.CharField(max_length=50, choices=APPOINTMENT_TYPE_CHOICES, verbose_name="Type of Appointment", null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.employee_id:

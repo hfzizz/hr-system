@@ -61,6 +61,25 @@
                         {% endif %}
                     </div>
 
+                    <!-- IC Number and IC Colour on the same line -->
+                    <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+                        <div>
+                            <label for="id_ic_no" class="block text-sm font-medium text-gray-700">IC Number</label>
+                            {% render_field form.ic_no class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                            {% if form.ic_no.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.ic_no.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label for="id_ic_colour" class="block text-sm font-medium text-gray-700">IC Colour</label>
+                            {% render_field form.ic_colour class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                            {% if form.ic_colour.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.ic_colour.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
                     <!-- Phone Number -->
                     <div>
                         <label for="id_phone_number" class="block text-sm font-medium text-gray-700">Phone Number</label>
@@ -76,6 +95,15 @@
                         {% render_field form.date_of_birth class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
                         {% if form.date_of_birth.errors %}
                             <p class="mt-2 text-sm text-red-600">{{ form.date_of_birth.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Type of Appointment-->
+                    <div>
+                        <label for="id_type_of_appointment" class="block text-sm font-medium text-gray-700">Type of Appointment</label>
+                        {% render_field form.type_of_appointment class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.type_of_appointment.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.type_of_appointment.errors.0 }}</p>
                         {% endif %}
                     </div>
 

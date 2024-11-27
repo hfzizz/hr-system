@@ -126,6 +126,18 @@
                         {% endif %}
                     </div>
 
+                    <!-- IC Number -->
+                    <div>
+                        <label for="id_ic_no" class="block text-sm font-medium text-gray-700">IC Number</label>
+                        {% render_field form.ic_no class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                    </div>
+
+                    <!-- IC Colour -->
+                    <div>
+                        <label for="id_ic_colour" class="block text-sm font-medium text-gray-700">IC Colour</label>
+                        {% render_field form.ic_colour class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                    </div>
+
                     <div>
                         <label for="id_phone_number" class="block text-sm font-medium text-gray-700">Phone Number</label>
                         {% render_field form.phone_number class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
@@ -157,6 +169,13 @@
                     </div>
 
                     <!-- Employment Information -->
+
+                    <!-- Type of Appointment -->
+                    <div>
+                        <label for="id_type_of_appointment" class="block text-sm font-medium text-gray-700">Type of Appointment</label>
+                        {% render_field form.type_of_appointment class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                    </div>
+                    
                     <div>
                         <label for="id_department" class="block text-sm font-medium text-gray-700">Department</label>
                         {% render_field form.department class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}

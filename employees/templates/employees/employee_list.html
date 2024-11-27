@@ -31,6 +31,14 @@
                                     <input type="checkbox" checked data-column="email" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                                     <span class="text-sm text-gray-900">Email</span>
                                 </label>
+                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded"></label>
+                                    <input type="checkbox" checked data-column="ic_no" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-sm text-gray-900">IC Number</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded"></label>
+                                    <input type="checkbox" checked data-column="ic_colour" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-sm text-gray-900">IC Colour</span>
+                                </label>
                                 <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
                                     <input type="checkbox" checked data-column="phone" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                                     <span class="text-sm text-gray-900">Phone</span>
@@ -42,6 +50,10 @@
                         <div class="mb-2">
                             <div class="font-medium text-gray-700 mb-1 text-sm">Work Info</div>
                             <div class="space-y-1">
+                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded"></label>
+                                    <input type="checkbox" checked data-column="type_of_appointment" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-sm text-gray-900">Type of Appointment</span>
+                                </label>
                                 <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
                                     <input type="checkbox" checked data-column="position" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                                     <span class="text-sm text-gray-900">Position</span>
@@ -85,7 +97,7 @@
     </div>
 
     <!-- Add this right after the header section, before the table -->
-    <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <!-- Search Box -->
         <div class="relative">
             <input 
@@ -128,6 +140,17 @@
                 {% endfor %}
             </select>
         </div>
+
+        <!-- Add Type of Appointment Filter -->
+        <div>
+            <select id="appointment-filter" class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                <option value="">All Appointment Types</option>
+                <option value="permanent">Permanent</option>
+                <option value="contract">Contract</option>
+                <option value="temporary">Temporary</option>
+                <option value="probation">Probation</option>
+            </select>
+        </div>
     </div>
 
     <!-- Employee Table -->
@@ -138,6 +161,9 @@
                     <th scope="col" data-column="employee_id" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Employee ID</th>
                     <th scope="col" data-column="name" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Name</th>
                     <th scope="col" data-column="email" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Email</th>
+                    <th scope="col" data-column="ic_no" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">IC Number</th>
+                    <th scope="col" data-column="ic_colour" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">IC Colour</th>
+                    <th scope="col" data-column="type_of_appointment" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Type of Appointment</th>
                     <th scope="col" data-column="phone" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Phone</th>
                     <th scope="col" data-column="position" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Position</th>
                     <th scope="col" data-column="department" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Department</th>
@@ -171,6 +197,9 @@
                         </div>
                     </td>
                     <td data-column="email" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.email }}</td>
+                    <td data-column="ic_no" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.ic_no }}</td>
+                    <td data-column="ic_colour" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.ic_colour }}</td>
+                    <td data-column="type_of_appointment" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.type_of_appointment }}</td>
                     <td data-column="phone" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.phone_number }}</td>
                     <td data-column="position" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.position }}</td>
                     <td data-column="department" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.department.name }}</td>
@@ -190,8 +219,8 @@
                     </td>
                 </tr>
                 {% empty %}
-                <tr>
-                    <td colspan="11" class="px-3 py-4 text-sm text-gray-500 text-center">No employees found.</td>
+                <tr class="empty-row">
+                    <td colspan="14" class="px-3 py-4 text-sm text-gray-500 text-center">No employees found.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -258,6 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const departmentFilter = document.getElementById('department-filter');
     const statusFilter = document.getElementById('status-filter');
     const positionFilter = document.getElementById('position-filter');
+    const appointmentFilter = document.getElementById('appointment-filter');
     const tableRows = document.querySelectorAll('#employee-table tbody tr');
 
     function filterTable() {
@@ -265,9 +295,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const departmentValue = departmentFilter.value.toLowerCase();
         const statusValue = statusFilter.value.toLowerCase();
         const positionValue = positionFilter.value.toLowerCase();
+        const appointmentValue = document.getElementById('appointment-filter').value.toLowerCase();
 
         tableRows.forEach(row => {
-            if (row.classList.contains('empty-row')) return; // Skip the "No employees found" row
+            if (row.classList.contains('empty-row')) return;
 
             const name = row.querySelector('[data-column="name"]').textContent.toLowerCase();
             const email = row.querySelector('[data-column="email"]').textContent.toLowerCase();
@@ -275,6 +306,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const status = row.querySelector('[data-column="status"]').textContent.toLowerCase();
             const position = row.querySelector('[data-column="position"]').textContent.toLowerCase();
             const employeeId = row.querySelector('[data-column="employee_id"]').textContent.toLowerCase();
+            const appointment = row.querySelector('[data-column="type_of_appointment"]').textContent.toLowerCase();
 
             const matchesSearch = searchTerm === '' || 
                 name.includes(searchTerm) || 
@@ -284,8 +316,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const matchesDepartment = departmentValue === '' || department === departmentValue;
             const matchesStatus = statusValue === '' || status.includes(statusValue);
             const matchesPosition = positionValue === '' || position === positionValue;
+            const matchesAppointment = appointmentValue === '' || appointment === appointmentValue;
 
-            if (matchesSearch && matchesDepartment && matchesStatus && matchesPosition) {
+            if (matchesSearch && matchesDepartment && matchesStatus && matchesPosition && matchesAppointment) {
                 row.classList.remove('hidden');
             } else {
                 row.classList.add('hidden');
@@ -307,6 +340,7 @@ document.addEventListener('DOMContentLoaded', function() {
     departmentFilter.addEventListener('change', filterTable);
     statusFilter.addEventListener('change', filterTable);
     positionFilter.addEventListener('change', filterTable);
+    appointmentFilter.addEventListener('change', filterTable);
 
     // Add debounce to search for better performance
     function debounce(func, wait) {

@@ -36,7 +36,10 @@ class EmployeeForm(forms.ModelForm):
             'employee_status',
             'roles',
             'address',
-            'profile_picture'
+            'profile_picture',
+            'ic_no',
+            'ic_colour',
+            'type_of_appointment'
         ]
 
     def clean_username(self):
@@ -102,34 +105,45 @@ class EmployeeForm(forms.ModelForm):
         return valid
 
 class EmployeeProfileForm(forms.ModelForm):
+    # Add User model fields as form fields
+    username = forms.CharField(max_length=150)
+    email = forms.EmailField()
+    first_name = forms.CharField(max_length=150)
+    last_name = forms.CharField(max_length=150)
+
     class Meta:
         model = Employee
         fields = [
-            'first_name',
-            'last_name',
-            'email',
             'phone_number',
             'address',
-            'profile_picture'
+            'profile_picture',
+            'ic_no',
+            'ic_colour',
+            'type_of_appointment'
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.user:
+            self.fields['username'].initial = self.instance.user.username
+            self.fields['email'].initial = self.instance.user.email
+            self.fields['first_name'].initial = self.instance.user.first_name
+            self.fields['last_name'].initial = self.instance.user.last_name
 
     def save(self, commit=True):
         employee = super().save(commit=False)
-        if employee.user:
-            # Sync user information
-            employee.user.first_name = employee.first_name
-            employee.user.last_name = employee.last_name
-            employee.user.email = employee.email
-            employee.user.save()
-
-            # Sync groups with roles
-            employee.user.groups.clear()
-            for role in employee.roles.all():
-                group, created = Group.objects.get_or_create(name=role.name)
-                employee.user.groups.add(group)
-
+        
+        # Update the related User model fields
+        user = employee.user
+        user.username = self.cleaned_data['username']
+        user.email = self.cleaned_data['email']
+        user.first_name = self.cleaned_data['first_name']
+        user.last_name = self.cleaned_data['last_name']
+        
         if commit:
+            user.save()
             employee.save()
+        
         return employee
 
 
