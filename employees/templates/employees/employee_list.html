@@ -211,8 +211,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const column = this.dataset.column;
             const isVisible = this.checked;
             
-            // Toggle visibility of cells
-            document.querySelectorAll(`[data-column="${column}"]`).forEach(cell => {
+            // Only target table cells and headers with the data-column attribute
+            document.querySelectorAll(`table th[data-column="${column}"], table td[data-column="${column}"]`).forEach(cell => {
                 if (isVisible) {
                     cell.classList.remove('hidden');
                 } else {
@@ -236,8 +236,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Set checkbox state
             toggle.checked = isVisible;
             
-            // Set initial visibility
-            document.querySelectorAll(`[data-column="${column}"]`).forEach(cell => {
+            // Set initial visibility (only for table cells and headers)
+            document.querySelectorAll(`table th[data-column="${column}"], table td[data-column="${column}"]`).forEach(cell => {
                 if (!isVisible) {
                     cell.classList.add('hidden');
                 }
