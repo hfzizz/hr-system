@@ -1,7 +1,8 @@
 # Ignore virtual environments
 venv/
 .venv/
-**/__pycache__/
-*.pyc
+# Add these lines to .gitignore
+__pycache__/
+*.py[cod]
+*$py.class
 db.sqlite3
-__pycache__

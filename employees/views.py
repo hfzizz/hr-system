@@ -3,7 +3,7 @@ from django.urls import reverse_lazy
 from django.views.generic import TemplateView, ListView, CreateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from .models import Employee
+from .models import Employee, Department
 from .forms import EmployeeForm, EmployeeProfileForm
 from django.views.generic.edit import CreateView
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -68,6 +68,13 @@ class EmployeeListView(LoginRequiredMixin, ListView):
     template_name = 'employees/employee_list.html'
     context_object_name = 'employees'
     login_url = 'login'  # Redirect to login if user is not authenticated
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['departments'] = Department.objects.all()
+        # Get unique positions
+        context['positions'] = Employee.objects.values_list('position', flat=True).distinct()
+        return context
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'employees/dashboard.html'
