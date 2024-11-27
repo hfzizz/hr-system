@@ -1,4 +1,4 @@
-from django.views.generic import ListView, CreateView, UpdateView
+from django.views.generic import ListView, CreateView, UpdateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -135,3 +135,28 @@ def appraisal_assign(request):
             'success': False,
             'error': str(e)
         })
+
+class AppraisalDetailView(DetailView):
+    model = Appraisal
+    template_name = 'appraisals/appraisal_detail.html'
+    context_object_name = 'appraisal'
+
+class AppraisalUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    model = Appraisal
+    template_name = 'appraisals/appraisal_form.html'
+    permission_required = 'appraisals.change_appraisal'
+    fields = [
+        'job_knowledge', 'work_quality', 'attendance', 'communication', 'teamwork',
+        'achievements', 'areas_for_improvement', 'comments', 'goals', 'status'
+    ]
+
+    def get_success_url(self):
+        return reverse_lazy('appraisals:appraisal_detail', kwargs={'pk': self.object.pk})
+
+    def has_permission(self):
+        appraisal = self.get_object()
+        return (
+            super().has_permission() and 
+            (self.request.user.groups.filter(name='HR').exists() or 
+             appraisal.appraiser.user == self.request.user)
+        )
