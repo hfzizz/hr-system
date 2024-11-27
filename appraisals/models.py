@@ -94,3 +94,50 @@ class Appraisal(models.Model):
     @property
     def can_be_edited(self):
         return self.status != 'completed'
+
+class AppraisalPeriod(models.Model):
+    start_date = models.DateField()
+    end_date = models.DateField()
+    is_active = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-start_date']
+        permissions = [
+            ("can_manage_periods", "Can manage appraisal periods"),
+        ]
+
+    def __str__(self):
+        return f"Appraisal Period ({self.start_date} - {self.end_date})"
+
+    def clean(self):
+        if not self.start_date or not self.end_date:
+            raise ValidationError("Both start date and end date are required")
+
+        if self.start_date and self.end_date and self.start_date >= self.end_date:
+            raise ValidationError("End date must be after start date")
+
+        # Check if there's an overlap with other periods
+        overlapping = AppraisalPeriod.objects.filter(
+            start_date__lte=self.end_date,
+            end_date__gte=self.start_date
+        )
+        
+        if self.pk:  # If updating existing period
+            overlapping = overlapping.exclude(pk=self.pk)
+            
+        if overlapping.exists():
+            raise ValidationError("This period overlaps with an existing period")
+
+        # If trying to activate, check no other active periods
+        if self.is_active:
+            active_periods = AppraisalPeriod.objects.filter(is_active=True)
+            if self.pk:
+                active_periods = active_periods.exclude(pk=self.pk)
+            if active_periods.exists():
+                raise ValidationError("Another period is already active")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)

@@ -1,16 +1,21 @@
 from django.views.generic import ListView, CreateView, UpdateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.decorators import login_required, permission_required
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.db.models import Q
 from django.contrib.auth.models import Group
-from .models import Appraisal
+from .models import Appraisal, AppraisalPeriod
 from employees.models import Employee
 from django.http import JsonResponse
 from django.shortcuts import redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
+from django.utils import timezone
+from django.core.exceptions import ValidationError
 import logging
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +27,7 @@ class AppraisalListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
-        # Check if user is HR
+        context['active_period'] = AppraisalPeriod.objects.filter(is_active=True).first()
         context['is_hr'] = self.request.user.groups.filter(name='HR').exists()
         
         # Get all employees for the main list
@@ -160,3 +164,101 @@ class AppraisalUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateVie
             (self.request.user.groups.filter(name='HR').exists() or 
              appraisal.appraiser.user == self.request.user)
         )
+
+class AppraisalPeriodListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    model = AppraisalPeriod
+    template_name = 'appraisals/period_list.html'
+    context_object_name = 'periods'
+    permission_required = ('appraisals.view_appraisalperiod',)
+    
+    def has_permission(self):
+        user = self.request.user
+        return user.groups.filter(name='HR').exists() or super().has_permission()
+
+@login_required
+@permission_required('appraisals.change_appraisalperiod')
+def toggle_appraisal_period(request, pk):
+    period = get_object_or_404(AppraisalPeriod, pk=pk)
+    period.is_active = not period.is_active
+    try:
+        period.full_clean()
+        period.save()
+        message = 'Appraisal period activated' if period.is_active else 'Appraisal period deactivated'
+        status = 'success'
+    except ValidationError as e:
+        message = str(e)
+        status = 'error'
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'status': status, 'message': message})
+    messages.add_message(request, messages.INFO if status == 'success' else messages.ERROR, message)
+    return redirect('appraisals:period_list')
+
+@csrf_exempt  # Only for testing, remove in production
+@require_http_methods(["POST"])
+@login_required
+@permission_required('appraisals.add_appraisalperiod', raise_exception=True)
+def create_period(request):
+    try:
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        
+        print(f"Received dates - Start: {start_date}, End: {end_date}")  # Debug print
+        
+        if not start_date or not end_date:
+            return JsonResponse({
+                'success': False,
+                'error': 'Both start date and end date are required'
+            }, status=400)
+
+        period = AppraisalPeriod(
+            start_date=start_date,
+            end_date=end_date,
+            is_active=False
+        )
+        
+        try:
+            period.full_clean()
+            period.save()
+            return JsonResponse({
+                'success': True,
+                'message': 'Appraisal period created successfully'
+            })
+        except ValidationError as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+            
+    except Exception as e:
+        print(f"Error creating period: {str(e)}")  # Debug print
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@require_http_methods(["POST"])
+@login_required
+@permission_required('appraisals.change_appraisalperiod')
+def toggle_period(request, pk):
+    try:
+        period = get_object_or_404(AppraisalPeriod, pk=pk)
+        period.is_active = not period.is_active
+        period.full_clean()
+        period.save()
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Period status updated successfully',
+            'is_active': period.is_active
+        })
+    except ValidationError as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'An error occurred while updating the period'
+        }, status=500)
