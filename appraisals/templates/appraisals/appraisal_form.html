@@ -151,12 +151,13 @@
                                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">University/College</th>
                                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">From Date</th>
                                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">To Date</th>
-                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Delete</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200" id="academic-qualifications">
                             {% for form in academic_formset %}
-                                <tr>
+                                <tr class="qualification-row {% if form.DELETE.value %}d-none{% endif %}">
+                                    {{ form.id }}
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                                         {{ form.degree_diploma|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
                                     </td>
@@ -170,14 +171,19 @@
                                         {{ form.to_date|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                        {{ form.DELETE }}
+                                        {{ form.DELETE.as_hidden }}
+                                        <button type="button" 
+                                                onclick="deleteQualification(this)"
+                                                class="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">
+                                            Delete
+                                        </button>
                                     </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                     <button type="button" 
-                            onclick="addRow()"
+                            onclick="addQualification()"
                             class="mt-4 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                         Add Another Qualification
                     </button>
@@ -345,12 +351,75 @@
 </div>
 
 <script>
-function addRow() {
-    // JavaScript to clone the last row and append it to the table
-    const table = document.querySelector('table tbody');
-    const newRow = table.lastElementChild.cloneNode(true);
-    newRow.querySelectorAll('input').forEach(input => input.value = '');
+function addQualification() {
+    const table = document.querySelector('#academic-qualifications');
+    const rows = table.getElementsByClassName('qualification-row');
+    const lastRow = rows[rows.length - 1];
+    const newRow = lastRow.cloneNode(true);
+    
+    // Clear all input values
+    newRow.querySelectorAll('input').forEach(input => {
+        const inputName = input.getAttribute('name');
+        if (inputName.includes('DELETE')) {
+            input.value = '';  // Clear DELETE field
+        } else {
+            input.value = '';  // Clear other fields
+        }
+        
+        // Update the form index
+        const oldName = input.getAttribute('name');
+        const newName = oldName.replace(/\d+/, rows.length);
+        input.setAttribute('name', newName);
+        input.setAttribute('id', `id_${newName}`);
+    });
+    
+    // Make sure the new row is visible
+    newRow.classList.remove('d-none');
+    
     table.appendChild(newRow);
+    
+    // Update the management form TOTAL_FORMS
+    const totalForms = document.querySelector('[name="academic_qualifications-TOTAL_FORMS"]');
+    totalForms.value = parseInt(totalForms.value) + 1;
 }
+
+function deleteQualification(button) {
+    const row = button.closest('tr');
+    const deleteInput = row.querySelector('input[name$="-DELETE"]');
+    
+    if (document.getElementsByClassName('qualification-row').length > 1) {
+        if (deleteInput) {
+            // For existing records, mark for deletion
+            deleteInput.value = 'on';
+            row.style.display = 'none';
+        } else {
+            // For new records, remove the row entirely
+            row.remove();
+            updateTotalForms();
+        }
+    } else {
+        // If it's the last row, just clear the inputs
+        row.querySelectorAll('input:not([name$="-DELETE"])').forEach(input => {
+            input.value = '';
+        });
+    }
+}
+
+function updateTotalForms() {
+    const totalForms = document.querySelector('[name="academic_qualifications-TOTAL_FORMS"]');
+    const visibleRows = Array.from(document.getElementsByClassName('qualification-row')).filter(row => row.style.display !== 'none').length;
+    totalForms.value = visibleRows;
+}
+
+// Add this to handle initial form state
+document.addEventListener('DOMContentLoaded', function() {
+    const deletedRows = document.querySelectorAll('input[name$="-DELETE"][value="on"]');
+    deletedRows.forEach(input => {
+        const row = input.closest('tr');
+        if (row) {
+            row.style.display = 'none';
+        }
+    });
+});
 </script>
 {% endblock %} 

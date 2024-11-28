@@ -182,9 +182,9 @@ class AppraisalPeriod(models.Model):
 
 class AcademicQualification(models.Model):
     appraisal = models.ForeignKey(
-        'Appraisal',
+        Appraisal,
         on_delete=models.CASCADE,
-        related_name='qualifications'
+        related_name='academic_qualifications'
     )
     degree_diploma = models.CharField(max_length=255)
     university_college = models.CharField(max_length=255)

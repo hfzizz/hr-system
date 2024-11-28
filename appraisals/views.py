@@ -17,6 +17,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 import json
 from .forms import AppraisalForm, AcademicQualificationFormSet
+from django.forms import inlineformset_factory
 
 logger = logging.getLogger(__name__)
 
@@ -287,3 +288,34 @@ def appraisal_update_view(request, pk):
         formset = AcademicQualificationFormSet(queryset=appraisal.academic_qualifications.all())
 
     return render(request, 'appraisals/appraisal_form.html', {'form': form, 'formset': formset})
+
+def appraisal_edit(request, pk=None):
+    AcademicQualificationFormSet = inlineformset_factory(
+        Appraisal,
+        AcademicQualification,
+        fields=('degree_diploma', 'university_college', 'from_date', 'to_date'),
+        extra=1,
+        can_delete=True
+    )
+    
+    if pk:
+        appraisal = get_object_or_404(Appraisal, pk=pk)
+    else:
+        appraisal = None
+    
+    if request.method == 'POST':
+        form = AppraisalForm(request.POST, instance=appraisal)
+        academic_formset = AcademicQualificationFormSet(request.POST, instance=appraisal)
+        
+        if form.is_valid() and academic_formset.is_valid():
+            appraisal = form.save()
+            academic_formset.save()
+            return redirect('appraisals:appraisal_detail', pk=appraisal.pk)
+    else:
+        form = AppraisalForm(instance=appraisal)
+        academic_formset = AcademicQualificationFormSet(instance=appraisal)
+    
+    return render(request, 'appraisals/appraisal_form.html', {
+        'form': form,
+        'academic_formset': academic_formset,
+    })
