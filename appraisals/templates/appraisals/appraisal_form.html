@@ -29,53 +29,57 @@
                 <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
                     <!-- Employee -->
                     <div class="sm:col-span-1">
-                        <label for="{{ form.employee.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        <label class="block text-sm font-medium text-gray-700">
                             {{ form.employee.label }}
                         </label>
                         <div class="mt-1">
-                            {{ form.employee|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
-                            {% if form.employee.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.employee.errors.0 }}</p>
-                            {% endif %}
+                            <input type="text" 
+                                   value="{{ form.employee.value }}" 
+                                   readonly
+                                   class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm">
+                            {{ form.employee.as_hidden }}
                         </div>
                     </div>
 
                     <!-- Appraiser -->
                     <div class="sm:col-span-1">
-                        <label for="{{ form.appraiser.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        <label class="block text-sm font-medium text-gray-700">
                             {{ form.appraiser.label }}
                         </label>
                         <div class="mt-1">
-                            {{ form.appraiser|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
-                            {% if form.appraiser.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.appraiser.errors.0 }}</p>
-                            {% endif %}
+                            <input type="text" 
+                                   value="{{ form.appraiser.value }}" 
+                                   readonly
+                                   class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm">
+                            {{ form.appraiser.as_hidden }}
                         </div>
                     </div>
 
                     <!-- Review Period Start -->
                     <div class="sm:col-span-1">
-                        <label for="{{ form.review_period_start.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        <label class="block text-sm font-medium text-gray-700">
                             {{ form.review_period_start.label }}
                         </label>
                         <div class="mt-1">
-                            {{ form.review_period_start|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
-                            {% if form.review_period_start.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.review_period_start.errors.0 }}</p>
-                            {% endif %}
+                            <input type="text" 
+                                   value="{{ form.review_period_start.value|date:'Y-m-d' }}" 
+                                   readonly
+                                   class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm">
+                            {{ form.review_period_start.as_hidden }}
                         </div>
                     </div>
 
                     <!-- Review Period End -->
                     <div class="sm:col-span-1">
-                        <label for="{{ form.review_period_end.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        <label class="block text-sm font-medium text-gray-700">
                             {{ form.review_period_end.label }}
                         </label>
                         <div class="mt-1">
-                            {{ form.review_period_end|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
-                            {% if form.review_period_end.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.review_period_end.errors.0 }}</p>
-                            {% endif %}
+                            <input type="text" 
+                                   value="{{ form.review_period_end.value|date:'Y-m-d' }}" 
+                                   readonly
+                                   class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm">
+                            {{ form.review_period_end.as_hidden }}
                         </div>
                     </div>
                 </div>

@@ -18,6 +18,7 @@ from django.utils.decorators import method_decorator
 import json
 from .forms import AppraisalForm, AcademicQualificationFormSet
 from django.forms import inlineformset_factory
+from django.core.exceptions import PermissionDenied
 
 logger = logging.getLogger(__name__)
 
@@ -290,32 +291,65 @@ def appraisal_update_view(request, pk):
     return render(request, 'appraisals/appraisal_form.html', {'form': form, 'formset': formset})
 
 def appraisal_edit(request, pk=None):
+    # Check permissions
+    if not request.user.has_perm('appraisals.change_appraisal'):
+        raise PermissionDenied
+    
+    # Define the formset outside try block since we'll need it in both cases
     AcademicQualificationFormSet = inlineformset_factory(
         Appraisal,
         AcademicQualification,
         fields=('degree_diploma', 'university_college', 'from_date', 'to_date'),
         extra=1,
-        can_delete=True
+        can_delete=True,
+        min_num=1,  # Require at least one form
+        validate_min=True
     )
     
-    if pk:
-        appraisal = get_object_or_404(Appraisal, pk=pk)
-    else:
-        appraisal = None
-    
-    if request.method == 'POST':
-        form = AppraisalForm(request.POST, instance=appraisal)
-        academic_formset = AcademicQualificationFormSet(request.POST, instance=appraisal)
+    try:
+        appraisal = get_object_or_404(Appraisal, pk=pk) if pk else None
         
-        if form.is_valid() and academic_formset.is_valid():
-            appraisal = form.save()
-            academic_formset.save()
-            return redirect('appraisals:appraisal_detail', pk=appraisal.pk)
-    else:
-        form = AppraisalForm(instance=appraisal)
-        academic_formset = AcademicQualificationFormSet(instance=appraisal)
-    
-    return render(request, 'appraisals/appraisal_form.html', {
-        'form': form,
-        'academic_formset': academic_formset,
-    })
+        if request.method == 'POST':
+            form = AppraisalForm(request.POST, instance=appraisal)
+            academic_formset = AcademicQualificationFormSet(
+                request.POST, 
+                instance=appraisal,
+                prefix='qualifications'
+            )
+            
+            if form.is_valid() and academic_formset.is_valid():
+                appraisal = form.save(commit=False)
+                appraisal.last_modified_by = request.user
+                appraisal.last_modified_date = timezone.now()
+                appraisal.save()
+                
+                academic_formset.save()
+                messages.success(request, 'Appraisal updated successfully.')
+                return redirect('appraisals:appraisal_detail', pk=appraisal.pk)
+            else:
+                messages.error(request, 'Please correct the errors below.')
+        else:
+            form = AppraisalForm(instance=appraisal)
+            academic_formset = AcademicQualificationFormSet(
+                instance=appraisal,
+                prefix='qualifications'
+            )
+        
+        context = {
+            'form': form,
+            'academic_formset': academic_formset,
+        }
+        return render(request, 'appraisals/appraisal_form.html', context)
+    except Exception as e:
+        messages.error(request, f'An error occurred while editing the appraisal: {str(e)}')
+        return redirect('appraisals:appraisal_list')
+
+def appraisal_list(request):
+    context = {
+        'is_hr': request.user.has_perm('appraisals.can_manage_appraisals'),
+        'employees': Employee.objects.all(),
+        'appraisers': User.objects.filter(groups__name='Appraisers'),
+        'active_period': AppraisalPeriod.objects.filter(is_active=True).first(),
+        # ... other context data ...
+    }
+    return render(request, 'appraisals/appraisal_list.html', context)
