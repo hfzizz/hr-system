@@ -9,6 +9,6 @@ def is_appraisal_period():
     today = timezone.now().date()
     return AppraisalPeriod.objects.filter(
         is_active=True,
-        start_date__lte=today,
-        end_date__gte=today
+        # start_date__lte=today,
+        # end_date__gte=today
     ).exists() 

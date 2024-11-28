@@ -19,6 +19,7 @@ import json
 from .forms import AppraisalForm, AcademicQualificationFormSet
 from django.forms import inlineformset_factory
 from django.core.exceptions import PermissionDenied
+from django.template.context_processors import request
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,7 @@ class AppraisalListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['active_period'] = AppraisalPeriod.objects.filter(is_active=True).first()
+        context['active_periods'] = AppraisalPeriod.objects.filter(is_active=True).order_by('start_date')
         context['is_hr'] = self.request.user.groups.filter(name='HR').exists()
         
         # Get all employees for the main list
@@ -75,7 +76,8 @@ class AppraisalAssignView(LoginRequiredMixin, PermissionRequiredMixin, CreateVie
                 appraiser=appraiser,
                 review_period_start=request.POST.get('review_period_start'),
                 review_period_end=request.POST.get('review_period_end'),
-                status='pending'
+                status='pending',
+                last_modified_by=request.user  # Add this line
             )
 
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -128,7 +130,8 @@ def appraisal_assign(request):
             appraiser=appraiser,
             review_period_start=review_period_start,
             review_period_end=review_period_end,
-            status='pending'
+            status='pending',
+            last_modified_by=request.user
         )
 
         return JsonResponse({
@@ -353,3 +356,15 @@ def appraisal_list(request):
         # ... other context data ...
     }
     return render(request, 'appraisals/appraisal_list.html', context)
+
+def appraisal_context_processor(request):
+    """
+    Context processor to add appraisal-related data to all templates
+    """
+    active_period = AppraisalPeriod.objects.filter(is_active=True).exists()
+    is_hr = request.user.groups.filter(name='HR').exists() if request.user.is_authenticated else False
+    
+    return {
+        'active_period': active_period,
+        'is_hr': is_hr,
+    }

@@ -74,6 +74,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'appraisals.context_processors.hr_context',
+                'appraisals.views.appraisal_context_processor',
             ],
         },
     },
