@@ -337,7 +337,7 @@
 
             <!-- Form Actions -->
             <div class="flex justify-end gap-x-3">
-                <a href="{% url 'appraisals:appraisal_list' %}"
+                <a href="{% url 'appraisals:appraisal_detail' form.instance.pk %}"
                    class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Cancel
                 </a>
