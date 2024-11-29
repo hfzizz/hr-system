@@ -31,4 +31,5 @@ urlpatterns = [
     path('employees/', include('employees.urls', namespace='employees')),
     path('profile/', EmployeeProfileView.as_view(), name='profile'),
     path('appraisals/', include('appraisals.urls', namespace='appraisals')),
+    path('contract/', include('contract.urls', namespace='contract')),
 ]

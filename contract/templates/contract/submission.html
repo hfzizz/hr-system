@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">Contract Renewal Submission</h1>
+        <p class="mt-2 text-sm text-gray-700">This form will be pre-populated with your latest appraisal data. Please review and update as needed.</p>
+    </div>
+
+    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        <form method="post" class="space-y-8">
+            {% csrf_token %}
+            
+            <!-- Employee Selection -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Select Employee
+                </label>
+                {{ form.employee }}
+                <p class="mt-2 text-sm text-gray-500">Select your name to load your appraisal data</p>
+            </div>
+
+            <!-- Form Fields (initially hidden) -->
+            <div id="formFields" class="space-y-8 hidden">
+                <!-- Personal Details Section -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Personal Details</h3>
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">First Name</label>
+                            <input type="text" name="first_name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" readonly>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Last Name</label>
+                            <input type="text" name="last_name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" readonly>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">IC Number</label>
+                            <input type="text" name="ic_no" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" readonly>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">IC Colour</label>
+                            <input type="text" name="ic_colour_display" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" readonly>
+                            <input type="hidden" name="ic_colour">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Phone Number</label>
+                            <input type="text" name="phone_number" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" readonly>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Department</label>
+                            <input type="text" name="department_display" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" readonly>
+                            <input type="hidden" name="department" class="department-id">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Present Post</label>
+                            {{ form.present_post }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Salary Scale/Division</label>
+                            {{ form.salary_scale_division }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Incremental Date</label>
+                            {{ form.incremental_date }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Last Appraisal Date</label>
+                            {{ form.date_of_last_appraisal }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Academic Information Section -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Academic Information</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Academic Qualifications</label>
+                            <p class="mt-1 text-sm text-gray-500">List your academic qualifications in chronological order</p>
+                            {{ form.academic_qualifications_text }}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Current Enrollment</label>
+                            <p class="mt-1 text-sm text-gray-500">Include any current studies or professional development</p>
+                            {{ form.current_enrollment }}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Modules Taught</label>
+                            {{ form.modules_taught }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Research Section -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Research and Publications</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Research History</label>
+                            <p class="mt-1 text-sm text-gray-500">Include completed research projects</p>
+                            {{ form.last_research }}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Ongoing Research</label>
+                            <p class="mt-1 text-sm text-gray-500">List current research projects and their status</p>
+                            {{ form.ongoing_research }}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Publications</label>
+                            <p class="mt-1 text-sm text-gray-500">List publications in APA format</p>
+                            {{ form.publications }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Professional Activities Section -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Professional Activities</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Conference Papers</label>
+                            <p class="mt-1 text-sm text-gray-500">List conference presentations and papers</p>
+                            {{ form.conference_papers }}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Consultancy Work</label>
+                            {{ form.consultancy_work }}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Administrative Posts</label>
+                            {{ form.administrative_posts }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Participation Section -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">University Participation</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Participation Within University</label>
+                            {{ form.participation_within_university }}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Participation Outside University</label>
+                            {{ form.participation_outside_university }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Future Plans Section -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Future Plans</h3>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Objectives for Next Year</label>
+                        <p class="mt-1 text-sm text-gray-500">Outline your professional goals and objectives</p>
+                        {{ form.objectives_next_year }}
+                    </div>
+                </div>
+
+                <!-- Previous Appraisal Comments -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Previous Appraisal Comments</h3>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Appraiser Comments History</label>
+                        <div class="mt-1 space-y-4" id="appraiserCommentsHistory">
+                            <!-- Comments will be inserted here dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-4">
+                <a href="{% url 'contract:list' %}" 
+                   class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                    Submit
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const employeeSelect = document.querySelector('select[name="employee"]');
+    const formFields = document.getElementById('formFields');
+    const commentsHistory = document.getElementById('appraiserCommentsHistory');
+
+    // IC Color mapping
+    const IC_COLOURS = {
+        'Y': 'Yellow',
+        'P': 'Purple',
+        'G': 'Green',
+        'R': 'Red'
+    };
+
+    employeeSelect.addEventListener('change', function() {
+        const employeeId = this.value;
+        if (employeeId) {
+            formFields.classList.remove('hidden');
+            
+            fetch(`/contract/employee-data/${employeeId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Object.keys(data.data).forEach(key => {
+                            const field = document.querySelector(`[name="${key}"]`);
+                            if (field) {
+                                if (key === 'ic_colour') {
+                                    // Set the hidden field with original value
+                                    field.value = data.data[key];
+                                    // Set the display field with full color name
+                                    const displayField = document.querySelector('[name="ic_colour_display"]');
+                                    displayField.value = IC_COLOURS[data.data[key]] || data.data[key];
+                                } else if (key === 'department') {
+                                    // Set the display field with department name
+                                    const displayField = document.querySelector('[name="department_display"]');
+                                    displayField.value = data.data[key];
+                                    // Set the hidden field with department ID
+                                    const idField = document.querySelector('.department-id');
+                                    idField.value = data.data.department_id;
+                                } else {
+                                    field.value = data.data[key] || '';
+                                }
+                            }
+                        });
+                        
+                        // Update comments history
+                        commentsHistory.innerHTML = ''; // Clear existing comments
+                        data.data.appraiser_comments_history.forEach(comment => {
+                            const commentDiv = document.createElement('div');
+                            commentDiv.className = 'border-l-4 border-gray-200 pl-4';
+                            commentDiv.innerHTML = `
+                                <div class="text-sm text-gray-500 mb-2">
+                                    Commented by <span class="font-medium">${comment.appraiser_name}</span> on ${comment.date}
+                                </div>
+                                <div class="p-3 bg-gray-50 rounded-md">
+                                    <p class="text-gray-700">${comment.comment}</p>
+                                </div>
+                            `;
+                            commentsHistory.appendChild(commentDiv);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        } else {
+            formFields.classList.add('hidden');
+        }
+    });
+});
+</script>
+{% endblock %} 

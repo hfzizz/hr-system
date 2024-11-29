@@ -287,3 +287,30 @@ def appraisal_update_view(request, pk):
         formset = AcademicQualificationFormSet(queryset=appraisal.academic_qualifications.all())
 
     return render(request, 'appraisals/appraisal_form.html', {'form': form, 'formset': formset})
+
+@login_required
+def get_latest_appraisal(request, employee_id):
+    """API endpoint to get the latest appraisal data for an employee"""
+    try:
+        latest_appraisal = Appraisal.objects.filter(
+            employee_id=employee_id
+        ).order_by('-date_created').first()
+        
+        if latest_appraisal:
+            data = {
+                'success': True,
+                'data': {
+                    'present_post': latest_appraisal.present_post or '',
+                    'salary_scale_division': latest_appraisal.salary_scale_division or '',
+                    'last_research': latest_appraisal.last_research or '',
+                    'ongoing_research': latest_appraisal.ongoing_research or '',
+                    'publications': latest_appraisal.publications or '',
+                    'conference_papers': latest_appraisal.conference_papers or '',
+                    'consultancy_work': latest_appraisal.consultancy_work or '',
+                    'administrative_posts': latest_appraisal.administrative_posts or '',
+                }
+            }
+            return JsonResponse(data)
+        return JsonResponse({'success': False, 'message': 'No appraisal found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)

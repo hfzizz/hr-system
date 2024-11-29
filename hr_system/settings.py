@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'employees',
     'appraisals',
+    'contract',
     'hr_system',
     'widget_tweaks',
 ]
@@ -74,6 +75,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'appraisals.context_processors.hr_context',
+                'contract.context_processors.contract_status',
             ],
         },
     },
@@ -141,3 +143,11 @@ AUTHENTICATION_BACKENDS = [
     'hr_system.backends.EmailOrUsernameModelBackend',  # custom backend
     'django.contrib.auth.backends.ModelBackend',  # default backend
 ]
+
+# Cache configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache_table',
+    }
+}

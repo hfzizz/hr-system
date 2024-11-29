@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">Review Contract Renewal</h1>
+        <p class="mt-2 text-sm text-gray-700">
+            Reviewing request for {{ object.employee.get_full_name }}
+        </p>
+    </div>
+
+    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        <form method="post" class="space-y-8">
+            {% csrf_token %}
+            
+            <!-- Personal Details Section -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Personal Details</h3>
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">First Name</label>
+                        <input type="text" value="{{ object.first_name }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Last Name</label>
+                        <input type="text" value="{{ object.last_name }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">IC Number</label>
+                        <input type="text" value="{{ object.ic_no }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">IC Colour</label>
+                        <input type="text" value="{% if object.ic_colour == 'Y' %}Yellow{% elif object.ic_colour == 'P' %}Purple{% elif object.ic_colour == 'G' %}Green{% elif object.ic_colour == 'R' %}Red{% endif %}" 
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Phone Number</label>
+                        <input type="text" value="{{ object.phone_number }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Department</label>
+                        <input type="text" value="{{ object.department.name }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Present Post</label>
+                        {{ form.present_post }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Salary Scale/Division</label>
+                        {{ form.salary_scale_division }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Incremental Date</label>
+                        {{ form.incremental_date }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Last Appraisal Date</label>
+                        {{ form.date_of_last_appraisal }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Academic Information Section -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Academic Information</h3>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Academic Qualifications</label>
+                        {{ form.academic_qualifications_text }}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Current Enrollment</label>
+                        {{ form.current_enrollment }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Research and Publications Section -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Research and Publications</h3>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Research History</label>
+                        {{ form.last_research }}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Ongoing Research</label>
+                        {{ form.ongoing_research }}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Publications</label>
+                        {{ form.publications }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Professional Activities Section -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Professional Activities</h3>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Conference Papers</label>
+                        {{ form.conference_papers }}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Consultancy Work</label>
+                        {{ form.consultancy_work }}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Administrative Posts</label>
+                        {{ form.administrative_posts }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- University Participation Section -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">University Participation</h3>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Participation Within University</label>
+                        {{ form.participation_within_university }}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Participation Outside University</label>
+                        {{ form.participation_outside_university }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Future Plans Section -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Future Plans</h3>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Objectives for Next Year</label>
+                    {{ form.objectives_next_year }}
+                </div>
+            </div>
+
+            <!-- Status Update -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Review Decision</h3>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Previous Appraiser Comments</label>
+                        <div class="mt-1 space-y-4">
+                            {% with appraisals=object.employee.appraisals.all|dictsortreversed:"date_of_last_appraisal" %}
+                                {% for appraisal in appraisals %}
+                                    {% if appraisal.appraiser_comments %}
+                                        <div class="border-l-4 border-gray-200 pl-4">
+                                            <div class="text-sm text-gray-500 mb-2">
+                                                Commented by {{ appraisal.appraiser.get_full_name }} on {{ appraisal.date_of_last_appraisal|date:"d F Y" }}
+                                            </div>
+                                            <div class="p-3 bg-gray-50 rounded-md">
+                                                <p class="text-gray-700">{{ appraisal.appraiser_comments }}</p>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% empty %}
+                                    <div class="text-sm text-gray-500">No previous appraisal comments found.</div>
+                                {% endfor %}
+                            {% endwith %}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Status</label>
+                        <select name="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <option value="pending" {% if object.status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="approved" {% if object.status == 'approved' %}selected{% endif %}>Approved</option>
+                            <option value="rejected" {% if object.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-4">
+                <a href="{% url 'contract:list' %}" 
+                   class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                    Save Review
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 
