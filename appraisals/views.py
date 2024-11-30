@@ -17,6 +17,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 import json
 from .forms import AppraisalForm, AcademicQualificationFormSet
+from django.forms import inlineformset_factory
+from django.core.exceptions import PermissionDenied
+from django.template.context_processors import request
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +31,7 @@ class AppraisalListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['active_period'] = AppraisalPeriod.objects.filter(is_active=True).first()
+        context['active_periods'] = AppraisalPeriod.objects.filter(is_active=True).order_by('start_date')
         context['is_hr'] = self.request.user.groups.filter(name='HR').exists()
         
         # Get all employees for the main list
@@ -73,7 +76,8 @@ class AppraisalAssignView(LoginRequiredMixin, PermissionRequiredMixin, CreateVie
                 appraiser=appraiser,
                 review_period_start=request.POST.get('review_period_start'),
                 review_period_end=request.POST.get('review_period_end'),
-                status='pending'
+                status='pending',
+                last_modified_by=request.user  # Add this line
             )
 
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -126,7 +130,8 @@ def appraisal_assign(request):
             appraiser=appraiser,
             review_period_start=review_period_start,
             review_period_end=review_period_end,
-            status='pending'
+            status='pending',
+            last_modified_by=request.user
         )
 
         return JsonResponse({
@@ -288,29 +293,157 @@ def appraisal_update_view(request, pk):
 
     return render(request, 'appraisals/appraisal_form.html', {'form': form, 'formset': formset})
 
+def appraisal_edit(request, pk=None):
+    # Check permissions
+    if not request.user.has_perm('appraisals.change_appraisal'):
+        raise PermissionDenied
+    
+    # Define the formset outside try block since we'll need it in both cases
+    AcademicQualificationFormSet = inlineformset_factory(
+        Appraisal,
+        AcademicQualification,
+        fields=('degree_diploma', 'university_college', 'from_date', 'to_date'),
+        extra=1,
+        can_delete=True,
+        min_num=1,  # Require at least one form
+        validate_min=True
+    )
+    
+    try:
+        appraisal = get_object_or_404(Appraisal, pk=pk) if pk else None
+        
+        if request.method == 'POST':
+            form = AppraisalForm(request.POST, instance=appraisal)
+            academic_formset = AcademicQualificationFormSet(
+                request.POST, 
+                instance=appraisal,
+                prefix='qualifications'
+            )
+            
+            if form.is_valid() and academic_formset.is_valid():
+                appraisal = form.save(commit=False)
+                appraisal.last_modified_by = request.user
+                appraisal.last_modified_date = timezone.now()
+                appraisal.save()
+                
+                academic_formset.save()
+                messages.success(request, 'Appraisal updated successfully.')
+                return redirect('appraisals:appraisal_detail', pk=appraisal.pk)
+            else:
+                messages.error(request, 'Please correct the errors below.')
+        else:
+            form = AppraisalForm(instance=appraisal)
+            academic_formset = AcademicQualificationFormSet(
+                instance=appraisal,
+                prefix='qualifications'
+            )
+        
+        context = {
+            'form': form,
+            'academic_formset': academic_formset,
+        }
+        return render(request, 'appraisals/appraisal_form.html', context)
+    except Exception as e:
+        messages.error(request, f'An error occurred while editing the appraisal: {str(e)}')
+        return redirect('appraisals:appraisal_list')
+
+def appraisal_list(request):
+    context = {
+        'is_hr': request.user.has_perm('appraisals.can_manage_appraisals'),
+        'employees': Employee.objects.all(),
+        'appraisers': User.objects.filter(groups__name='Appraisers'),
+        'active_period': AppraisalPeriod.objects.filter(is_active=True).first(),
+        # ... other context data ...
+    }
+    return render(request, 'appraisals/appraisal_list.html', context)
+
+def appraisal_context_processor(request):
+    """
+    Context processor to add appraisal-related data to all templates
+    """
+    active_period = AppraisalPeriod.objects.filter(is_active=True).exists()
+    is_hr = request.user.groups.filter(name='HR').exists() if request.user.is_authenticated else False
+    
+    return {
+        'active_period': active_period,
+        'is_hr': is_hr,
+    }
+
 @login_required
 def get_latest_appraisal(request, employee_id):
-    """API endpoint to get the latest appraisal data for an employee"""
+    """API endpoint to get combined appraisal data for an employee"""
     try:
-        latest_appraisal = Appraisal.objects.filter(
+        # Get all appraisals for the employee, ordered by date
+        appraisals = Appraisal.objects.filter(
             employee_id=employee_id
-        ).order_by('-date_created').first()
+        ).order_by('-date_created')
         
-        if latest_appraisal:
-            data = {
-                'success': True,
-                'data': {
-                    'present_post': latest_appraisal.present_post or '',
-                    'salary_scale_division': latest_appraisal.salary_scale_division or '',
-                    'last_research': latest_appraisal.last_research or '',
-                    'ongoing_research': latest_appraisal.ongoing_research or '',
-                    'publications': latest_appraisal.publications or '',
-                    'conference_papers': latest_appraisal.conference_papers or '',
-                    'consultancy_work': latest_appraisal.consultancy_work or '',
-                    'administrative_posts': latest_appraisal.administrative_posts or '',
-                }
+        if not appraisals.exists():
+            return JsonResponse({
+                'success': False,
+                'message': 'No appraisal found for this employee'
+            }, status=404)
+
+        # Get the latest appraisal
+        latest_appraisal = appraisals.first()
+        
+        # Initialize set to track unique qualifications
+        unique_qualifications = set()
+        all_qualifications = []
+        
+        # Combine academic qualifications from all appraisals
+        for appraisal in appraisals:
+            qualifications = appraisal.academic_qualifications.all()
+            
+            for qual in qualifications:
+                # Create unique identifier for qualification
+                qual_identifier = (
+                    qual.degree_diploma.lower(),
+                    qual.university_college.lower(),
+                    qual.from_date.isoformat(),
+                    qual.to_date.isoformat()
+                )
+                
+                # Only add if not seen before
+                if qual_identifier not in unique_qualifications:
+                    unique_qualifications.add(qual_identifier)
+                    all_qualifications.append({
+                        'degree_diploma': qual.degree_diploma,
+                        'university_college': qual.university_college,
+                        'from_date': qual.from_date.strftime('%Y-%m-%d'),
+                        'to_date': qual.to_date.strftime('%Y-%m-%d')
+                    })
+        
+        # Sort qualifications by completion date (most recent first)
+        all_qualifications.sort(key=lambda x: x['to_date'], reverse=True)
+        
+        # Combine data from latest appraisal with all qualifications
+        data = {
+            'success': True,
+            'data': {
+                'present_post': latest_appraisal.present_post or '',
+                'salary_scale_division': latest_appraisal.salary_scale_division or '',
+                'incremental_date': latest_appraisal.incremental_date.strftime('%Y-%m-%d') if latest_appraisal.incremental_date else '',
+                'date_of_last_appraisal': latest_appraisal.date_of_last_appraisal.strftime('%Y-%m-%d') if latest_appraisal.date_of_last_appraisal else '',
+                'academic_qualifications_text': json.dumps(all_qualifications),
+                'current_enrollment': latest_appraisal.current_enrollment or '',
+                'last_research': latest_appraisal.last_research or '',
+                'ongoing_research': latest_appraisal.ongoing_research or '',
+                'publications': latest_appraisal.publications or '',
+                'conference_papers': latest_appraisal.conference_papers or '',
+                'consultancy_work': latest_appraisal.consultancy_work or '',
+                'administrative_posts': latest_appraisal.administrative_posts or '',
+                'participation_within_university': latest_appraisal.participation_within_university or '',
+                'participation_outside_university': latest_appraisal.participation_outside_university or '',
+                'objectives_next_year': latest_appraisal.objectives_next_year or '',
+                'appraiser_comments': latest_appraisal.appraiser_comments or ''
             }
-            return JsonResponse(data)
-        return JsonResponse({'success': False, 'message': 'No appraisal found'}, status=404)
+        }
+        return JsonResponse(data)
+        
     except Exception as e:
-        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+        print(f"Error in get_latest_appraisal: {str(e)}")  # Debug print
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=500)

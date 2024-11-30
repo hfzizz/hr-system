@@ -76,6 +76,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'appraisals.context_processors.hr_context',
                 'contract.context_processors.contract_status',
+                'appraisals.views.appraisal_context_processor',
             ],
         },
     },

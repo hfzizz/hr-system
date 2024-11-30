@@ -49,3 +49,11 @@ class Contract(models.Model):
 
     def __str__(self):
         return f"Contract Renewal - {self.employee.get_full_name()} ({self.submission_date.date()})"
+
+class ContractRenewalStatus(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    is_enabled = models.BooleanField(default=False)
+    enabled_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Contract Renewal Statuses"

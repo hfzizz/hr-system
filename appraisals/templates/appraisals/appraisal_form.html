@@ -20,7 +20,7 @@
 
     <!-- Form -->
     <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
-        <form method="post" class="space-y-8 p-6">
+        <form method="post" class="space-y-8 p-6" action="{% if form.instance.pk %}{% url 'appraisals:appraisal_edit' form.instance.pk %}{% else %}{% url 'appraisals:appraisal_create' %}{% endif %}">
             {% csrf_token %}
             
             <!-- Core Details -->
@@ -29,53 +29,57 @@
                 <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
                     <!-- Employee -->
                     <div class="sm:col-span-1">
-                        <label for="{{ form.employee.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        <label class="block text-sm font-medium text-gray-700">
                             {{ form.employee.label }}
                         </label>
                         <div class="mt-1">
-                            {{ form.employee|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
-                            {% if form.employee.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.employee.errors.0 }}</p>
-                            {% endif %}
+                            <input type="text" 
+                                   value="{{ form.employee.value }}" 
+                                   readonly
+                                   class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm">
+                            {{ form.employee.as_hidden }}
                         </div>
                     </div>
 
                     <!-- Appraiser -->
                     <div class="sm:col-span-1">
-                        <label for="{{ form.appraiser.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        <label class="block text-sm font-medium text-gray-700">
                             {{ form.appraiser.label }}
                         </label>
                         <div class="mt-1">
-                            {{ form.appraiser|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
-                            {% if form.appraiser.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.appraiser.errors.0 }}</p>
-                            {% endif %}
+                            <input type="text" 
+                                   value="{{ form.appraiser.value }}" 
+                                   readonly
+                                   class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm">
+                            {{ form.appraiser.as_hidden }}
                         </div>
                     </div>
 
                     <!-- Review Period Start -->
                     <div class="sm:col-span-1">
-                        <label for="{{ form.review_period_start.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        <label class="block text-sm font-medium text-gray-700">
                             {{ form.review_period_start.label }}
                         </label>
                         <div class="mt-1">
-                            {{ form.review_period_start|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
-                            {% if form.review_period_start.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.review_period_start.errors.0 }}</p>
-                            {% endif %}
+                            <input type="text" 
+                                   value="{{ form.review_period_start.value|date:'Y-m-d' }}" 
+                                   readonly
+                                   class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm">
+                            {{ form.review_period_start.as_hidden }}
                         </div>
                     </div>
 
                     <!-- Review Period End -->
                     <div class="sm:col-span-1">
-                        <label for="{{ form.review_period_end.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        <label class="block text-sm font-medium text-gray-700">
                             {{ form.review_period_end.label }}
                         </label>
                         <div class="mt-1">
-                            {{ form.review_period_end|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
-                            {% if form.review_period_end.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.review_period_end.errors.0 }}</p>
-                            {% endif %}
+                            <input type="text" 
+                                   value="{{ form.review_period_end.value|date:'Y-m-d' }}" 
+                                   readonly
+                                   class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm">
+                            {{ form.review_period_end.as_hidden }}
                         </div>
                     </div>
                 </div>
@@ -151,12 +155,13 @@
                                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">University/College</th>
                                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">From Date</th>
                                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">To Date</th>
-                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Delete</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200" id="academic-qualifications">
                             {% for form in academic_formset %}
-                                <tr>
+                                <tr class="qualification-row {% if form.DELETE.value %}d-none{% endif %}">
+                                    {{ form.id }}
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                                         {{ form.degree_diploma|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
                                     </td>
@@ -170,14 +175,19 @@
                                         {{ form.to_date|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                        {{ form.DELETE }}
+                                        {{ form.DELETE.as_hidden }}
+                                        <button type="button" 
+                                                onclick="deleteQualification(this)"
+                                                class="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">
+                                            Delete
+                                        </button>
                                     </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                     <button type="button" 
-                            onclick="addRow()"
+                            onclick="addQualification()"
                             class="mt-4 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                         Add Another Qualification
                     </button>
@@ -331,7 +341,7 @@
 
             <!-- Form Actions -->
             <div class="flex justify-end gap-x-3">
-                <a href="{% url 'appraisals:appraisal_list' %}"
+                <a href="{% url 'appraisals:appraisal_detail' form.instance.pk %}"
                    class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Cancel
                 </a>
@@ -345,12 +355,75 @@
 </div>
 
 <script>
-function addRow() {
-    // JavaScript to clone the last row and append it to the table
-    const table = document.querySelector('table tbody');
-    const newRow = table.lastElementChild.cloneNode(true);
-    newRow.querySelectorAll('input').forEach(input => input.value = '');
+function addQualification() {
+    const table = document.querySelector('#academic-qualifications');
+    const rows = table.getElementsByClassName('qualification-row');
+    const lastRow = rows[rows.length - 1];
+    const newRow = lastRow.cloneNode(true);
+    
+    // Clear all input values
+    newRow.querySelectorAll('input').forEach(input => {
+        const inputName = input.getAttribute('name');
+        if (inputName.includes('DELETE')) {
+            input.value = '';  // Clear DELETE field
+        } else {
+            input.value = '';  // Clear other fields
+        }
+        
+        // Update the form index
+        const oldName = input.getAttribute('name');
+        const newName = oldName.replace(/\d+/, rows.length);
+        input.setAttribute('name', newName);
+        input.setAttribute('id', `id_${newName}`);
+    });
+    
+    // Make sure the new row is visible
+    newRow.classList.remove('d-none');
+    
     table.appendChild(newRow);
+    
+    // Update the management form TOTAL_FORMS
+    const totalForms = document.querySelector('[name="academic_qualifications-TOTAL_FORMS"]');
+    totalForms.value = parseInt(totalForms.value) + 1;
 }
+
+function deleteQualification(button) {
+    const row = button.closest('tr');
+    const deleteInput = row.querySelector('input[name$="-DELETE"]');
+    
+    if (document.getElementsByClassName('qualification-row').length > 1) {
+        if (deleteInput) {
+            // For existing records, mark for deletion
+            deleteInput.value = 'on';
+            row.style.display = 'none';
+        } else {
+            // For new records, remove the row entirely
+            row.remove();
+            updateTotalForms();
+        }
+    } else {
+        // If it's the last row, just clear the inputs
+        row.querySelectorAll('input:not([name$="-DELETE"])').forEach(input => {
+            input.value = '';
+        });
+    }
+}
+
+function updateTotalForms() {
+    const totalForms = document.querySelector('[name="academic_qualifications-TOTAL_FORMS"]');
+    const visibleRows = Array.from(document.getElementsByClassName('qualification-row')).filter(row => row.style.display !== 'none').length;
+    totalForms.value = visibleRows;
+}
+
+// Add this to handle initial form state
+document.addEventListener('DOMContentLoaded', function() {
+    const deletedRows = document.querySelectorAll('input[name$="-DELETE"][value="on"]');
+    deletedRows.forEach(input => {
+        const row = input.closest('tr');
+        if (row) {
+            row.style.display = 'none';
+        }
+    });
+});
 </script>
 {% endblock %} 
