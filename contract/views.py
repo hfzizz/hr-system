@@ -418,29 +418,3 @@ def enable_contract(request):
         return JsonResponse({'status': 'success'})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
-
-@login_required
-def send_contract_notifications(request):
-    if not request.user.groups.filter(name='HR').exists():
-        return JsonResponse({'error': 'Unauthorized'}, status=403)
-    
-    try:
-        # Get all employees with enabled contract renewal
-        enabled_statuses = ContractRenewalStatus.objects.filter(is_enabled=True)
-        
-        notification_count = 0
-        for status in enabled_statuses:
-            # Create notification for each employee
-            ContractNotification.objects.create(
-                employee=status.employee,
-                message="Your contract renewal is due. Please submit your renewal application."
-            )
-            notification_count += 1
-        
-        messages.success(request, f'Notifications sent to {notification_count} employees.')
-        return JsonResponse({
-            'status': 'success',
-            'count': notification_count
-        })
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=400)
