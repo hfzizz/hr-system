@@ -181,14 +181,14 @@ class AppointmentType(models.Model):
 
 class Qualification(models.Model):
     employee = models.ForeignKey(
-        Employee, 
-        on_delete=models.CASCADE, 
+        'Employee',
+        on_delete=models.CASCADE,
         related_name='employee_qualifications',
-        null=True, 
+        null=True,
         blank=True
     )
-    degree_diploma = models.CharField(max_length=200)
-    university_college = models.CharField(max_length=200)
+    degree_diploma = models.CharField(max_length=255)
+    university_college = models.CharField(max_length=255)
     from_date = models.DateField()
     to_date = models.DateField()
 

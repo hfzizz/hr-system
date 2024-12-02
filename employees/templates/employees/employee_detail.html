@@ -128,7 +128,7 @@
             <!-- Academic Qualifications -->
             <div class="mt-8 space-y-6">
                 <h3 class="text-lg font-medium leading-6 text-gray-900">Academic Qualifications</h3>
-                {% if employee.qualification_set.exists %}
+                {% if employee.employee_qualifications.exists %}
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-300">
                         <thead class="bg-gray-50">
@@ -140,13 +140,15 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 bg-white">
-                            {% for qualification in employee.qualification_set.all %}
-                            <tr>
-                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900">{{ qualification.degree_diploma }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ qualification.university_college }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ qualification.from_date }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ qualification.to_date }}</td>
-                            </tr>
+                            {% for qualification in employee.employee_qualifications.all %}
+                                {% if not qualification.DELETE %}
+                                <tr>
+                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900">{{ qualification.degree_diploma }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ qualification.university_college }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ qualification.from_date|date:"d M Y" }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ qualification.to_date|date:"d M Y" }}</td>
+                                </tr>
+                                {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>

@@ -22,17 +22,18 @@ document.addEventListener('DOMContentLoaded', function() {
         window.addQualification = function() {
             console.log('Adding qualification...');
             const template = document.getElementById('empty-form-template');
-            console.log('Template element:', template);
             
             if (!template) {
                 console.error('Empty form template not found');
                 return;
             }
             
-            const formCount = document.querySelectorAll('.qualification-form').length;
-            console.log('Current form count:', formCount);
+            // Get the current form count from the management form
+            const totalFormsInput = document.querySelector('[name="qualification_set-TOTAL_FORMS"]');
+            const currentFormCount = parseInt(totalFormsInput.value);
+            console.log('Current form count:', currentFormCount);
             
-            if (formCount >= window.maxForms) {
+            if (currentFormCount >= window.maxForms) {
                 alert('Maximum number of qualifications reached');
                 return;
             }
@@ -46,44 +47,58 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Replace all instances of __prefix__ in the new row
-            const prefix = formCount;
-            newRow.innerHTML = newRow.innerHTML.replace(/__prefix__/g, prefix);
+            // Replace all instances of __prefix__ with the current form count
+            newRow.innerHTML = newRow.innerHTML.replace(/__prefix__/g, currentFormCount);
             
-            // Update IDs and names for all inputs in the new row
-            newRow.querySelectorAll('input').forEach(input => {
-                input.id = input.id.replace(/__prefix__/g, prefix);
-                input.name = input.name.replace(/__prefix__/g, prefix);
-            });
+            // Update the employee ID in the new row
+            const employeeId = document.querySelector('[name="id"]')?.value;
+            if (employeeId) {
+                const employeeInput = newRow.querySelector(`[name="qualification_set-${currentFormCount}-employee"]`);
+                if (employeeInput) {
+                    employeeInput.value = employeeId;
+                }
+            }
             
             tbody.appendChild(newRow);
             
-            // Update management form count
-            const totalFormsInput = document.getElementById('id_qualification_set-TOTAL_FORMS');
-            if (totalFormsInput) {
-                totalFormsInput.value = formCount + 1;
-            }
+            // Update management form
+            totalFormsInput.value = currentFormCount + 1;
             
-            console.log('Qualification added successfully');
+            console.log('Qualification added successfully. New total:', totalFormsInput.value);
         };
         
         window.deleteQualification = function(button) {
             const row = button.closest('tr');
-            const deleteInput = row.querySelector('input[type="hidden"][name$="-DELETE"]');
-            const formCount = document.querySelectorAll('.qualification-form:not([style*="display: none"])').length;
+            const deleteInput = row.querySelector('input[name$="-DELETE"]');
+            const visibleRows = document.querySelectorAll('.qualification-form:not(.d-none)').length;
             
-            if (formCount <= 1) {
-                alert('Cannot delete: minimum number of qualifications required');
+            console.log('Deleting qualification row:', row);
+            console.log('Delete input found:', deleteInput);
+            console.log('Visible rows:', visibleRows);
+            
+            if (visibleRows <= 1) {
+                alert('Cannot delete: minimum one qualification is required');
                 return;
             }
             
             if (deleteInput) {
+                // For existing qualifications, mark as deleted and hide the row
                 deleteInput.value = 'on';
                 row.style.display = 'none';
+                row.classList.add('d-none');
+                console.log('Marked for deletion:', deleteInput.value);
             } else {
+                // For new qualifications, remove the row completely
                 row.remove();
-                // Update all subsequent form indices
                 updateFormIndices();
+            }
+            
+            // Update the total forms count
+            const totalFormsInput = document.querySelector('[name="qualification_set-TOTAL_FORMS"]');
+            if (totalFormsInput) {
+                const currentTotal = parseInt(totalFormsInput.value);
+                totalFormsInput.value = currentTotal - 1;
+                console.log('Updated total forms:', totalFormsInput.value);
             }
         };
         
@@ -91,30 +106,28 @@ document.addEventListener('DOMContentLoaded', function() {
             const tbody = document.getElementById('qualification-formset');
             if (!tbody) return;
             
-            const rows = tbody.children;
-            let visibleCount = 0;
+            const rows = Array.from(tbody.querySelectorAll('.qualification-form:not([style*="display: none"]):not(.d-none)'));
+            const totalFormsInput = document.querySelector('[name="qualification_set-TOTAL_FORMS"]');
             
-            for (let i = 0; i < rows.length; i++) {
-                if (rows[i].style.display !== 'none') {
-                    const inputs = rows[i].getElementsByTagName('input');
-                    for (let input of inputs) {
-                        input.name = input.name.replace(/-\d+-/, `-${visibleCount}-`);
-                        input.id = input.id.replace(/-\d+-/, `-${visibleCount}-`);
+            console.log('Updating indices for rows:', rows.length);
+            
+            rows.forEach((row, index) => {
+                row.querySelectorAll('input').forEach(input => {
+                    const name = input.getAttribute('name');
+                    if (name) {
+                        const newName = name.replace(/-\d+-/, `-${index}-`);
+                        input.setAttribute('name', newName);
+                        input.setAttribute('id', `id_${newName}`);
+                        console.log(`Updated input name from ${name} to ${newName}`);
                     }
-                    visibleCount++;
-                }
-            }
+                });
+            });
             
-            const totalFormsInput = document.getElementById('id_qualification_set-TOTAL_FORMS');
             if (totalFormsInput) {
-                totalFormsInput.value = visibleCount;
+                totalFormsInput.value = rows.length;
+                console.log('Updated total forms count:', rows.length);
             }
         }
-
-        // Add auto-save functionality
-        document.getElementById('qualification-formset').addEventListener('change', function() {
-            saveQualifications();
-        });
     }
 });
 

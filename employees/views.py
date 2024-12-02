@@ -17,6 +17,18 @@ import random
 from django.contrib.auth import login, authenticate
 from django.shortcuts import render
 from django.forms import modelformset_factory
+from django.forms import inlineformset_factory
+
+QualificationFormSet = inlineformset_factory(
+    Employee,
+    Qualification,
+    form=QualificationForm,
+    extra=1,
+    can_delete=True,
+    fields=['degree_diploma', 'university_college', 'from_date', 'to_date'],
+    validate_min=False,
+    validate_max=False
+)
 
 class CustomLoginView(LoginView):
     template_name = 'auth/login.html'
@@ -169,13 +181,14 @@ class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMes
     model = Employee
     form_class = EmployeeForm
     template_name = 'employees/employee_edit.html'
-    success_url = reverse_lazy('employees:employee_list')
     permission_required = 'employees.change_employee'
     success_message = "Employee updated successfully"
 
+    def get_success_url(self):
+        return reverse_lazy('employees:employee_detail', kwargs={'pk': self.object.pk})
+
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
-        # Remove password fields for edit form
         if form.fields.get('password'):
             del form.fields['password']
         if form.fields.get('confirm_password'):
@@ -186,10 +199,54 @@ class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMes
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if self.object:
-            # Add current roles to context
-            context['current_roles'] = self.object.roles.all()
+        if self.request.POST:
+            context['qualification_formset'] = QualificationFormSet(
+                self.request.POST,
+                instance=self.object,
+                prefix='qualification_set'
+            )
+        else:
+            context['qualification_formset'] = QualificationFormSet(
+                instance=self.object,
+                prefix='qualification_set'
+            )
         return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        qualification_formset = context['qualification_formset']
+        
+        print("POST Data:", self.request.POST)
+        print("Formset valid:", qualification_formset.is_valid())
+        
+        if qualification_formset.is_valid():
+            self.object = form.save()
+            qualification_formset.instance = self.object
+            qualification_instances = qualification_formset.save(commit=False)
+            
+            # Delete marked objects
+            for obj in qualification_formset.deleted_objects:
+                obj.delete()
+            
+            # Save new/updated instances
+            for qualification in qualification_instances:
+                qualification.employee = self.object
+                qualification.save()
+            
+            messages.success(self.request, self.success_message)
+            return super().form_valid(form)
+        else:
+            print("Formset errors:", qualification_formset.errors)
+            print("Non form errors:", qualification_formset.non_form_errors())
+            messages.error(self.request, "Please correct the errors in the qualifications section.")
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        context = self.get_context_data()
+        qualification_formset = context['qualification_formset']
+        if not qualification_formset.is_valid():
+            messages.error(self.request, "Please correct the errors in the qualifications section.")
+        return super().form_invalid(form)
 
 class EmployeeProfileView(LoginRequiredMixin, DetailView):
     model = Employee
