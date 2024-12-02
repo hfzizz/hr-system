@@ -28,4 +28,5 @@ urlpatterns = [
     path('appraisals/', include('appraisals.urls')),
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('settings/', views.SettingsView.as_view(), name='settings'),
+    path('roles/', include('roles.urls')),
 ]

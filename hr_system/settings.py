@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'appraisals',
     'hr_system',
     'widget_tweaks',
+    'roles',
 ]
 
 MIDDLEWARE = [
