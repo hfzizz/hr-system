@@ -395,4 +395,10 @@ class EmployeeDetailView(DetailView):
     template_name = 'employees/employee_detail.html'
     context_object_name = 'employee'
 
+class SettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'employees/settings.html'
+    
+    def test_func(self):
+        return self.request.user.groups.filter(name='HR').exists()
+
 

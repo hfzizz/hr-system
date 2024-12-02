@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - HR System{% endblock %}
+
+{% block content %}
+<div class="py-6 px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between mb-6">
+        <div class="min-w-0 flex-1">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">Settings</h2>
+        </div>
+    </div>
+
+    <!-- Settings Grid -->
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <!-- System Settings -->
+        <div class="bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-base font-semibold leading-6 text-gray-900">System Settings</h3>
+                <div class="mt-2 max-w-xl text-sm text-gray-500">
+                    <p>Configure general system settings and preferences.</p>
+                </div>
+                <div class="mt-5">
+                    <a href="#" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        Manage Settings
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Management -->
+        <div class="bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-base font-semibold leading-6 text-gray-900">User Management</h3>
+                <div class="mt-2 max-w-xl text-sm text-gray-500">
+                    <p>Manage user roles, permissions, and access control.</p>
+                </div>
+                <div class="mt-5">
+                    <a href="#" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        Manage Users
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Templates -->
+        <div class="bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-base font-semibold leading-6 text-gray-900">Email Templates</h3>
+                <div class="mt-2 max-w-xl text-sm text-gray-500">
+                    <p>Customize email notifications and templates.</p>
+                </div>
+                <div class="mt-5">
+                    <a href="#" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        Manage Templates
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Backup & Restore -->
+        <div class="bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-base font-semibold leading-6 text-gray-900">Backup & Restore</h3>
+                <div class="mt-2 max-w-xl text-sm text-gray-500">
+                    <p>Manage system backups and data restoration.</p>
+                </div>
+                <div class="mt-5">
+                    <a href="#" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        Manage Backups
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Logs -->
+        <div class="bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-base font-semibold leading-6 text-gray-900">System Logs</h3>
+                <div class="mt-2 max-w-xl text-sm text-gray-500">
+                    <p>View system logs and activity history.</p>
+                </div>
+                <div class="mt-5">
+                    <a href="#" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        View Logs
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Settings -->
+        <div class="bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-base font-semibold leading-6 text-gray-900">API Settings</h3>
+                <div class="mt-2 max-w-xl text-sm text-gray-500">
+                    <p>Manage API keys and integration settings.</p>
+                </div>
+                <div class="mt-5">
+                    <a href="#" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        Manage API
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
