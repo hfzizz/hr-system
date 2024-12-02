@@ -47,8 +47,8 @@ class Employee(models.Model):
     phone_number = models.CharField(max_length=15)
     date_of_birth = models.DateField()
     hire_date = models.DateField()
-    position = models.CharField(max_length=100)
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True)
+    post = models.CharField(max_length=100, null=True, blank=True)
     salary = models.DecimalField(max_digits=10, decimal_places=2)
     employee_status = models.CharField(max_length=50, choices=[('active', 'Active'), ('on_leave', 'On Leave'), ('inactive', 'Inactive')], default='active')
     roles = models.ManyToManyField('auth.Group', blank=True)
@@ -57,6 +57,9 @@ class Employee(models.Model):
     ic_no = models.CharField(max_length=20, unique=True, verbose_name="IC Number", null=True, blank=True)
     ic_colour = models.CharField(max_length=1, choices=IC_COLOUR_CHOICES, verbose_name="IC Colour", null=True, blank=True)
     type_of_appointment = models.CharField(max_length=50, choices=APPOINTMENT_TYPE_CHOICES, verbose_name="Type of Appointment", null=True, blank=True)
+    qualifications = models.ManyToManyField('appraisals.Qualification', blank=True)
+    appointments = models.ManyToManyField('appraisals.Appointment', blank=True)
+   
 
     def save(self, *args, **kwargs):
         if not self.employee_id:

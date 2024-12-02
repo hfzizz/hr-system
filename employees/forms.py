@@ -30,7 +30,7 @@ class EmployeeForm(forms.ModelForm):
             'date_of_birth',
             'gender',
             'hire_date',
-            'position',
+            'post',
             'department',
             'salary',
             'employee_status',
@@ -41,6 +41,10 @@ class EmployeeForm(forms.ModelForm):
             'ic_colour',
             'type_of_appointment'
         ]
+        widgets = {
+            'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
+            'hire_date': forms.DateInput(attrs={'type': 'date'}),
+        }
 
     def clean_username(self):
         username = self.cleaned_data['username']

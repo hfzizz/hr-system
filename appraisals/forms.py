@@ -30,7 +30,7 @@ class AppraisalForm(forms.ModelForm):
             'appraiser',
             'review_period_start',
             'review_period_end',
-            'present_post',
+            'post_at_time_of_review',
             'salary_scale_division',
             'incremental_date',
             'date_of_last_appraisal',

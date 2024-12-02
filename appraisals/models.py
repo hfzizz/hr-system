@@ -68,8 +68,6 @@ class Appraisal(models.Model):
         default='pending'
     )
     
-    appointments = models.ManyToManyField(Appointment, blank=True)
-    present_post = models.CharField(max_length=100, null=True, blank=True)
     salary_scale_division = models.CharField(max_length=50, null=True, blank=True)
     incremental_date = models.DateField(null=True, blank=True)
     date_of_last_appraisal = models.DateField(null=True, blank=True)
@@ -100,6 +98,10 @@ class Appraisal(models.Model):
     )
     last_modified_date = models.DateTimeField(auto_now=True)
     
+    # Keep these fields but rename them to clarify they're snapshots
+    appointments_at_time_of_review = models.ManyToManyField(Appointment, blank=True)
+    post_at_time_of_review = models.CharField(max_length=100, null=True, blank=True)
+    
     class Meta:
         ordering = ['-date_created']
         permissions = [
@@ -125,8 +127,16 @@ class Appraisal(models.Model):
         super().clean()
 
     def save(self, *args, **kwargs):
-        self.full_clean()
+        # If this is a new appraisal, populate the snapshot fields from employee
+        if not self.pk:  # Check if this is a new instance
+            self.post_at_time_of_review = self.employee.post
+        
         super().save(*args, **kwargs)
+        
+        # Need to handle M2M relationships after save
+        if not self.pk:
+            for appointment in self.employee.appointments.all():
+                self.appointments_at_time_of_review.add(appointment)
 
     def get_employee_name(self):
         """Get employee's full name"""
