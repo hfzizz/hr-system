@@ -14,6 +14,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 import string
 import random
+from django.contrib.auth import login, authenticate
 
 class CustomLoginView(LoginView):
     template_name = 'auth/login.html'
@@ -25,25 +26,35 @@ class CustomLoginView(LoginView):
 
     def form_valid(self, form):
         """Security check complete. Log the user in."""
-        # Call parent's form_valid to complete the login process first
-        response = super().form_valid(form)
+        username = form.cleaned_data.get('login')  # Get the login field value
+        password = form.cleaned_data.get('password')
         
-        # Get the authenticated user and welcome them by username
-        user = form.get_user()
-        messages.success(self.request, f'Welcome back, {user.username}!')
-            
-        return response
+        # Explicitly authenticate the user
+        user = authenticate(
+            self.request,
+            username=username,  # Use username parameter as that's what your backend expects
+            password=password
+        )
+        
+        if user is not None:
+            login(self.request, user)
+            messages.success(self.request, f'Welcome back, {user.username}!')
+            return redirect(self.get_success_url())
+        else:
+            messages.error(self.request, f'Failed to authenticate user with username/email: {username}')
+            return self.form_invalid(form)
 
     def form_invalid(self, form):
-        """If the form is invalid, render the invalid form with a generic error message."""
+        """If the form is invalid, render the invalid form with error messages."""
         messages.error(self.request, 'Invalid username/email or password.')
         return super().form_invalid(form)
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
-        # Update the username field label and placeholder
-        form.fields['username'].label = 'Username or Email'
-        form.fields['username'].widget.attrs.update({
+        # Update the login field (instead of username) to match your form
+        form.fields['login'] = form.fields.pop('username')  # Rename the field
+        form.fields['login'].label = 'Username or Email'
+        form.fields['login'].widget.attrs.update({
             'placeholder': 'Enter your username or email',
             'autocomplete': 'username',
             'class': 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
