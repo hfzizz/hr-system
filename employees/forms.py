@@ -1,7 +1,8 @@
 from django import forms
-from django.contrib.auth.models import User, Group
-from .models import Employee
+from django.contrib.auth.models import User
+from .models import Employee, Appointment, Qualification, AppointmentType
 from django.db import models
+from django.forms import modelformset_factory, BaseModelFormSet
 
 class EmployeeForm(forms.ModelForm):
     employee_id = forms.CharField(
@@ -30,8 +31,8 @@ class EmployeeForm(forms.ModelForm):
             'date_of_birth',
             'gender',
             'hire_date',
-            'post',
             'department',
+            'post',
             'salary',
             'employee_status',
             'roles',
@@ -39,7 +40,7 @@ class EmployeeForm(forms.ModelForm):
             'profile_picture',
             'ic_no',
             'ic_colour',
-            'type_of_appointment'
+            'qualifications'
         ]
         widgets = {
             'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
@@ -119,11 +120,12 @@ class EmployeeProfileForm(forms.ModelForm):
         model = Employee
         fields = [
             'phone_number',
+            'post',
             'address',
             'profile_picture',
             'ic_no',
             'ic_colour',
-            'type_of_appointment'
+            'qualifications'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -150,4 +152,118 @@ class EmployeeProfileForm(forms.ModelForm):
         
         return employee
 
+class AppointmentForm(forms.ModelForm):
+    type_of_appointment = forms.ModelChoiceField(
+        queryset=AppointmentType.objects.filter(is_active=True),
+        widget=forms.Select(attrs={
+            'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+        }),
+        empty_label=None
+    )
+
+    class Meta:
+        model = Appointment
+        fields = [
+            'type_of_appointment',
+            'first_appointment_govt',
+            'first_appointment_ubd',
+            'faculty_programme',
+            'from_date',
+            'to_date'
+        ]
+        widgets = {
+            'first_appointment_govt': forms.DateInput(
+                attrs={
+                    'type': 'date',
+                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+                }
+            ),
+            'first_appointment_ubd': forms.DateInput(
+                attrs={
+                    'type': 'date',
+                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+                }
+            ),
+            'faculty_programme': forms.TextInput(
+                attrs={
+                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+                }
+            ),
+            'from_date': forms.DateInput(
+                attrs={
+                    'type': 'date',
+                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+                }
+            ),
+            'to_date': forms.DateInput(
+                attrs={
+                    'type': 'date',
+                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+                }
+            )
+        }
+
+class QualificationForm(forms.ModelForm):
+    class Meta:
+        model = Qualification
+        fields = [
+            'degree_diploma',
+            'university_college',
+            'from_date',
+            'to_date'
+        ]
+        widgets = {
+            'degree_diploma': forms.TextInput(
+                attrs={
+                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6',
+                    'placeholder': 'Enter degree or diploma name'
+                }
+            ),
+            'university_college': forms.TextInput(
+                attrs={
+                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6',
+                    'placeholder': 'Enter institution name'
+                }
+            ),
+            'from_date': forms.DateInput(
+                attrs={
+                    'type': 'date',
+                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+                }
+            ),
+            'to_date': forms.DateInput(
+                attrs={
+                    'type': 'date',
+                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+                }
+            )
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Add Tailwind CSS classes to all fields
+        for field_name, field in self.fields.items():
+            if not isinstance(field.widget, forms.DateInput):  # Skip date inputs as they're already styled
+                field.widget.attrs.update({
+                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+                })
+
+class BaseQualificationFormSet(BaseModelFormSet):
+    def clean(self):
+        if any(self.errors):
+            return
+        for form in self.forms:
+            if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
+                if form.cleaned_data.get('from_date') and form.cleaned_data.get('to_date'):
+                    if form.cleaned_data['from_date'] > form.cleaned_data['to_date']:
+                        raise forms.ValidationError('Start date cannot be after end date.')
+
+# Use modelformset_factory for the QualificationFormSet
+QualificationFormSet = modelformset_factory(
+    Qualification,
+    form=QualificationForm,
+    formset=BaseQualificationFormSet,
+    extra=1,
+    can_delete=True
+)
 

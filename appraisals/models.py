@@ -1,27 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
-from employees.models import Employee
+from employees.models import Employee, Appointment, AppointmentType, Qualification
 from django.utils import timezone
-
-class Appointment(models.Model):
-    type_of_appointment = models.CharField(max_length=50, choices=[
-        ('Permanent', 'Permanent'),
-        ('Contract', 'Contract'),
-        ('Month-to-Month', 'Month-to-Month'),
-        ('Daily Rated', 'Daily Rated')
-    ])
-    first_appointment_govt = models.DateField(null=True, blank=True)
-    first_appointment_ubd = models.DateField(null=True, blank=True)
-    post = models.CharField(max_length=100)
-    faculty_programme = models.CharField(max_length=100)
-    from_date = models.DateField()
-    to_date = models.DateField()
-
-class Qualification(models.Model):
-    degree_diploma = models.CharField(max_length=100)
-    university_college = models.CharField(max_length=100)
-    from_date = models.DateField()
-    to_date = models.DateField()
 
 class Module(models.Model):
     title = models.CharField(max_length=100)

@@ -31,11 +31,11 @@
                                     <input type="checkbox" checked data-column="email" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                                     <span class="text-sm text-gray-900">Email</span>
                                 </label>
-                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded"></label>
+                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
                                     <input type="checkbox" checked data-column="ic_no" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                                     <span class="text-sm text-gray-900">IC Number</span>
                                 </label>
-                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded"></label>
+                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
                                     <input type="checkbox" checked data-column="ic_colour" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                                     <span class="text-sm text-gray-900">IC Colour</span>
                                 </label>
@@ -50,12 +50,8 @@
                         <div class="mb-2">
                             <div class="font-medium text-gray-700 mb-1 text-sm">Work Info</div>
                             <div class="space-y-1">
-                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded"></label>
-                                    <input type="checkbox" checked data-column="type_of_appointment" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                    <span class="text-sm text-gray-900">Type of Appointment</span>
-                                </label>
                                 <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
-                                    <input type="checkbox" checked data-column="position" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <input type="checkbox" checked data-column="post" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                                     <span class="text-sm text-gray-900">Position</span>
                                 </label>
                                 <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
@@ -69,6 +65,10 @@
                                 <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
                                     <input type="checkbox" checked data-column="salary" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                                     <span class="text-sm text-gray-900">Salary</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                    <input type="checkbox" checked data-column="type_of_appointment" class="column-toggle h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-sm text-gray-900">Appointment Type</span>
                                 </label>
                             </div>
                         </div>
@@ -135,8 +135,8 @@
         <div>
             <select id="position-filter" class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
                 <option value="">All Positions</option>
-                {% for position in positions %}
-                <option value="{{ position }}">{{ position }}</option>
+                {% for post in posts %}
+                <option value="{{ post }}">{{ post }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -147,8 +147,8 @@
                 <option value="">All Appointment Types</option>
                 <option value="permanent">Permanent</option>
                 <option value="contract">Contract</option>
-                <option value="temporary">Temporary</option>
-                <option value="probation">Probation</option>
+                <option value="month-to-month">Month-to-Month</option>
+                <option value="daily-rated">Daily-Rated</option>
             </select>
         </div>
     </div>
@@ -163,14 +163,14 @@
                     <th scope="col" data-column="email" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Email</th>
                     <th scope="col" data-column="ic_no" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">IC Number</th>
                     <th scope="col" data-column="ic_colour" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">IC Colour</th>
-                    <th scope="col" data-column="type_of_appointment" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Type of Appointment</th>
                     <th scope="col" data-column="phone" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Phone</th>
-                    <th scope="col" data-column="position" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Position</th>
+                    <th scope="col" data-column="post" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Position</th>
                     <th scope="col" data-column="department" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Department</th>
                     <th scope="col" data-column="status" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
                     <th scope="col" data-column="salary" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Salary</th>
                     <th scope="col" data-column="hire_date" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Hire Date</th>
                     <th scope="col" data-column="dob" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Date of Birth</th>
+                    <th scope="col" data-column="type_of_appointment" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Appointment Type</th>
                     <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
                         <span class="sr-only">Actions</span>
                     </th>
@@ -199,9 +199,8 @@
                     <td data-column="email" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.email }}</td>
                     <td data-column="ic_no" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.ic_no }}</td>
                     <td data-column="ic_colour" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.ic_colour }}</td>
-                    <td data-column="type_of_appointment" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.type_of_appointment }}</td>
                     <td data-column="phone" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.phone_number }}</td>
-                    <td data-column="position" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.position }}</td>
+                    <td data-column="post" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.post }}</td>
                     <td data-column="department" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.department.name }}</td>
                     <td data-column="status" class="whitespace-nowrap px-3 py-4 text-sm">
                         <span class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 
@@ -214,6 +213,13 @@
                     <td data-column="salary" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">${{ employee.salary }}</td>
                     <td data-column="hire_date" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.hire_date|date:"M d, Y" }}</td>
                     <td data-column="dob" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.date_of_birth|date:"M d, Y" }}</td>
+                    <td data-column="type_of_appointment" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {% if employee.appointment %}
+                            {{ employee.appointment.type_of_appointment.name }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                         <a href="{% url 'employees:employee_edit' employee.id %}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
                     </td>
@@ -295,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const departmentValue = departmentFilter.value.toLowerCase();
         const statusValue = statusFilter.value.toLowerCase();
         const positionValue = positionFilter.value.toLowerCase();
-        const appointmentValue = document.getElementById('appointment-filter').value.toLowerCase();
+        const appointmentValue = appointmentFilter.value.toLowerCase();
 
         tableRows.forEach(row => {
             if (row.classList.contains('empty-row')) return;
@@ -304,9 +310,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const email = row.querySelector('[data-column="email"]').textContent.toLowerCase();
             const department = row.querySelector('[data-column="department"]').textContent.toLowerCase();
             const status = row.querySelector('[data-column="status"]').textContent.toLowerCase();
-            const position = row.querySelector('[data-column="position"]').textContent.toLowerCase();
+            const post = row.querySelector('[data-column="post"]').textContent.toLowerCase();
             const employeeId = row.querySelector('[data-column="employee_id"]').textContent.toLowerCase();
-            const appointment = row.querySelector('[data-column="type_of_appointment"]').textContent.toLowerCase();
+            const typeOfAppointment = row.querySelector('[data-column="type_of_appointment"]')?.textContent.toLowerCase() || '';
 
             const matchesSearch = searchTerm === '' || 
                 name.includes(searchTerm) || 
@@ -315,8 +321,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const matchesDepartment = departmentValue === '' || department === departmentValue;
             const matchesStatus = statusValue === '' || status.includes(statusValue);
-            const matchesPosition = positionValue === '' || position === positionValue;
-            const matchesAppointment = appointmentValue === '' || appointment === appointmentValue;
+            const matchesPosition = positionValue === '' || post === positionValue;
+            const matchesAppointment = appointmentValue === '' || typeOfAppointment.includes(appointmentValue);
 
             if (matchesSearch && matchesDepartment && matchesStatus && matchesPosition && matchesAppointment) {
                 row.classList.remove('hidden');

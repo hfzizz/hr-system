@@ -3,8 +3,8 @@ from django.urls import reverse_lazy
 from django.views.generic import TemplateView, ListView, CreateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from .models import Employee, Department
-from .forms import EmployeeForm, EmployeeProfileForm
+from .models import Employee, Department, Qualification
+from .forms import EmployeeForm, EmployeeProfileForm, AppointmentForm, QualificationForm, QualificationFormSet
 from django.views.generic.edit import CreateView
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import redirect
@@ -15,6 +15,8 @@ from django.db import transaction
 import string
 import random
 from django.contrib.auth import login, authenticate
+from django.shortcuts import render
+from django.forms import modelformset_factory
 
 class CustomLoginView(LoginView):
     template_name = 'auth/login.html'
@@ -84,8 +86,11 @@ class EmployeeListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['departments'] = Department.objects.all()
         # Get unique positions
-        context['positions'] = Employee.objects.values_list('position', flat=True).distinct()
+        context['posts'] = Employee.objects.values_list('post', flat=True).distinct()
         return context
+
+    def get_queryset(self):
+        return Employee.objects.select_related('department', 'appointment__type_of_appointment').all()
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'employees/dashboard.html'
@@ -106,6 +111,10 @@ class EmployeeCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView
         context = super().get_context_data(**kwargs)
         context['title'] = 'Create Employee'
         context['button_label'] = 'Create'
+        if self.request.POST:
+            context['appointment_form'] = AppointmentForm(self.request.POST)
+        else:
+            context['appointment_form'] = AppointmentForm()
         return context
 
     def form_valid(self, form):
@@ -218,3 +227,82 @@ class EmployeeProfileEditView(LoginRequiredMixin, UpdateView):
                 messages.success(self.request, 'Profile updated successfully.')
                 
         return response
+
+@transaction.atomic
+def employee_create(request):
+    if request.method == 'POST':
+        form = EmployeeForm(request.POST, request.FILES)
+        appointment_form = AppointmentForm(request.POST)
+        qualification_formset = QualificationFormSet(
+            request.POST, 
+            request.FILES,
+            prefix='qualifications'
+        )
+        
+        print("POST request received")
+        print("Qualification formset is valid:", qualification_formset.is_valid())
+        if not qualification_formset.is_valid():
+            print("Qualification formset errors:", qualification_formset.errors)
+        
+        if form.is_valid() and appointment_form.is_valid() and qualification_formset.is_valid():
+            try:
+                # Generate a random password if none provided
+                password = form.cleaned_data.get('password')
+                if not password:
+                    password = ''.join(random.choices(string.ascii_letters + string.digits + "!@#$%^&*()", k=12))
+
+                # Create user account
+                user = User.objects.create_user(
+                    username=form.cleaned_data['username'],
+                    email=form.cleaned_data['email'],
+                    password=password,
+                    first_name=form.cleaned_data['first_name'],
+                    last_name=form.cleaned_data['last_name']
+                )
+
+                # Save employee
+                employee = form.save(commit=False)
+                employee.user = user
+                employee.save()
+                form.save_m2m()  # Save many-to-many relationships
+                
+                # Save appointment
+                if appointment_form.has_changed():
+                    appointment = appointment_form.save(commit=False)
+                    appointment.employee = employee
+                    appointment.save()
+                
+                # Save qualifications
+                instances = qualification_formset.save(commit=False)
+                for instance in instances:
+                    instance.save()
+                employee.qualifications.add(*instances)
+                
+                messages.success(
+                    request, 
+                    f'Employee created successfully. Username: {user.username}. Please securely share the credentials with the employee.'
+                )
+                return redirect('employees:employee_list')
+                
+            except Exception as e:
+                messages.error(request, f'Error creating employee: {str(e)}')
+                # If there's an error, the transaction will be rolled back
+                
+    else:
+        form = EmployeeForm()
+        appointment_form = AppointmentForm()
+        qualification_formset = QualificationFormSet(
+            prefix='qualifications'
+        )
+        
+        # Get the empty form HTML
+        empty_form = qualification_formset.empty_form
+        
+    return render(request, 'employees/employee_create.html', {
+        'form': form,
+        'appointment_form': appointment_form,
+        'qualification_formset': qualification_formset,
+        'empty_form': empty_form,
+    })
+
+
