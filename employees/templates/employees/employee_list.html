@@ -203,8 +203,8 @@
                     <td data-column="hire_date" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.hire_date|date:"M d, Y" }}</td>
                     <td data-column="dob" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ employee.date_of_birth|date:"M d, Y" }}</td>
                     <td data-column="type_of_appointment" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {% if employee.appointment %}
-                            {{ employee.appointment.type_of_appointment.name }}
+                        {% if employee.appointment_type %}
+                            {{ employee.appointment_type.name }}
                         {% else %}
                             -
                         {% endif %}
