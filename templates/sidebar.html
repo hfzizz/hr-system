@@ -89,6 +89,18 @@
           <span>Settings</span>
         </a>
       </li>
+
+      <!-- Departments (for HR only) -->
+      {% if is_hr %}
+      <li>
+        <a href="{% url 'employees:department_list' %}" class="flex items-center gap-2 rounded-lg px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 21V5C19 3.89543 18.1046 3 17 3H7C5.89543 3 5 3.89543 5 5V21M19 21H5M19 21H21M5 21H3M9 6.99998H15M9 11H15M9 15H12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Departments</span>
+        </a>
+      </li>
+      {% endif %}
     </ul>
   </nav>
 </aside>

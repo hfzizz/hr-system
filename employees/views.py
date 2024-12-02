@@ -1,6 +1,6 @@
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import reverse_lazy
-from django.views.generic import TemplateView, ListView, CreateView, DetailView
+from django.views.generic import TemplateView, ListView, CreateView, DetailView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from .models import Employee, Department, Qualification
@@ -18,6 +18,7 @@ from django.contrib.auth import login, authenticate
 from django.shortcuts import render
 from django.forms import modelformset_factory
 from django.forms import inlineformset_factory
+from django.contrib.auth.mixins import UserPassesTestMixin
 
 QualificationFormSet = inlineformset_factory(
     Employee,
@@ -29,6 +30,33 @@ QualificationFormSet = inlineformset_factory(
     validate_min=False,
     validate_max=False
 )
+
+class HRRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.groups.filter(name='HR').exists()
+
+class DepartmentListView(LoginRequiredMixin, HRRequiredMixin, ListView):
+    model = Department
+    template_name = 'employees/department_list.html'
+    context_object_name = 'departments'
+
+class DepartmentCreateView(LoginRequiredMixin, HRRequiredMixin, CreateView):
+    model = Department
+    template_name = 'employees/department_form.html'
+    fields = ['name', 'description']
+    success_url = reverse_lazy('employees:department_list')
+
+class DepartmentUpdateView(LoginRequiredMixin, HRRequiredMixin, UpdateView):
+    model = Department
+    template_name = 'employees/department_form.html'
+    fields = ['name', 'description']
+    success_url = reverse_lazy('employees:department_list')
+
+class DepartmentDeleteView(LoginRequiredMixin, HRRequiredMixin, DeleteView):
+    model = Department
+    template_name = 'employees/department_confirm_delete.html'
+    success_url = reverse_lazy('employees:department_list')
+
 
 class CustomLoginView(LoginView):
     template_name = 'auth/login.html'
@@ -110,7 +138,11 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
 class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = 'employees/profile.html'
-    login_url = 'login'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user'] = self.request.user
+        return context
 
 class EmployeeCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Employee
