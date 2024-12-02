@@ -138,6 +138,6 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTHENTICATION_BACKENDS = [
-    'hr_system.backends.EmailOrUsernameModelBackend',  # custom backend
-    'django.contrib.auth.backends.ModelBackend',  # default backend
+    'hr_system.backends.EmailOrUsernameModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
 ]
