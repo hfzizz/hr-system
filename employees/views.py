@@ -19,6 +19,9 @@ from django.shortcuts import render
 from django.forms import modelformset_factory
 from django.forms import inlineformset_factory
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.db.models import Count, Q
+from appraisals.models import Appraisal, AppraisalPeriod
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 QualificationFormSet = inlineformset_factory(
     Employee,
@@ -134,7 +137,46 @@ class EmployeeListView(LoginRequiredMixin, ListView):
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'employees/dashboard.html'
-    login_url = 'login'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get basic stats
+        context['total_employees'] = Employee.objects.count()
+        context['total_departments'] = Department.objects.count()
+        
+        # Get appraisal stats
+        active_period = AppraisalPeriod.objects.filter(is_active=True).first()
+        if active_period:
+            context['ongoing_appraisals'] = Appraisal.objects.filter(
+                status='in_progress'
+            ).count()
+            context['pending_reviews'] = Appraisal.objects.filter(
+                status='pending'
+            ).count()
+        else:
+            context['ongoing_appraisals'] = 0
+            context['pending_reviews'] = 0
+
+        # Get recent employees (last 5)
+        context['recent_employees'] = Employee.objects.select_related('department').order_by('-hire_date')[:5]
+
+        # Get recent appraisals - Removed period from select_related
+        if self.request.user.groups.filter(name='HR').exists():
+            # HR sees all recent appraisals
+            context['recent_appraisals'] = Appraisal.objects.select_related(
+                'employee', 'appraiser'
+            ).order_by('-date_created')[:5]
+        else:
+            # Regular users see only their appraisals and ones they need to review
+            context['recent_appraisals'] = Appraisal.objects.filter(
+                Q(employee=self.request.user.employee) |
+                Q(appraiser=self.request.user.employee)  # Changed from reviewer to appraiser
+            ).select_related(
+                'employee', 'appraiser'
+            ).order_by('-date_created')[:5]
+
+        return context
 
 class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = 'employees/profile.html'
@@ -399,6 +441,11 @@ class SettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'employees/settings.html'
     
     def test_func(self):
+        """Only allow HR users to access settings"""
         return self.request.user.groups.filter(name='HR').exists()
+    
+    def handle_no_permission(self):
+        messages.error(self.request, "You don't have permission to access settings.")
+        return redirect('dashboard')
 
 
