@@ -24,7 +24,7 @@
         <form method="post" enctype="multipart/form-data" class="space-y-8 p-6">
             {% csrf_token %}
             
-            <!-- Add this right after the form opening tag -->
+            <!-- Form Errors -->
             {% if form.errors %}
             <div class="rounded-md bg-red-50 p-4 mb-6">
                 <div class="flex">
@@ -123,11 +123,21 @@
                         {% endif %}
                     </div>
 
+                    <!-- Email -->
                     <div>
                         <label for="id_email" class="block text-sm font-medium text-gray-700">Email</label>
                         {% render_field form.email class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
                         {% if form.email.errors %}
                             <p class="mt-2 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div>
+                        <label for="id_phone_number" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                        {% render_field form.phone_number class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.phone_number.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.phone_number.errors.0 }}</p>
                         {% endif %}
                     </div>
 
@@ -143,14 +153,7 @@
                         {% render_field form.ic_colour class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
                     </div>
 
-                    <div>
-                        <label for="id_phone_number" class="block text-sm font-medium text-gray-700">Phone Number</label>
-                        {% render_field form.phone_number class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
-                        {% if form.phone_number.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.phone_number.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
+                    <!-- Date of Birth -->
                     <div>
                         <label for="id_date_of_birth" class="block text-sm font-medium text-gray-700">Date of Birth</label>
                         {% render_field form.date_of_birth class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" type="date" %}
@@ -159,6 +162,7 @@
                         {% endif %}
                     </div>
 
+                    <!-- Gender -->
                     <div>
                         <label for="id_gender" class="block text-sm font-medium text-gray-700">Gender</label>
                         <select id="id_gender" name="gender" class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
@@ -172,114 +176,218 @@
                             <p class="mt-2 text-sm text-red-600">{{ form.gender.errors.0 }}</p>
                         {% endif %}
                     </div>
+                </div>
 
-                    <!-- Employment Information -->
+                <!-- Address -->
+                <div class="sm:col-span-2">
+                    <label for="id_address" class="block text-sm font-medium text-gray-700">Address</label>
+                    {% render_field form.address class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" rows="3" %}
+                    {% if form.address.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.address.errors.0 }}</p>
+                    {% endif %}
+                </div>
 
-                    <!-- Appointment Information -->
-                    <div class="sm:col-span-2">
-                        <h4 class="text-base font-medium text-gray-900 mb-4">Appointment Details</h4>
-                        <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                            <!-- Type of Appointment -->
-                            <div>
-                                <label for="{{ appointment_form.type_of_appointment.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                    Type of Appointment
-                                </label>
-                                <select name="{{ appointment_form.type_of_appointment.html_name }}" 
-                                        id="{{ appointment_form.type_of_appointment.id_for_label }}"
-                                        class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                    <option value="">Select Type of Appointment</option>
-                                    {% for value, label in appointment_form.type_of_appointment.field.choices %}
-                                        <option value="{{ value }}" {% if appointment_form.type_of_appointment.value == value %}selected{% endif %}>
-                                            {{ label }}
-                                        </option>
+                    <!-- Hire Date -->
+                    <div>
+                        <label for="id_hire_date" class="block text-sm font-medium text-gray-700">Hire Date</label>
+                        {% render_field form.hire_date class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" type="date" %}
+                        {% if form.hire_date.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.hire_date.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Salary -->
+                    <div>
+                        <label for="id_salary" class="block text-sm font-medium text-gray-700">Salary</label>
+                        {% render_field form.salary class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" type="number" step="0.01" %}
+                        {% if form.salary.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.salary.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Employee Status -->
+                    <div>
+                        <label for="id_employee_status" class="block text-sm font-medium text-gray-700">Employee Status</label>
+                        {% render_field form.employee_status class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.employee_status.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.employee_status.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Type of Appointment -->
+                    <div>
+                        <label for="id_appointment_type" class="block text-sm font-medium text-gray-700">Type of Appointment</label>
+                        {% render_field form.appointment_type class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.appointment_type.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.appointment_type.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                </div>
+                <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+                    <!-- Date of Birth -->
+                    <div>
+                        <label for="id_date_of_birth" class="block text-sm font-medium text-gray-700">Date of Birth</label>
+                        {% render_field form.date_of_birth class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" type="date" %}
+                        {% if form.date_of_birth.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.date_of_birth.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Gender -->
+                    <div>
+                        <label for="id_gender" class="block text-sm font-medium text-gray-700">Gender</label>
+                        <select id="id_gender" name="gender" class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                            <option value="">Select Gender</option>
+                            <option value="M">Male</option>
+                            <option value="F">Female</option>
+                            <option value="O">Other</option>
+                            <option value="N">Prefer not to say</option>
+                        </select>
+                        {% if form.gender.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.gender.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+                    <!-- Post -->
+                    <div>
+                        <label for="id_post" class="block text-sm font-medium text-gray-700">Post</label>
+                        {% render_field form.post class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.post.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.post.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Department -->
+                    <div>
+                        <label for="id_department" class="block text-sm font-medium text-gray-700">Department</label>
+                        {% render_field form.department class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                        {% if form.department.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.department.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Form Errors -->
+                {% if form.non_field_errors %}
+                <div class="rounded-md bg-red-50 p-4">
+                    <div class="flex">
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">There were errors with your submission</h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                <ul class="list-disc pl-5 space-y-1">
+                                    {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
                                     {% endfor %}
-                                </select>
-                                {% if appointment_form.type_of_appointment.errors %}
-                                    <p class="mt-2 text-sm text-red-600">{{ appointment_form.type_of_appointment.errors.0 }}</p>
-                                {% endif %}
-                            </div>  
-
-                            <!-- First Appointment in Government -->
-                            <div>
-                                <label for="{{ appointment_form.first_appointment_govt.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                    First Appointment in Government
-                                </label>
-                                <input type="date" 
-                                       name="{{ appointment_form.first_appointment_govt.html_name }}"
-                                       id="{{ appointment_form.first_appointment_govt.id_for_label }}"
-                                       class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                       value="{{ appointment_form.first_appointment_govt.value|default:'' }}">
-                                {% if appointment_form.first_appointment_govt.errors %}
-                                    <p class="mt-2 text-sm text-red-600">{{ appointment_form.first_appointment_govt.errors.0 }}</p>
-                                {% endif %}
-                            </div>
-
-                            <!-- First Appointment in UBD -->
-                            <div>
-                                <label for="{{ appointment_form.first_appointment_ubd.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                    First Appointment in UBD
-                                </label>
-                                <input type="date" 
-                                       name="{{ appointment_form.first_appointment_ubd.html_name }}"
-                                       id="{{ appointment_form.first_appointment_ubd.id_for_label }}"
-                                       class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                       value="{{ appointment_form.first_appointment_ubd.value|default:'' }}">
-                                {% if appointment_form.first_appointment_ubd.errors %}
-                                    <p class="mt-2 text-sm text-red-600">{{ appointment_form.first_appointment_ubd.errors.0 }}</p>
-                                {% endif %}
-                            </div>
-
-                            <!-- Faculty/Programme -->
-                            <div>
-                                <label for="{{ appointment_form.faculty_programme.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                    Faculty/Programme
-                                </label>
-                                <input type="text" 
-                                       name="{{ appointment_form.faculty_programme.html_name }}"
-                                       id="{{ appointment_form.faculty_programme.id_for_label }}"
-                                       class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                       value="{{ appointment_form.faculty_programme.value|default:'' }}">
-                                {% if appointment_form.faculty_programme.errors %}
-                                    <p class="mt-2 text-sm text-red-600">{{ appointment_form.faculty_programme.errors.0 }}</p>
-                                {% endif %}
-                            </div>
-
-                            <!-- From Date -->
-                            <div>
-                                <label for="{{ appointment_form.from_date.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                    From Date
-                                </label>
-                                <input type="date" 
-                                       name="{{ appointment_form.from_date.html_name }}"
-                                       id="{{ appointment_form.from_date.id_for_label }}"
-                                       class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                       value="{{ appointment_form.from_date.value|default:'' }}">
-                                {% if appointment_form.from_date.errors %}
-                                    <p class="mt-2 text-sm text-red-600">{{ appointment_form.from_date.errors.0 }}</p>
-                                {% endif %}
-                            </div>
-
-                            <!-- To Date -->
-                            <div>
-                                <label for="{{ appointment_form.to_date.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                    To Date
-                                </label>
-                                <input type="date" 
-                                       name="{{ appointment_form.to_date.html_name }}"
-                                       id="{{ appointment_form.to_date.id_for_label }}"
-                                       class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                       value="{{ appointment_form.to_date.value|default:'' }}">
-                                {% if appointment_form.to_date.errors %}
-                                    <p class="mt-2 text-sm text-red-600">{{ appointment_form.to_date.errors.0 }}</p>
-                                {% endif %}
+                                </ul>
                             </div>
                         </div>
                     </div>
+                </div>
+                {% endif %}
 
-                    <!-- Full Width Fields -->
-                    <!-- Roles -->
+                <!-- Academic Qualifications -->
+                <div class="space-y-6 sm:col-span-2">
+                    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 w-full">
+                        <h3 class="text-lg font-medium leading-6 text-gray-900 mb-6">Academic Qualifications</h3>
+                        <div class="w-full">
+                            {{ qualification_formset.management_form }}
+                            
+                            <!-- Add the template before the table -->
+                            <template id="empty-form-template">
+                                <tr class="qualification-form">
+                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
+                                        <input type="text" 
+                                               name="qualification_set-__prefix__-degree_diploma" 
+                                               id="id_qualification_set-__prefix__-degree_diploma"
+                                               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        <input type="text" 
+                                               name="qualification_set-__prefix__-university_college" 
+                                               id="id_qualification_set-__prefix__-university_college"
+                                               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        <input type="date" 
+                                               name="qualification_set-__prefix__-from_date" 
+                                               id="id_qualification_set-__prefix__-from_date"
+                                               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        <input type="date" 
+                                               name="qualification_set-__prefix__-to_date" 
+                                               id="id_qualification_set-__prefix__-to_date"
+                                               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        <input type="hidden" 
+                                               name="qualification_set-__prefix__-DELETE" 
+                                               id="id_qualification_set-__prefix__-DELETE">
+                                        <button type="button" 
+                                                onclick="window.deleteQualification(this)"
+                                                class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+
+                            <div class="overflow-x-auto ring-1 ring-gray-300 rounded-lg w-full">
+                                <table class="min-w-full divide-y divide-gray-300">
+                                    <thead>
+                                        <tr class="bg-gray-50">
+                                            <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Degree/Diploma</th>
+                                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">University/College</th>
+                                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">From Date</th>
+                                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">To Date</th>
+                                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200 bg-white" id="qualification-formset">
+                                        {% for form in qualification_formset %}
+                                            <tr class="qualification-form {% if form.DELETE.value %}d-none{% endif %}">
+                                                {{ form.id }}
+                                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
+                                                    {{ form.degree_diploma|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
+                                                </td>
+                                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                                    {{ form.university_college|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
+                                                </td>
+                                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                                    {{ form.from_date|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
+                                                </td>
+                                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                                    {{ form.to_date|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
+                                                </td>
+                                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                                    {{ form.DELETE.as_hidden }}
+                                                    <button type="button" 
+                                                            onclick="window.deleteQualification(this)"
+                                                            class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-6 space-y-6">
+                                <div>
+                                    <button type="button" 
+                                            onclick="window.addQualification()"
+                                            class="mt-4 inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                        Add Another Qualification
+                                    </button>
+                                </div>
+
+                                <!-- Roles - Checkbox Group with 2 Columns -->
                     <div class="sm:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Roles</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Roles
+                        </label>
                         <div class="max-h-48 overflow-y-auto p-3 bg-white rounded-md border border-gray-300">
                             <div class="grid grid-cols-2 gap-4">
                                 {% for choice in form.roles.field.queryset %}
@@ -288,6 +396,7 @@
                                         name="roles" 
                                         value="{{ choice.id }}" 
                                         id="role_{{ choice.id }}"
+                                        {% if choice in form.instance.roles.all %}checked{% endif %}
                                         class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
                                     <label for="role_{{ choice.id }}" class="ml-2 text-sm text-gray-900 truncate">
                                         {{ choice.name }}
@@ -301,140 +410,18 @@
                         {% endif %}
                         <p class="mt-1 text-sm text-gray-500">Select all applicable roles</p>
                     </div>
-
-                    <!-- Address -->
-                    <div class="sm:col-span-2">
-                        <label for="id_address" class="block text-sm font-medium text-gray-700">Address</label>
-                        {% render_field form.address class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" rows="3" %}
-                        {% if form.address.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.address.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-            <!-- Form Errors -->
-            {% if form.non_field_errors %}
-            <div class="rounded-md bg-red-50 p-4">
-                <div class="flex">
-                    <div class="ml-3">
-                        <h3 class="text-sm font-medium text-red-800">There were errors with your submission</h3>
-                        <div class="mt-2 text-sm text-red-700">
-                            <ul class="list-disc pl-5 space-y-1">
-                                {% for error in form.non_field_errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- Academic Qualifications -->
-            <div class="space-y-6 sm:col-span-2">
-                <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 w-full">
-                    <h3 class="text-lg font-medium leading-6 text-gray-900 mb-6">Academic Qualifications</h3>
-                    <div class="w-full">
-                        {{ qualification_formset.management_form }}
-                        
-                        <!-- Add the template before the table -->
-                        <template id="empty-form-template">
-                            <tr class="qualification-form">
-                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
-                                    <input type="text" 
-                                           name="qualification_set-__prefix__-degree_diploma" 
-                                           id="id_qualification_set-__prefix__-degree_diploma"
-                                           class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                </td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                    <input type="text" 
-                                           name="qualification_set-__prefix__-university_college" 
-                                           id="id_qualification_set-__prefix__-university_college"
-                                           class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                </td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                    <input type="date" 
-                                           name="qualification_set-__prefix__-from_date" 
-                                           id="id_qualification_set-__prefix__-from_date"
-                                           class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                </td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                    <input type="date" 
-                                           name="qualification_set-__prefix__-to_date" 
-                                           id="id_qualification_set-__prefix__-to_date"
-                                           class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                </td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                    <input type="hidden" 
-                                           name="qualification_set-__prefix__-DELETE" 
-                                           id="id_qualification_set-__prefix__-DELETE">
-                                    <button type="button" 
-                                            onclick="window.deleteQualification(this)"
-                                            class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
-                                        Delete
+                                
+                                <!-- Form Actions -->
+                                <div class="flex items-center justify-end gap-x-6 border-t border-gray-900/10 pt-6">
+                                    <a href="{% url 'employees:employee_list' %}" 
+                                       class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600">
+                                        Cancel
+                                    </a>
+                                    <button type="submit"
+                                            class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                        Create Employee
                                     </button>
-                                </td>
-                            </tr>
-                        </template>
-
-                        <div class="overflow-x-auto ring-1 ring-gray-300 rounded-lg w-full">
-                            <table class="min-w-full divide-y divide-gray-300">
-                                <thead>
-                                    <tr class="bg-gray-50">
-                                        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Degree/Diploma</th>
-                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">University/College</th>
-                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">From Date</th>
-                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">To Date</th>
-                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200 bg-white" id="qualification-formset">
-                                    {% for form in qualification_formset %}
-                                        <tr class="qualification-form {% if form.DELETE.value %}d-none{% endif %}">
-                                            {{ form.id }}
-                                            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
-                                                {{ form.degree_diploma|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
-                                            </td>
-                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                                {{ form.university_college|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
-                                            </td>
-                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                                {{ form.from_date|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
-                                            </td>
-                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                                {{ form.to_date|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
-                                            </td>
-                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                                {{ form.DELETE.as_hidden }}
-                                                <button type="button" 
-                                                        onclick="window.deleteQualification(this)"
-                                                        class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
-                                                    Delete
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="mt-6 space-y-6">
-                            <div>
-                                <button type="button" 
-                                        onclick="window.addQualification()"
-                                        class="mt-4 inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                                    Add Another Qualification
-                                </button>
-                            </div>
-                            
-                            <!-- Form Actions -->
-                            <div class="flex items-center justify-end gap-x-6 border-t border-gray-900/10 pt-6">
-                                <a href="{% url 'employees:employee_list' %}" 
-                                   class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600">
-                                    Cancel
-                                </a>
-                                <button type="submit"
-                                        class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                                    Create Employee
-                                </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -448,4 +435,9 @@
     console.log('Template loaded');
 </script>
 <script src="{% static 'employees/js/employee_create.js' %}"></script>
+{% if not form.errors and not form.non_field_errors %}
+    <script>
+        localStorage.removeItem('draft_qualifications');
+    </script>
+{% endif %}
 {% endblock %}  

@@ -1,7 +1,39 @@
 from django.db import models
 from django.core.exceptions import ValidationError
-from employees.models import Employee, Appointment, AppointmentType, Qualification
+from employees.models import Employee, AppointmentType, Qualification, Department
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+
+class Appointment(models.Model):
+    employee = models.OneToOneField(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name='appointment',
+        null=True,
+        blank=True
+    )
+    type_of_appointment = models.ForeignKey(
+        AppointmentType,
+        on_delete=models.PROTECT,
+        related_name='appointments'
+    )
+    first_appointment_govt = models.DateField(null=True, blank=True)
+    first_appointment_ubd = models.DateField(null=True, blank=True)
+    faculty_programme = models.ForeignKey(
+        Department,
+        on_delete=models.PROTECT,
+        related_name='appointments',
+        verbose_name=_('Faculty/Department')
+    )
+    from_date = models.DateField()
+    to_date = models.DateField()
+
+    def __str__(self):
+        employee_name = self.employee.last_name if self.employee else "No Employee"
+        return f"{self.type_of_appointment.name} - {employee_name} ({self.from_date} to {self.to_date})"
+
+    class Meta:
+        ordering = ['-from_date']
 
 class Module(models.Model):
     title = models.CharField(max_length=100)
@@ -79,7 +111,7 @@ class Appraisal(models.Model):
     last_modified_date = models.DateTimeField(auto_now=True)
     
     # Keep these fields but rename them to clarify they're snapshots
-    appointments_at_time_of_review = models.ManyToManyField(Appointment, blank=True)
+    appointments_at_time_of_review = models.ManyToManyField('Appointment', blank=True)
     post_at_time_of_review = models.CharField(max_length=100, null=True, blank=True)
     
     class Meta:

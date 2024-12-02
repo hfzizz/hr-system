@@ -33,18 +33,12 @@ class Employee(models.Model):
         ON_LEAVE = 'on_leave', _('On Leave')
         INACTIVE = 'inactive', _('Inactive')
 
-    phone_regex = RegexValidator(
-        regex=r'^\+?1?\d{9,15}$',
-        message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed."
-    )
-
     employee_id = models.CharField(max_length=10, unique=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(
-        validators=[phone_regex],
         max_length=15,
         help_text=_('Contact phone number')
     )
@@ -105,6 +99,14 @@ class Employee(models.Model):
         help_text=_('Employee position/job title'),
         blank=True,
         null=True
+    )
+    appointment_type = models.ForeignKey(
+        'AppointmentType',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='employees',
+        help_text=_('Type of employment appointment')
     )
 
     created_at = models.DateTimeField(default=timezone.now)
@@ -176,32 +178,6 @@ class AppointmentType(models.Model):
 
     class Meta:
         ordering = ['name']
-
-class Appointment(models.Model):
-    employee = models.OneToOneField(
-        'Employee',
-        on_delete=models.CASCADE,
-        related_name='appointment',
-        null=True,
-        blank=True
-    )
-    type_of_appointment = models.ForeignKey(
-        AppointmentType,
-        on_delete=models.PROTECT,
-        related_name='appointments'
-    )
-    first_appointment_govt = models.DateField(null=True, blank=True)
-    first_appointment_ubd = models.DateField(null=True, blank=True)
-    faculty_programme = models.CharField(max_length=100)
-    from_date = models.DateField()
-    to_date = models.DateField()
-
-    def __str__(self):
-        employee_name = self.employee.last_name if self.employee else "No Employee"
-        return f"{self.type_of_appointment.name} - {employee_name} ({self.from_date} to {self.to_date})"
-
-    class Meta:
-        ordering = ['-from_date']
 
 class Qualification(models.Model):
     employee = models.ForeignKey(

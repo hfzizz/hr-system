@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Employee Details - HR System{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-900">Employee Details</h1>
+        <div class="flex space-x-4">
+            <a href="{% url 'employees:employee_edit' employee.pk %}" 
+               class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                Edit Employee
+            </a>
+            <a href="{% url 'employees:employee_list' %}" 
+               class="rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-200">
+                Back to List
+            </a>
+        </div>
+    </div>
+
+    <!-- Employee Information -->
+    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <!-- Basic Information -->
+            <div class="space-y-6">
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Basic Information</h3>
+                <div class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Employee ID</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ employee.employee_id }}</dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Username</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ employee.username }}</dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Full Name</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ employee.first_name }} {{ employee.last_name }}</dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Email</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ employee.email }}</dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Phone Number</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ employee.phone_number }}</dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">IC Number</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ employee.ic_no }}</dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">IC Colour</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ employee.ic_colour }}</dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Date of Birth</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ employee.date_of_birth }}</dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Gender</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ employee.get_gender_display }}</dd>
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500">Address</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ employee.address }}</dd>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employment Information -->
+            <div class="mt-8 space-y-6">
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Employment Information</h3>
+                <div class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Department</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ employee.department }}</dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Position</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ employee.post }}</dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Hire Date</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ employee.hire_date }}</dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Employee Status</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ employee.employee_status }}</dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Type of Appointment</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ employee.appointment_type }}</dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Salary</dt>
+                        <dd class="mt-1 text-sm text-gray-900">${{ employee.salary }}</dd>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Roles -->
+            <div class="mt-8 space-y-6">
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Roles</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    {% for role in employee.roles.all %}
+                    <div class="text-sm text-gray-900">{{ role.name }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Academic Qualifications -->
+            <div class="mt-8 space-y-6">
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Academic Qualifications</h3>
+                {% if employee.qualification_set.exists %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-300">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Degree/Diploma</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">University/College</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">From Date</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">To Date</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 bg-white">
+                            {% for qualification in employee.qualification_set.all %}
+                            <tr>
+                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900">{{ qualification.degree_diploma }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ qualification.university_college }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ qualification.from_date }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ qualification.to_date }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-500">No qualifications recorded.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

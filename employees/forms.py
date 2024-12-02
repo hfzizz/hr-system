@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Employee, Appointment, Qualification, AppointmentType
+from .models import Employee, Qualification, AppointmentType
+from appraisals.models import Appointment
 from django.db import models
 from django.forms import modelformset_factory, BaseModelFormSet
 
@@ -18,6 +19,13 @@ class EmployeeForm(forms.ModelForm):
         required=False
     )
     email = forms.EmailField(required=True)
+    appointment_type = forms.ModelChoiceField(
+        queryset=AppointmentType.objects.filter(is_active=True),
+        empty_label="Select Type of Appointment",
+        widget=forms.Select(attrs={
+            'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+        })
+    )
 
     class Meta:
         model = Employee
@@ -35,6 +43,7 @@ class EmployeeForm(forms.ModelForm):
             'post',
             'salary',
             'employee_status',
+            'appointment_type',
             'roles',
             'address',
             'profile_picture',
@@ -55,8 +64,10 @@ class EmployeeForm(forms.ModelForm):
 
     def clean_email(self):
         email = self.cleaned_data['email']
-        if User.objects.filter(email=email).exists():
-            raise forms.ValidationError('This email is already in use.')
+        if self.instance:
+            exists = Employee.objects.filter(email=email).exclude(pk=self.instance.pk).exists()
+            if exists:
+                raise forms.ValidationError("This email is already in use.")
         return email
 
     def __init__(self, *args, **kwargs):

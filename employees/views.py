@@ -4,7 +4,7 @@ from django.views.generic import TemplateView, ListView, CreateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from .models import Employee, Department, Qualification
-from .forms import EmployeeForm, EmployeeProfileForm, AppointmentForm, QualificationForm, QualificationFormSet
+from .forms import EmployeeForm, EmployeeProfileForm, QualificationForm, QualificationFormSet
 from django.views.generic.edit import CreateView
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import redirect
@@ -111,10 +111,6 @@ class EmployeeCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView
         context = super().get_context_data(**kwargs)
         context['title'] = 'Create Employee'
         context['button_label'] = 'Create'
-        if self.request.POST:
-            context['appointment_form'] = AppointmentForm(self.request.POST)
-        else:
-            context['appointment_form'] = AppointmentForm()
         return context
 
     def form_valid(self, form):
@@ -304,5 +300,10 @@ def employee_create(request):
         'qualification_formset': qualification_formset,
         'empty_form': empty_form,
     })
+
+class EmployeeDetailView(DetailView):
+    model = Employee
+    template_name = 'employees/employee_detail.html'
+    context_object_name = 'employee'
 
 

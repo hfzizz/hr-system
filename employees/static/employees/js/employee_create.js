@@ -10,6 +10,12 @@ document.addEventListener('DOMContentLoaded', function() {
     initializePasswordFunctions();
     initializeQualificationFunctions();
     
+    // Load saved qualifications if they exist
+    loadSavedQualifications();
+    
+    // Add form submission handler
+    document.querySelector('form').addEventListener('submit', saveQualifications);
+    
     console.log('Checking for template:', document.getElementById('empty-form-template'));
     
     function initializeQualificationFunctions() {
@@ -104,8 +110,82 @@ document.addEventListener('DOMContentLoaded', function() {
                 totalFormsInput.value = visibleCount;
             }
         }
+
+        // Add auto-save functionality
+        document.getElementById('qualification-formset').addEventListener('change', function() {
+            saveQualifications();
+        });
     }
 });
+
+function loadSavedQualifications() {
+    const savedData = localStorage.getItem('draft_qualifications');
+    if (!savedData) return;
+
+    try {
+        const qualifications = JSON.parse(savedData);
+        const tbody = document.getElementById('qualification-formset');
+        
+        // Clear existing forms except the first one if it's empty
+        const existingForms = tbody.querySelectorAll('.qualification-form');
+        if (existingForms.length > 0) {
+            const firstForm = existingForms[0];
+            const isEmpty = Array.from(firstForm.querySelectorAll('input[type="text"], input[type="date"]'))
+                .every(input => !input.value);
+            
+            if (isEmpty) {
+                while (tbody.children.length > 0) {
+                    tbody.removeChild(tbody.lastChild);
+                }
+            }
+        }
+
+        // Add saved qualifications
+        qualifications.forEach(qual => {
+            window.addQualification();
+            const newRow = tbody.lastElementChild;
+            
+            newRow.querySelector('[name$="-degree_diploma"]').value = qual.degree_diploma || '';
+            newRow.querySelector('[name$="-university_college"]').value = qual.university_college || '';
+            newRow.querySelector('[name$="-from_date"]').value = qual.from_date || '';
+            newRow.querySelector('[name$="-to_date"]').value = qual.to_date || '';
+        });
+
+        // Update total forms count
+        const totalFormsInput = document.getElementById('id_qualification_set-TOTAL_FORMS');
+        if (totalFormsInput) {
+            totalFormsInput.value = qualifications.length;
+        }
+    } catch (error) {
+        console.error('Error loading saved qualifications:', error);
+        localStorage.removeItem('draft_qualifications');
+    }
+}
+
+function saveQualifications() {
+    const qualifications = [];
+    document.querySelectorAll('.qualification-form').forEach(row => {
+        if (row.style.display !== 'none') {
+            const qualification = {
+                degree_diploma: row.querySelector('[name$="-degree_diploma"]').value,
+                university_college: row.querySelector('[name$="-university_college"]').value,
+                from_date: row.querySelector('[name$="-from_date"]').value,
+                to_date: row.querySelector('[name$="-to_date"]').value
+            };
+            
+            // Only save if at least one field is filled
+            if (Object.values(qualification).some(value => value)) {
+                qualifications.push(qualification);
+            }
+        }
+    });
+
+    if (qualifications.length > 0) {
+        localStorage.setItem('draft_qualifications', JSON.stringify(qualifications));
+    } else {
+        localStorage.removeItem('draft_qualifications');
+    }
+}
 
 function initializePasswordFunctions() {
     window.generatePassword = function() {
