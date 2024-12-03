@@ -26,6 +26,7 @@ from .models import ContractRenewalStatus
 from .models import ContractNotification
 from django.contrib.auth.models import Group
 from django.urls import reverse
+from django.db.models import Q
 
 
 class ContractSubmissionView(LoginRequiredMixin, CreateView):

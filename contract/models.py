@@ -100,6 +100,7 @@ class ContractNotification(models.Model):
     read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     contract = models.ForeignKey('Contract', on_delete=models.CASCADE, null=True)
+    metadata = models.JSONField(null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']
