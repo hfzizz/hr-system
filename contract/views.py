@@ -23,6 +23,10 @@ from employees.models import Department
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from .models import ContractRenewalStatus
+from .models import ContractNotification
+from django.contrib.auth.models import Group
+from django.urls import reverse
+
 
 class ContractSubmissionView(LoginRequiredMixin, CreateView):
     template_name = 'contract/submission.html'
@@ -63,47 +67,24 @@ class ContractSubmissionView(LoginRequiredMixin, CreateView):
         return context
 
     def form_valid(self, form):
-        try:
-            contract = form.save(commit=False)
-            
-            # Save all the form data exactly as submitted
-            contract.employee = form.cleaned_data['employee']
-            contract.first_name = contract.employee.first_name
-            contract.last_name = contract.employee.last_name
-            contract.ic_no = contract.employee.ic_no
-            contract.ic_colour = contract.employee.ic_colour
-            contract.phone_number = contract.employee.phone_number
-            contract.department = contract.employee.department
-            
-            # Save all the editable fields from the form
-            contract.present_post = form.cleaned_data['present_post']
-            contract.salary_scale_division = form.cleaned_data['salary_scale_division']
-            contract.incremental_date = form.cleaned_data['incremental_date']
-            contract.date_of_last_appraisal = form.cleaned_data['date_of_last_appraisal']
-            contract.current_enrollment = form.cleaned_data['current_enrollment']
-            contract.higher_degree_students_supervised = form.cleaned_data['higher_degree_students_supervised']
-            contract.last_research = form.cleaned_data['last_research']
-            contract.ongoing_research = form.cleaned_data['ongoing_research']
-            contract.publications = form.cleaned_data['publications']
-            contract.attendance = form.cleaned_data['attendance']
-            contract.conference_papers = form.cleaned_data['conference_papers']
-            contract.consultancy_work = form.cleaned_data['consultancy_work']
-            contract.administrative_posts = form.cleaned_data['administrative_posts']
-            contract.participation_within_university = form.cleaned_data['participation_within_university']
-            contract.participation_outside_university = form.cleaned_data['participation_outside_university']
-            contract.objectives_next_year = form.cleaned_data['objectives_next_year']
-            
-            # Save academic qualifications exactly as submitted
-            if 'academic_qualifications_text' in form.cleaned_data:
-                contract.academic_qualifications_text = form.cleaned_data['academic_qualifications_text']
-            
-            contract.save()
-            messages.success(self.request, "Contract renewal submitted successfully.")
-            return super().form_valid(form)
-            
-        except Exception as e:
-            messages.error(self.request, f"Error submitting contract renewal: {str(e)}")
-            return super().form_invalid(form)
+        form.instance.employee = self.request.user.employee
+        form.instance.status = 'pending'
+        response = super().form_valid(form)
+        
+        # Create notification for HR users
+        hr_users = Group.objects.get(name='HR').user_set.all()
+        submission_date = form.instance.submission_date.strftime('%B %d, %Y')
+        message = f"{self.request.user.employee.get_full_name()} has submitted a contract renewal form on {submission_date}"
+        
+        for hr_user in hr_users:
+            ContractNotification.objects.create(
+                employee=hr_user.employee,
+                message=message,
+                read=False,
+                contract=form.instance
+            )
+        
+        return response
 
     def post(self, request, *args, **kwargs):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -115,6 +96,23 @@ class ContractSubmissionView(LoginRequiredMixin, CreateView):
                 'message': f"Contract system has been {'enabled' if contract_status else 'disabled'}"
             })
         return super().post(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        # Check if user has a pending submission
+        existing_submission = Contract.objects.filter(
+            employee=request.user.employee,
+            status__in=['pending', 'smt_review']
+        ).first()
+        
+        if existing_submission:
+            return render(request, 'contract/submission_exists.html', {
+                'submission': existing_submission
+            })
+            
+        return super().get(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse_lazy('contract:thank_you')
 
 def get_employee_data(request, employee_id):
     try:
@@ -216,6 +214,8 @@ def get_employee_data(request, employee_id):
                     if enrollment not in seen_enrollments:
                         seen_enrollments.add(enrollment)
                         current_enrollments.append(enrollment)
+        
+        contract_count = Contract.objects.filter(employee=employee).count() + 1
 
         combined_data = {
             # Basic information
@@ -226,6 +226,7 @@ def get_employee_data(request, employee_id):
             'phone_number': employee.phone_number,
             'department': employee.department.name if employee.department else '',
             'department_id': employee.department.id if employee.department else '',
+            'contract_count': contract_count, 
             
             # Academic qualifications
             'academic_qualifications_text': json.dumps(all_qualifications),
@@ -296,11 +297,15 @@ class ContractListView(LoginRequiredMixin, View):
             # Get contract renewal status
             status = ContractRenewalStatus.objects.filter(employee=employee).first()
             
+            # Get number of contract submissions plus the default contract (1)
+            contract_count = Contract.objects.filter(employee=employee).count() + 1
+            
             employees_data.append({
                 'employee': employee,
                 'renewal_date': renewal_date,
                 'months_remaining': months_remaining,
-                'is_enabled': status.is_enabled if status else False
+                'is_enabled': status.is_enabled if status else False,
+                'contract_count': contract_count
             })
 
         context = {
@@ -331,6 +336,28 @@ class ContractReviewView(LoginRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         contract = self.get_object()
+        employee = contract.employee
+        
+        # Get the contract count from the specific submission being reviewed
+        submissions_before = Contract.objects.filter(
+            employee=contract.employee,
+            submission_date__lt=contract.submission_date
+        ).count()
+        contract_count = submissions_before + 1
+        
+        # Add personal details to context
+        context.update({
+            'contract': contract,
+            'first_name': employee.first_name,
+            'last_name': employee.last_name,
+            'ic_no': employee.ic_no,
+            'ic_colour': employee.ic_colour,
+            'phone_number': employee.phone_number,
+            'department': employee.department.name if employee.department else '',
+            'contract_count': contract_count,
+            'academic_qualifications': json.loads(contract.academic_qualifications_text) if contract.academic_qualifications_text else [],
+            'is_review': True
+        })
         
         # Get all appraisals for this employee
         appraisals = Appraisal.objects.filter(
@@ -339,7 +366,6 @@ class ContractReviewView(LoginRequiredMixin, UpdateView):
         
         # Format appraiser comments from all appraisals
         appraiser_comments = []
-        
         for appraisal in appraisals:
             if appraisal.appraiser_comments and appraisal.appraiser_comments.strip():
                 comment_data = {
@@ -348,22 +374,8 @@ class ContractReviewView(LoginRequiredMixin, UpdateView):
                     'appraiser_name': appraisal.appraiser.get_full_name() if appraisal.appraiser else 'Unknown Appraiser'
                 }
                 appraiser_comments.append(comment_data)
-
-        # Add current contract comments if they exist
-        if contract.appraiser_comments and contract.appraiser_comments.strip():
-            contract_comment = {
-                'comment': contract.appraiser_comments.strip(),
-                'date': contract.submission_date.strftime('%Y-%m-%d'),
-                'appraiser_name': 'Contract Reviewer'
-            }
-            appraiser_comments.append(contract_comment)
-
-        context.update({
-            'contract': contract,
-            'academic_qualifications': json.loads(contract.academic_qualifications_text) if contract.academic_qualifications_text else [],
-            'appraiser_comments': appraiser_comments,
-            'is_review': True
-        })
+        
+        context['appraiser_comments'] = appraiser_comments
         
         return context
     
@@ -420,27 +432,123 @@ def enable_contract(request):
         return JsonResponse({'error': str(e)}, status=400)
 
 @login_required
-def send_contract_notifications(request):
+@require_POST
+def send_notification(request):
     if not request.user.groups.filter(name='HR').exists():
         return JsonResponse({'error': 'Unauthorized'}, status=403)
     
     try:
-        # Get all employees with enabled contract renewal
-        enabled_statuses = ContractRenewalStatus.objects.filter(is_enabled=True)
+        # Get all contract employees with enabled contract renewal status
+        contract_employees = Employee.objects.filter(
+            type_of_appointment='Contract',
+            contractrenewalstatus__is_enabled=True
+        ).select_related('department')
         
-        notification_count = 0
-        for status in enabled_statuses:
-            # Create notification for each employee
-            ContractNotification.objects.create(
-                employee=status.employee,
-                message="Your contract renewal is due. Please submit your renewal application."
+        today = timezone.now().date()
+        notifications_sent = 0
+        
+        for employee in contract_employees:
+            # Calculate next renewal date
+            renewal_date = employee.hire_date + relativedelta(years=3)
+            while renewal_date < today:
+                renewal_date += relativedelta(years=3)
+            
+            # Calculate months remaining
+            months_remaining = ((renewal_date.year - today.year) * 12 + 
+                              renewal_date.month - today.month)
+            
+            # Get the correct URL using reverse()
+            submission_url = '/contract/form/'
+            
+            # Create notification with link to contract renewal form
+            message = (
+                f"Your contract renewal is due on {renewal_date.strftime('%B %d, %Y')}. "
+                f"You have {months_remaining} months remaining. "
+                "Please submit your contract renewal application. Use the link below:<br/>"
+                f'<a href="{submission_url}" class="text-blue-600 hover:underline">Click here to submit</a>'
             )
-            notification_count += 1
+            
+            # Create notification
+            ContractNotification.objects.create(
+                employee=employee,
+                message=message
+            )
+            notifications_sent += 1
         
-        messages.success(request, f'Notifications sent to {notification_count} employees.')
-        return JsonResponse({
-            'status': 'success',
-            'count': notification_count
-        })
+        if notifications_sent > 0:
+            return JsonResponse({
+                'status': 'success',
+                'message': f'Notifications sent to {notifications_sent} employees'
+            })
+        else:
+            return JsonResponse({
+                'status': 'info',
+                'message': 'No employees with enabled contract renewal found'
+            })
+        
+    except Exception as e:
+        print(f"Error sending notifications: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=400)
+
+@login_required
+@require_POST
+def delete_notification(request, notification_id):
+    try:
+        notification = ContractNotification.objects.get(
+            id=notification_id,
+            employee__user=request.user
+        )
+        notification.delete()
+        return JsonResponse({'status': 'success'})
+    except ContractNotification.DoesNotExist:
+        return JsonResponse({'error': 'Notification not found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+class NotificationsView(LoginRequiredMixin, ListView):
+    template_name = 'contract/notifications.html'
+    context_object_name = 'notifications'
+    
+    def get_queryset(self):
+        return ContractNotification.objects.filter(
+            employee__user=self.request.user
+        ).order_by('-created_at')
+    
+    def get(self, request, *args, **kwargs):
+        # Mark all notifications as read
+        ContractNotification.objects.filter(
+            employee__user=request.user,
+            read=False
+        ).update(read=True)
+        return super().get(request, *args, **kwargs)
+
+@login_required
+@require_POST
+def forward_to_smt(request, contract_id):
+    if not request.user.groups.filter(name='HR').exists():
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
+    try:
+        contract = Contract.objects.get(id=contract_id)
+        contract.status = 'smt_review'
+        contract.save()
+        
+        return JsonResponse({'status': 'success'})
+    except Contract.DoesNotExist:
+        return JsonResponse({'error': 'Contract not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+@login_required
+@require_POST
+def mark_notification_read(request, notification_id):
+    try:
+        notification = ContractNotification.objects.get(
+            id=notification_id,
+            employee=request.user.employee
+        )
+        notification.read = True
+        notification.save()
+        return JsonResponse({'status': 'success'})
+    except ContractNotification.DoesNotExist:
+        return JsonResponse({'error': 'Notification not found'}, status=404)

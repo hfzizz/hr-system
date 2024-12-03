@@ -41,6 +41,9 @@ class ContractRenewalForm(forms.ModelForm):
             'participation_outside_university',
             'objectives_next_year',
             'appraiser_comments',
+            'achievements_last_contract',
+            'achievements_proposal',
+            'other_matters',
         ]
         widgets = {
             'academic_qualifications_text': forms.Textarea(attrs={'rows': 4}),
@@ -56,6 +59,9 @@ class ContractRenewalForm(forms.ModelForm):
             'participation_within_university': forms.Textarea(attrs={'rows': 4}),
             'participation_outside_university': forms.Textarea(attrs={'rows': 4}),
             'objectives_next_year': forms.Textarea(attrs={'rows': 4}),
+            'achievements_last_contract': forms.Textarea(attrs={'rows': 4, 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm'}),
+            'achievements_proposal': forms.Textarea(attrs={'rows': 4, 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm'}),
+            'other_matters': forms.Textarea(attrs={'rows': 4, 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm'}),
         }
 
     def __init__(self, *args, **kwargs):

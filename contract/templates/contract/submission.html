@@ -55,6 +55,24 @@
                             <input type="hidden" name="department" class="department-id">
                         </div>
                         <div>
+                            <label class="block text-sm font-medium text-gray-700">Number of Contracts</label>
+                            <input type="text" 
+                                   name="contract_count" 
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" 
+                                   readonly>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Type of contract applied *</label>
+                            <select name="contract_type" 
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="">Select contract type</option>
+                                <option value="RENEWAL_3">Renewal of contract (3 years)</option>
+                                <option value="EXTENSION_1">Extension of current contract (1 year)</option>
+                                <option value="LOCAL_RENEWAL">New/Renewal of contract for local staff</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+                        <div>
                             <label class="block text-sm font-medium text-gray-700">Present Post</label>
                             {{ form.present_post }}
                         </div>
@@ -128,8 +146,13 @@
 
                 <!-- Research Section -->
                 <div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Research and Publications</h3>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Research, Consultancy and Publications</h3>
                     <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Consultancy Work</label>
+                            {{ form.consultancy_work }}
+                        </div>
+
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Research History</label>
                             <p class="mt-1 text-sm text-gray-500">Include completed research projects</p>
@@ -187,11 +210,6 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Consultancy Work</label>
-                            {{ form.consultancy_work }}
-                        </div>
-
-                        <div>
                             <label class="block text-sm font-medium text-gray-700">Administrative Posts</label>
                             {{ form.administrative_posts }}
                         </div>
@@ -200,7 +218,7 @@
 
                 <!-- Participation Section -->
                 <div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">University Participation</h3>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Others Activities</h3>
                     <div class="space-y-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Participation Within University</label>
@@ -216,10 +234,9 @@
 
                 <!-- Future Plans Section -->
                 <div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Future Plans</h3>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Teaching</h3>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Objectives for Next Year</label>
-                        <p class="mt-1 text-sm text-gray-500">Outline your professional goals and objectives</p>
+                        <label class="block text-sm font-medium text-gray-700">Future Plans</label>
                         {{ form.objectives_next_year }}
                     </div>
                 </div>
@@ -232,6 +249,31 @@
                         <div class="mt-1 space-y-4" id="appraiserCommentsHistory">
                             <!-- Comments will be inserted here dynamically -->
                         </div>
+                    </div>
+                </div>
+
+                <!-- Achievements Section -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Achievements</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">What have you achieved in the last contract for Teaching / Research / Administrative Duties?</label>
+                            {{ form.achievements_last_contract }}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">What do you propose to undertake and achieve if your contract is renewed?</label>
+                            {{ form.achievements_proposal }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Others Section -->
+                <div class="mt-8">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Others</h3>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Any other matters you wish to highlight?</label>
+                        {{ form.other_matters }}
                     </div>
                 </div>
             </div>

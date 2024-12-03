@@ -6,8 +6,16 @@ from appraisals.models import Module, Membership
 class Contract(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
+        ('smt_review', 'Currently under SMT Review'),
         ('approved', 'Approved'),
-        ('rejected', 'Rejected')
+        ('rejected', 'Rejected'),
+    ]
+    
+    CONTRACT_TYPE_CHOICES = [
+        ('RENEWAL_3', 'Renewal of contract (3 years)'),
+        ('EXTENSION_1', 'Extension of current contract (1 year)'),
+        ('LOCAL_RENEWAL', 'New/Renewal of contract for local staff'),
+        ('OTHER', 'Other'),
     ]
     
     # Personal Details (from Employee model)
@@ -20,7 +28,12 @@ class Contract(models.Model):
     
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='contracts')
     submission_date = models.DateTimeField(default=timezone.now)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+        verbose_name='Contract Status'
+    )
     
     # Fields from Appraisal model
     present_post = models.CharField(max_length=100, null=True, blank=True)
@@ -43,6 +56,28 @@ class Contract(models.Model):
     participation_outside_university = models.TextField(blank=True, null=True)
     objectives_next_year = models.TextField(blank=True, null=True)
     appraiser_comments = models.TextField(blank=True, null=True)
+    contract_type = models.CharField(
+        max_length=20,
+        choices=CONTRACT_TYPE_CHOICES,
+        verbose_name='Type of contract applied',
+        default='RENEWAL_3'
+    )
+    
+    # Achievement Section
+    achievements_last_contract = models.TextField(
+        verbose_name="What have you achieved in the last contract for Teaching / Research / Administrative Duties?",
+        blank=True
+    )
+    achievements_proposal = models.TextField(
+        verbose_name="What do you propose to undertake and achieve if your contract is renewed?",
+        blank=True
+    )
+    
+    # Others Section
+    other_matters = models.TextField(
+        verbose_name="Any other matters you wish to highlight?",
+        blank=True
+    )
 
     class Meta:
         ordering = ['-submission_date']
@@ -54,6 +89,20 @@ class ContractRenewalStatus(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     is_enabled = models.BooleanField(default=False)
     enabled_date = models.DateTimeField(auto_now=True)
+    contract_count = models.IntegerField(default=1)
 
     class Meta:
         verbose_name_plural = "Contract Renewal Statuses"
+
+class ContractNotification(models.Model):
+    employee = models.ForeignKey('employees.Employee', on_delete=models.CASCADE)
+    message = models.TextField()
+    read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    contract = models.ForeignKey('Contract', on_delete=models.CASCADE, null=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Contract Notification for {self.employee.get_full_name()} ({self.created_at.date()})"

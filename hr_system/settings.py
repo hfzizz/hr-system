@@ -77,6 +77,7 @@ TEMPLATES = [
                 'appraisals.context_processors.hr_context',
                 'contract.context_processors.contract_status',
                 'appraisals.views.appraisal_context_processor',
+                'contract.context_processors.notifications',
             ],
         },
     },
@@ -120,7 +121,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Brunei'
 
 USE_I18N = True
 
