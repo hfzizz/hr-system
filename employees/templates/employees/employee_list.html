@@ -224,8 +224,9 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
-{% block extra_js %}
+{% block javascript %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Load saved column preferences or set defaults
@@ -285,7 +286,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusFilter = document.getElementById('status-filter');
     const positionFilter = document.getElementById('position-filter');
     const appointmentFilter = document.getElementById('appointment-filter');
-    const tableRows = document.querySelectorAll('#employee-table tbody tr');
 
     function filterTable() {
         const searchTerm = searchInput.value.toLowerCase();
@@ -294,67 +294,87 @@ document.addEventListener('DOMContentLoaded', function() {
         const positionValue = positionFilter.value.toLowerCase();
         const appointmentValue = appointmentFilter.value.toLowerCase();
 
+        // Get all rows except the empty-message row
+        const tableRows = Array.from(document.querySelectorAll('#employee-table tbody tr')).filter(row => !row.classList.contains('empty-row'));
+
+        let visibleCount = 0;
+
         tableRows.forEach(row => {
-            if (row.classList.contains('empty-row')) return;
+            // Get text content for each field, with null checks
+            const employeeId = row.querySelector('[data-column="employee_id"]')?.textContent?.toLowerCase() || '';
+            const name = row.querySelector('td:nth-child(2)')?.textContent?.toLowerCase() || '';
+            const email = row.querySelector('[data-column="email"]')?.textContent?.toLowerCase() || '';
+            const department = row.querySelector('[data-column="department"]')?.textContent?.toLowerCase() || '';
+            const status = row.querySelector('[data-column="status"] span')?.textContent?.toLowerCase() || '';
+            const position = row.querySelector('[data-column="post"]')?.textContent?.toLowerCase() || '';
+            const appointment = row.querySelector('[data-column="type_of_appointment"]')?.textContent?.toLowerCase() || '';
 
-            const name = row.querySelector('[data-column="name"]').textContent.toLowerCase();
-            const email = row.querySelector('[data-column="email"]').textContent.toLowerCase();
-            const department = row.querySelector('[data-column="department"]').textContent.toLowerCase();
-            const status = row.querySelector('[data-column="status"]').textContent.toLowerCase();
-            const post = row.querySelector('[data-column="post"]').textContent.toLowerCase();
-            const employeeId = row.querySelector('[data-column="employee_id"]').textContent.toLowerCase();
-            const typeOfAppointment = row.querySelector('[data-column="type_of_appointment"]')?.textContent.toLowerCase() || '';
-
+            // Search match
             const matchesSearch = searchTerm === '' || 
                 name.includes(searchTerm) || 
                 email.includes(searchTerm) || 
                 employeeId.includes(searchTerm);
 
-            const matchesDepartment = departmentValue === '' || department === departmentValue;
+            // Filter matches
+            const matchesDepartment = departmentValue === '' || department.includes(departmentValue);
             const matchesStatus = statusValue === '' || status.includes(statusValue);
-            const matchesPosition = positionValue === '' || post === positionValue;
-            const matchesAppointment = appointmentValue === '' || typeOfAppointment.includes(appointmentValue);
+            const matchesPosition = positionValue === '' || position.includes(positionValue);
+            const matchesAppointment = appointmentValue === '' || appointment.includes(appointmentValue);
 
+            // Show/hide row based on all conditions
             if (matchesSearch && matchesDepartment && matchesStatus && matchesPosition && matchesAppointment) {
-                row.classList.remove('hidden');
+                row.style.display = '';
+                visibleCount++;
             } else {
-                row.classList.add('hidden');
+                row.style.display = 'none';
             }
         });
 
-        // Show/hide empty state message
-        const visibleRows = document.querySelectorAll('#employee-table tbody tr:not(.hidden):not(.empty-row)');
+        // Show/hide empty message
         const emptyMessage = document.querySelector('.empty-row');
-        if (visibleRows.length === 0 && emptyMessage) {
-            emptyMessage.classList.remove('hidden');
-        } else if (emptyMessage) {
-            emptyMessage.classList.add('hidden');
+        if (emptyMessage) {
+            emptyMessage.style.display = visibleCount === 0 ? '' : 'none';
         }
     }
 
-    // Add event listeners
-    searchInput.addEventListener('input', filterTable);
-    departmentFilter.addEventListener('change', filterTable);
-    statusFilter.addEventListener('change', filterTable);
-    positionFilter.addEventListener('change', filterTable);
-    appointmentFilter.addEventListener('change', filterTable);
-
-    // Add debounce to search for better performance
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
+    // Add event listeners with console logs for debugging
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            console.log('Search input:', e.target.value);
+            filterTable();
+        });
     }
 
-    const debouncedSearch = debounce(() => filterTable(), 300);
-    searchInput.addEventListener('input', debouncedSearch);
+    if (departmentFilter) {
+        departmentFilter.addEventListener('change', function(e) {
+            console.log('Department filter:', e.target.value);
+            filterTable();
+        });
+    }
+
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function(e) {
+            console.log('Status filter:', e.target.value);
+            filterTable();
+        });
+    }
+
+    if (positionFilter) {
+        positionFilter.addEventListener('change', function(e) {
+            console.log('Position filter:', e.target.value);
+            filterTable();
+        });
+    }
+
+    if (appointmentFilter) {
+        appointmentFilter.addEventListener('change', function(e) {
+            console.log('Appointment filter:', e.target.value);
+            filterTable();
+        });
+    }
+
+    // Initial filter
+    filterTable();
 });
 </script>
 {% endblock %}
-{% endblock %} 
