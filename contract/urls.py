@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ContractSubmissionView, get_employee_data, ContractListView, ContractDeleteView, ContractReviewView, ThankYouView, ViewSubmissionsView, enable_contract, send_notification, NotificationsView, delete_notification, forward_to_smt, mark_notification_read
+from .views import ContractSubmissionView, get_employee_data, ContractListView, ContractDeleteView, ContractReviewView, ThankYouView, ViewSubmissionsView, enable_contract, send_notification, NotificationsView, delete_notification, forward_to_smt, mark_notification_read, ViewAllSubmissionsView, EmployeeContractView, ContractRedirectView, ContractDetailView
 
 app_name = 'contract'
 
@@ -17,4 +17,8 @@ urlpatterns = [
     path('delete-notification/<int:notification_id>/', delete_notification, name='delete_notification'),
     path('forward-to-smt/<int:contract_id>/', forward_to_smt, name='forward_to_smt'),
     path('notifications/<int:notification_id>/mark-read/', mark_notification_read, name='mark_notification_read'),
+    path('all-submissions/', ViewAllSubmissionsView.as_view(), name='view_all_submissions'),
+    path('employee-contracts/', EmployeeContractView.as_view(), name='employee_contracts'),
+    path('redirect/', ContractRedirectView.as_view(), name='redirect'),
+    path('contract/view/<int:pk>/', ContractDetailView.as_view(), name='contract_detail'),
 ]

@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.views.generic import TemplateView, CreateView, ListView, UpdateView
+from django.views.generic import TemplateView, CreateView, ListView, UpdateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.http import JsonResponse, HttpResponseForbidden
 from django.core.cache import cache
@@ -134,8 +134,21 @@ def get_employee_data(request, employee_id):
             """
             Process fields that might contain status indicators
             Keep ONGOING items unless they have a FINISHED status
+            Remove duplicates (case-insensitive and punctuation-insensitive)
             """
             status_tracker = {}
+            seen_items = set()
+            
+            def normalize_text(text):
+                """Normalize text for comparison by removing punctuation and extra spaces"""
+                import re
+                # Remove status indicators before normalization
+                text = text.replace('(ONGOING)', '').replace('(FINISHED)', '')
+                # Remove all punctuation and convert to lowercase
+                text = re.sub(r'[^\w\s]', '', text.lower())
+                # Normalize whitespace
+                text = ' '.join(text.split())
+                return text
             
             for appraisal in appraisals:
                 content = getattr(appraisal, field_name, '') or ''
@@ -149,27 +162,70 @@ def get_employee_data(request, employee_id):
                     is_finished = '(FINISHED)' in item
                     is_ongoing = '(ONGOING)' in item
                     
-                    if base_item not in status_tracker:
-                        status_tracker[base_item] = item
+                    # Normalize for comparison
+                    normalized = normalize_text(base_item)
+                    
+                    if normalized not in seen_items:
+                        seen_items.add(normalized)
+                        status_tracker[normalized] = {
+                            'text': base_item,
+                            'status': 'FINISHED' if is_finished else ('ONGOING' if is_ongoing else None),
+                            'original': item
+                        }
                     elif is_finished:
-                        status_tracker[base_item] = item
-                    elif is_ongoing and not '(FINISHED)' in status_tracker[base_item]:
-                        status_tracker[base_item] = item
+                        # Update status to FINISHED if it wasn't already
+                        status_tracker[normalized]['status'] = 'FINISHED'
+                        status_tracker[normalized]['original'] = item
+                    elif is_ongoing and status_tracker[normalized]['status'] != 'FINISHED':
+                        # Update to ONGOING only if not FINISHED
+                        status_tracker[normalized]['status'] = 'ONGOING'
+                        status_tracker[normalized]['original'] = item
 
+            # Sort items by status and original text
             finished_items = []
             ongoing_items = []
             regular_items = []
             
-            for item in status_tracker.values():
-                if '(FINISHED)' in item:
-                    finished_items.append(item)
-                elif '(ONGOING)' in item:
-                    ongoing_items.append(item)
+            for item_data in status_tracker.values():
+                if item_data['status'] == 'FINISHED':
+                    finished_items.append(item_data['original'])
+                elif item_data['status'] == 'ONGOING':
+                    ongoing_items.append(item_data['original'])
                 else:
-                    regular_items.append(item)
+                    regular_items.append(item_data['original'])
             
             all_items = finished_items + ongoing_items + regular_items
             return '\n'.join(all_items) if all_items else ''
+
+        def process_objectives():
+            """
+            Combine all 'Teaching and Research Objectives for Next Year' entries
+            Remove duplicates (case-insensitive and punctuation-insensitive)
+            """
+            seen_objectives = set()
+            unique_objectives = []
+            
+            def normalize_text(text):
+                """Normalize text for comparison by removing punctuation and extra spaces"""
+                import re
+                # Remove all punctuation and convert to lowercase
+                text = re.sub(r'[^\w\s]', '', text.lower())
+                # Normalize whitespace
+                text = ' '.join(text.split())
+                return text
+            
+            for appraisal in appraisals:
+                if appraisal.objectives_next_year and appraisal.objectives_next_year.strip():
+                    objectives = [obj.strip() for obj in appraisal.objectives_next_year.split('\n') if obj.strip()]
+                    
+                    for objective in objectives:
+                        # Normalize for comparison
+                        normalized = normalize_text(objective)
+                        if normalized not in seen_objectives:
+                            seen_objectives.add(normalized)
+                            unique_objectives.append(objective)
+            
+            return '\n'.join(unique_objectives) if unique_objectives else ''
 
         # Process appraiser comments
         appraiser_comments_history = []
@@ -253,7 +309,7 @@ def get_employee_data(request, employee_id):
             # Latest values
             'present_post': latest_appraisal.present_post,
             'salary_scale_division': latest_appraisal.salary_scale_division,
-            'objectives_next_year': latest_appraisal.objectives_next_year,
+            'objectives_next_year': process_objectives(),
             'incremental_date': latest_appraisal.incremental_date.strftime('%Y-%m-%d') if latest_appraisal.incremental_date else '',
             'date_of_last_appraisal': latest_appraisal.date_of_last_appraisal.strftime('%Y-%m-%d') if latest_appraisal.date_of_last_appraisal else '',
         }
@@ -553,3 +609,122 @@ def mark_notification_read(request, notification_id):
         return JsonResponse({'status': 'success'})
     except ContractNotification.DoesNotExist:
         return JsonResponse({'error': 'Notification not found'}, status=404)
+
+class ViewAllSubmissionsView(LoginRequiredMixin, View):
+    template_name = 'contract/all_submissions.html'
+
+    def get(self, request):
+        if not request.user.groups.filter(name='HR').exists():
+            return redirect('contract:submission')
+        
+        today = datetime.now().date()
+        
+        # Get contracts in process (smt_review, approved, rejected)
+        in_process_contracts = Contract.objects.filter(
+            status__in=['smt_review', 'approved', 'rejected']
+        ).select_related('employee', 'employee__department').order_by('-submission_date')
+
+        # Get pending contracts
+        pending_contracts = Contract.objects.filter(
+            status='pending'
+        ).select_related('employee', 'employee__department').order_by('-submission_date')
+
+        # Calculate months remaining for each contract
+        for contracts in [in_process_contracts, pending_contracts]:
+            for contract in contracts:
+                renewal_date = contract.employee.hire_date + relativedelta(years=3)
+                while renewal_date < today:
+                    renewal_date += relativedelta(years=3)
+                
+                r_date = datetime(renewal_date.year, renewal_date.month, 1)
+                t_date = datetime(today.year, today.month, 1)
+                
+                contract.months_remaining = ((r_date.year - t_date.year) * 12 + 
+                                          r_date.month - t_date.month)
+
+        context = {
+            'in_process_contracts': in_process_contracts,
+            'pending_contracts': pending_contracts,
+            'departments': Department.objects.all()
+        }
+        
+        return render(request, self.template_name, context)
+
+class EmployeeContractView(LoginRequiredMixin, View):
+    template_name = 'contract/employee_contracts.html'
+
+    def get(self, request):
+        if request.user.groups.filter(name='HR').exists():
+            return redirect('contract:list')
+        
+        # Fetch contracts for the current user
+        previous_contracts = Contract.objects.filter(
+            employee=request.user.employee,
+            status__in=['approved', 'rejected']
+        ).select_related('employee', 'employee__department')
+
+        current_contracts = Contract.objects.filter(
+            employee=request.user.employee,
+            status__in=['pending', 'smt_review']
+        ).select_related('employee', 'employee__department')
+
+        context = {
+            'previous_contracts': previous_contracts,
+            'current_contracts': current_contracts,
+            'departments': Department.objects.all()
+        }
+
+        return render(request, self.template_name, context)
+
+def some_view(request):
+    if not request.user.groups.filter(name='HR').exists():
+        return redirect('contract:employee_contracts')
+    # HR logic here
+
+class ContractRedirectView(LoginRequiredMixin, View):
+    def get(self, request):
+        if request.user.groups.filter(name='HR').exists():
+            return redirect('contract:all_submissions')
+        else:
+            return redirect('contract:employee_contracts')
+
+class ContractDetailView(LoginRequiredMixin, DetailView):
+    model = Contract
+    template_name = 'contract/contract_detail.html'
+    context_object_name = 'contract'
+
+    def get_queryset(self):
+        # Add select_related to optimize database queries
+        return Contract.objects.filter(
+            employee=self.request.user.employee
+        ).select_related('employee', 'department')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Define IC_COLOURS dictionary
+        IC_COLOURS = {
+            'Y': 'Yellow',
+            'P': 'Purple',
+            'G': 'Green',
+            'R': 'Red'
+        }
+        
+        # Fetch employee details
+        employee = self.object.employee
+        context.update({
+            'first_name': employee.first_name,
+            'last_name': employee.last_name,
+            'ic_no': employee.ic_no,
+            'ic_colour_display': IC_COLOURS.get(employee.ic_colour, employee.ic_colour),
+            'phone_number': employee.phone_number,
+            'department_name': employee.department.name if employee.department else 'None',
+        })
+        
+        # Parse academic qualifications JSON
+        try:
+            context['academic_qualifications'] = json.loads(self.object.academic_qualifications_text or '[]')
+        except json.JSONDecodeError:
+            context['academic_qualifications'] = []
+            
+        return context

@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'appraisals',
     'contract',
     'hr_system',
+    'employee_promotion',
     'widget_tweaks',
 ]
 
