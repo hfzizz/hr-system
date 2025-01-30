@@ -176,6 +176,43 @@
                 <p class="text-sm text-gray-500">No qualifications recorded.</p>
                 {% endif %}
             </div>
+
+            <!-- Documents -->
+            <div class="mt-8 space-y-6">
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Documents</h3>
+                {% if employee.documents.exists %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-300">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Title</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">File</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Upload Date</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 bg-white">
+                            {% for document in employee.documents.all %}
+                            <tr>
+                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900">{{ document.title }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ document.filename }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ document.uploaded_at|date:"d M Y H:i" }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                    <a href="{{ document.file.url }}" 
+                                       target="_blank"
+                                       class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                        Download
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-500">No documents uploaded.</p>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>

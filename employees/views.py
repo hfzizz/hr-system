@@ -3,7 +3,7 @@ from django.urls import reverse_lazy
 from django.views.generic import TemplateView, ListView, CreateView, DetailView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from .models import Employee, Department, Qualification
+from .models import Employee, Department, Qualification, Document
 from .forms import EmployeeForm, EmployeeProfileForm, QualificationForm, QualificationFormSet
 from django.views.generic.edit import CreateView
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -30,6 +30,16 @@ QualificationFormSet = inlineformset_factory(
     extra=1,
     can_delete=True,
     fields=['degree_diploma', 'university_college', 'from_date', 'to_date'],
+    validate_min=False,
+    validate_max=False
+)
+
+DocumentFormSet = inlineformset_factory(
+    Employee,
+    Document,
+    fields=['title', 'file'],
+    extra=1,
+    can_delete=True,
     validate_min=False,
     validate_max=False
 )
@@ -197,50 +207,65 @@ class EmployeeCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView
         context = super().get_context_data(**kwargs)
         context['title'] = 'Create Employee'
         context['button_label'] = 'Create'
+        
+        if self.request.POST:
+            context['document_formset'] = DocumentFormSet(
+                self.request.POST,
+                self.request.FILES,
+                prefix='document_set'
+            )
+        else:
+            context['document_formset'] = DocumentFormSet(
+                prefix='document_set'
+            )
         return context
 
     def form_valid(self, form):
-        try:
-            # Generate a random password if none provided
-            password = form.cleaned_data.get('password')
-            if not password:
-                password = self.generate_random_password()
+        context = self.get_context_data()
+        document_formset = context['document_formset']
+        
+        if document_formset.is_valid():
+            try:
+                # Generate a random password if none provided
+                password = form.cleaned_data.get('password')
+                if not password:
+                    password = self.generate_random_password()
 
-            # Create user account
-            username = form.cleaned_data['username']
-            email = form.cleaned_data['email']
-            first_name = form.cleaned_data['first_name']
-            last_name = form.cleaned_data['last_name']
+                # Create user account
+                user = User.objects.create_user(
+                    username=form.cleaned_data['username'],
+                    email=form.cleaned_data['email'],
+                    password=password,
+                    first_name=form.cleaned_data['first_name'],
+                    last_name=form.cleaned_data['last_name']
+                )
 
-            # Create the user first
-            user = User.objects.create_user(
-                username=username,
-                email=email,
-                password=password,
-                first_name=first_name,
-                last_name=last_name
-            )
+                # Save employee
+                employee = form.save(commit=False)
+                employee.user = user
+                employee.save()
+                form.save_m2m()
 
-            # Set the user for the employee
-            employee = form.save(commit=False)
-            employee.user = user
-            employee.save()
-            
-            # Save many-to-many relationships
-            form.save_m2m()
+                # Save documents
+                document_formset.instance = employee
+                document_instances = document_formset.save(commit=False)
+                for document in document_instances:
+                    document.employee = employee
+                    document.save()
 
-            # Add success message
-            messages.success(
-                self.request, 
-                f'Employee created successfully. Username: {username}. Please securely share the credentials with the employee.'
-            )
-            
-            return super().form_valid(form)
-        except Exception as e:
-            # Add error message and print for debugging
-            print(f"Error creating employee: {str(e)}")
-            messages.error(self.request, f"Error creating employee: {str(e)}")
-            return super().form_invalid(form)
+                messages.success(
+                    self.request, 
+                    f'Employee created successfully. Username: {user.username}. Please securely share the credentials with the employee.'
+                )
+                
+                return super().form_valid(form)
+            except Exception as e:
+                print(f"Error creating employee: {str(e)}")
+                messages.error(self.request, f"Error creating employee: {str(e)}")
+                return super().form_invalid(form)
+        else:
+            messages.error(self.request, "Please correct the errors in the documents section.")
+            return self.form_invalid(form)
 
     def generate_random_password(self, length=12):
         """Generate a random password with letters, digits, and special characters"""
@@ -279,39 +304,63 @@ class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMes
                 instance=self.object,
                 prefix='qualification_set'
             )
+            context['document_formset'] = DocumentFormSet(
+                self.request.POST,
+                self.request.FILES,
+                instance=self.object,
+                prefix='document_set'
+            )
         else:
             context['qualification_formset'] = QualificationFormSet(
                 instance=self.object,
                 prefix='qualification_set'
+            )
+            context['document_formset'] = DocumentFormSet(
+                instance=self.object,
+                prefix='document_set'
             )
         return context
 
     def form_valid(self, form):
         context = self.get_context_data()
         qualification_formset = context['qualification_formset']
+        document_formset = context['document_formset']
         
-        print("POST Data:", self.request.POST)
-        print("Formset valid:", qualification_formset.is_valid())
-        
-        if qualification_formset.is_valid():
+        if qualification_formset.is_valid() and document_formset.is_valid():
             self.object = form.save()
+            
+            # Save qualifications
             qualification_formset.instance = self.object
             qualification_instances = qualification_formset.save(commit=False)
             
-            # Delete marked objects
+            # Delete marked qualifications
             for obj in qualification_formset.deleted_objects:
                 obj.delete()
             
-            # Save new/updated instances
+            # Save new/updated qualifications
             for qualification in qualification_instances:
                 qualification.employee = self.object
                 qualification.save()
             
+            # Save documents
+            document_formset.instance = self.object
+            document_instances = document_formset.save(commit=False)
+            
+            # Delete marked documents
+            for obj in document_formset.deleted_objects:
+                obj.delete()
+            
+            # Save new/updated documents
+            for document in document_instances:
+                document.employee = self.object
+                document.save()
+            
             return super().form_valid(form)
         else:
-            print("Formset errors:", qualification_formset.errors)
-            print("Non form errors:", qualification_formset.non_form_errors())
-            messages.error(self.request, "Please correct the errors in the qualifications section.")
+            if not qualification_formset.is_valid():
+                messages.error(self.request, "Please correct the errors in the qualifications section.")
+            if not document_formset.is_valid():
+                messages.error(self.request, "Please correct the errors in the documents section.")
             return self.form_invalid(form)
 
     def form_invalid(self, form):
