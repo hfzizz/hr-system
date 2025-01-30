@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load employee_tags %}
 
 {% block title %}{{ employee.get_full_name }} - HR System{% endblock %}
 
@@ -194,13 +195,34 @@
                         <tbody class="divide-y divide-gray-200 bg-white">
                             {% for document in employee.documents.all %}
                             <tr>
-                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900">{{ document.title }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ document.filename }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ document.uploaded_at|date:"d M Y H:i" }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900">
                                     <a href="{{ document.file.url }}" 
                                        target="_blank"
-                                       class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                       class="text-indigo-600 hover:text-indigo-900">
+                                        {{ document.title }}
+                                    </a>
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ document.filename }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ document.uploaded_at|date:"d M Y H:i" }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900 space-x-2">
+                                    {% if document.file.url|lower|endswith:'.pdf' %}
+                                        <!-- PDF Viewer -->
+                                        <a href="{{ document.file.url }}" 
+                                           target="_blank"
+                                           class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                            <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                            </svg>
+                                            View
+                                        </a>
+                                    {% endif %}
+                                    <a href="{{ document.file.url }}" 
+                                       download
+                                       class="inline-flex items-center rounded-md bg-green-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600">
+                                        <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                        </svg>
                                         Download
                                     </a>
                                 </td>
