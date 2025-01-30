@@ -307,7 +307,6 @@ class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMes
                 qualification.employee = self.object
                 qualification.save()
             
-            messages.success(self.request, self.success_message)
             return super().form_valid(form)
         else:
             print("Formset errors:", qualification_formset.errors)
