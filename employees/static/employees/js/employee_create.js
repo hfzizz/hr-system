@@ -244,3 +244,33 @@ function initializePasswordFunctions() {
         }, 2000);
     };
 }
+
+// Add document formset handling
+window.addDocument = function() {
+    const totalForms = document.querySelector("#id_document_set-TOTAL_FORMS");
+    const currentForms = document.querySelectorAll(".document-form").length;
+    const template = document.querySelector("#empty-document-template");
+    const newForm = template.content.cloneNode(true);
+    
+    // Replace all __prefix__ in the template with the current form count
+    newForm.querySelectorAll("input").forEach(input => {
+        input.name = input.name.replace("__prefix__", currentForms);
+        input.id = input.id.replace("__prefix__", currentForms);
+    });
+    
+    document.querySelector("#document-formset").appendChild(newForm);
+    totalForms.value = currentForms + 1;
+};
+
+window.deleteDocument = function(button) {
+    const row = button.closest("tr");
+    const deleteInput = row.querySelector("input[name$='-DELETE']");
+    
+    if (deleteInput) {
+        deleteInput.value = "on";
+        row.classList.add("d-none");
+        row.style.display = "none";
+    } else {
+        row.remove();
+    }
+};

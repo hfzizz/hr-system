@@ -440,4 +440,102 @@
         localStorage.removeItem('draft_qualifications');
     </script>
 {% endif %}
+
+<!-- Document Upload Section -->
+<div class="space-y-6 sm:col-span-2">
+    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 w-full">
+        <h3 class="text-lg font-medium leading-6 text-gray-900 mb-6">Documents</h3>
+        <div class="w-full">
+            {{ document_formset.management_form }}
+            
+            <!-- Document template -->
+            <template id="empty-document-template">
+                <tr class="document-form">
+                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
+                        <input type="text" 
+                               name="document_set-__prefix__-title" 
+                               id="id_document_set-__prefix__-title"
+                               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                               placeholder="Document Title">
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                        <input type="file" 
+                               name="document_set-__prefix__-file" 
+                               id="id_document_set-__prefix__-file"
+                               class="block w-full text-sm text-gray-500
+                                      file:mr-4 file:py-2 file:px-4
+                                      file:rounded-md file:border-0
+                                      file:text-sm file:font-semibold
+                                      file:bg-indigo-50 file:text-indigo-700
+                                      hover:file:bg-indigo-100">
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                        <input type="hidden" 
+                               name="document_set-__prefix__-DELETE" 
+                               id="id_document_set-__prefix__-DELETE">
+                        <button type="button" 
+                                onclick="window.deleteDocument(this)"
+                                class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            </template>
+
+            <div class="overflow-x-auto ring-1 ring-gray-300 rounded-lg w-full">
+                <table class="min-w-full divide-y divide-gray-300">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Title</th>
+                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">File</th>
+                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 bg-white" id="document-formset">
+                        {% for form in document_formset %}
+                            <tr class="document-form {% if form.DELETE.value %}d-none{% endif %}">
+                                {{ form.id }}
+                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
+                                    <input type="text" 
+                                           name="document_set-{{ forloop.counter0 }}-title" 
+                                           id="id_document_set-{{ forloop.counter0 }}-title"
+                                           value="{{ form.instance.title|default:'' }}"
+                                           class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                    <input type="file" 
+                                           name="document_set-{{ forloop.counter0 }}-file" 
+                                           id="id_document_set-{{ forloop.counter0 }}-file"
+                                           class="block w-full text-sm text-gray-500
+                                                  file:mr-4 file:py-2 file:px-4
+                                                  file:rounded-md file:border-0
+                                                  file:text-sm file:font-semibold
+                                                  file:bg-indigo-50 file:text-indigo-700
+                                                  hover:file:bg-indigo-100">
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                    <input type="hidden" 
+                                           name="document_set-{{ forloop.counter0 }}-DELETE" 
+                                           id="id_document_set-{{ forloop.counter0 }}-DELETE">
+                                    <button type="button" 
+                                            onclick="window.deleteDocument(this)"
+                                            class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-6">
+                <button type="button" 
+                        onclick="window.addDocument()"
+                        class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    Add Document
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}  

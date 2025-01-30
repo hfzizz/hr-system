@@ -7,6 +7,7 @@ from django.core.validators import RegexValidator, MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+import os
 
 class Department(models.Model):
     name = models.CharField(max_length=100)
@@ -197,3 +198,36 @@ class Qualification(models.Model):
 
     class Meta:
         ordering = ['-from_date']
+
+class Document(models.Model):
+    employee = models.ForeignKey(
+        'Employee',
+        on_delete=models.CASCADE,
+        related_name='documents'
+    )
+    title = models.CharField(
+        max_length=255,
+        help_text=_('Title of the document')
+    )
+    file = models.FileField(
+        upload_to='employee_documents/',
+        help_text=_('Upload document file')
+    )
+    uploaded_at = models.DateTimeField(
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        ordering = ['-uploaded_at']
+        verbose_name = _('Document')
+        verbose_name_plural = _('Documents')
+
+    def __str__(self):
+        return f"{self.title} - {self.employee.get_full_name()}"
+
+    @property
+    def filename(self):
+        return os.path.basename(self.file.name)
