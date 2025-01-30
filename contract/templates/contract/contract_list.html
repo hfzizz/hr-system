@@ -7,24 +7,20 @@
         <h1 class="text-2xl font-bold text-gray-900">Contract Management</h1>
     </div>
 
+    <div id="notification-alert" 
+         class="hidden fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 px-6 py-3 rounded-md text-white text-center shadow-lg z-50">
+    </div>
+
     {% if is_hr %}
     <!-- Contract Settings -->
     <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-6">
         <h2 class="text-xl font-semibold mb-4">Contract Settings</h2>
         <form method="post" class="space-y-4">
             {% csrf_token %}
-            <div class="flex items-center">
-                <input type="checkbox" 
-                       id="contractToggle" 
-                       name="contract_status" 
-                       class="form-checkbox h-4 w-4 text-blue-600"
-                       {% if contract_enabled %}checked{% endif %}>
-                <label for="contractToggle" class="ml-2 block text-gray-700">
-                    Button
-                </label>
-            </div>
-            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                Update Settings
+            <button type="button" 
+                    id="sendNotificationBtn"
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Send Notification
             </button>
         </form>
     </div>
@@ -43,7 +39,7 @@
                  x-transition:enter-start="transform opacity-0 scale-95"
                  x-transition:enter-end="transform opacity-100 scale-100"
                  x-transition:leave="transition ease-in duration-75"
-                 x-transition:leave-start="transform opacity-100 scale-100"
+                 x-transition:leave-start="transform opacity-100 scale-95"
                  x-transition:leave-end="transform opacity-0 scale-95"
                  class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
                  style="display: none;">
@@ -95,7 +91,11 @@
         <div class="flex gap-4">
             <!-- Existing Show/Hide Columns dropdown -->
         </div>
-        <div class="space-x-4">
+        <div class="flex gap-4">
+            <a href="{% url 'contract:view_all_submissions' %}" 
+               class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                View All Submissions
+            </a>
             <button id="enable-contract-btn" 
                     disabled
                     class="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 opacity-50 cursor-not-allowed"
@@ -196,6 +196,14 @@
                                 </svg>
                             </div>
                         </th>
+                        <th scope="col" data-column="contracts" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <div class="flex items-center cursor-pointer" id="sort-contracts" data-sort="contracts">
+                                Number of Contracts
+                                <svg class="w-4 h-4 ml-1 sort-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                </svg>
+                            </div>
+                        </th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Actions
                         </th>
@@ -253,6 +261,9 @@
                                 {{ data.months_remaining }} months
                             </span>
                         </td>
+                        <td data-column="contracts" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ data.contract_count }}
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                 {% if data.is_enabled %}
@@ -262,10 +273,6 @@
                                 {% endif %}">
                                 {{ data.is_enabled|yesno:"Enabled,Disabled" }}
                             </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <a href="{% url 'contract:view_submissions' employee_id=data.employee.id %}" 
-                               class="text-indigo-600 hover:text-indigo-900">View Submissions</a>
                         </td>
                     </tr>
                     {% empty %}
@@ -289,7 +296,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const departmentFilter = document.getElementById('department-filter');
     const monthsFilter = document.getElementById('months-filter');
     const tableRows = document.querySelectorAll('#contract-table tbody tr');
-
+    const sendNotificationBtn = document.getElementById('sendNotificationBtn');
+    const notificationAlert = document.getElementById('notification-alert');
+    
+    function showAlert(message, isSuccess) {
+        notificationAlert.textContent = message;
+        notificationAlert.classList.remove('hidden', 'bg-green-500', 'bg-red-500');
+        notificationAlert.classList.add(isSuccess ? 'bg-green-500' : 'bg-red-500');
+        
+        setTimeout(() => {
+            notificationAlert.classList.add('hidden');
+        }, 3000);
+    }
+    
     function filterTable() {
         const searchTerm = searchInput.value.toLowerCase();
         const departmentValue = departmentFilter.value.toLowerCase();
@@ -319,64 +338,67 @@ document.addEventListener('DOMContentLoaded', function() {
     departmentFilter.addEventListener('change', filterTable);
     monthsFilter.addEventListener('change', filterTable);
 
-    // Sorting functionality
+    // Initialize sort states for all sortable columnsM
     const sortStates = {
-        'employee-id': false,
-        'hire-date': true,
-        'renewal-date': true,
-        'months': true
+        'employee-id': { ascending: true },
+        'hire-date': { ascending: true },
+        'renewal-date': { ascending: true },
+        'months': { ascending: true },
+        'contracts': { ascending: true }
     };
 
-    function getSortValue(row, column) {
-        switch(column) {
-            case 'employee-id':
-                return row.children[0].textContent.trim();
-            case 'hire-date':
-                return new Date(row.children[3].textContent.trim());
-            case 'renewal-date':
-                return new Date(row.children[4].textContent.trim());
-            case 'months':
-                return parseInt(row.children[5].textContent.trim());
-            default:
-                return '';
-        }
-    }
-
-    function sortTable(column, initialSort = false) {
+    function sortTable(column) {
         const tbody = document.querySelector('#contract-table tbody');
         const rows = Array.from(tbody.querySelectorAll('tr:not(:last-child)'));
-        const isAscending = initialSort ? true : sortStates[column];
-
+        
+        // Get current sort state for this column
+        const isAscending = sortStates[column].ascending;
+        
         rows.sort((a, b) => {
-            const aValue = getSortValue(a, column);
-            const bValue = getSortValue(b, column);
-
-            if (column === 'months' || column.includes('date')) {
-                return isAscending ? aValue - bValue : bValue - aValue;
+            let aValue = a.querySelector(`[data-column="${column}"]`)?.textContent.trim() || '';
+            let bValue = b.querySelector(`[data-column="${column}"]`)?.textContent.trim() || '';
+            
+            // Convert to appropriate type for sorting
+            if (column === 'months') {
+                // Extract number from "X months" text
+                aValue = parseInt(aValue.replace(/[^0-9]/g, '')) || 0;
+                bValue = parseInt(bValue.replace(/[^0-9]/g, '')) || 0;
+            } else if (column === 'contracts') {
+                aValue = parseInt(aValue) || 0;
+                bValue = parseInt(bValue) || 0;
+            } else if (column === 'hire-date' || column === 'renewal-date') {
+                // Parse dates in "MMM D, YYYY" format
+                aValue = new Date(aValue);
+                bValue = new Date(bValue);
+            }
+            
+            // Compare values based on sort direction
+            if (isAscending) {
+                return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
             } else {
-                return isAscending ? 
-                    aValue.localeCompare(bValue) : 
-                    bValue.localeCompare(aValue);
+                return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
             }
         });
 
         // Clear and repopulate table
-        rows.forEach(row => row.remove());
         rows.forEach(row => tbody.appendChild(row));
 
-        // Update sort icons
-        document.querySelectorAll('.sort-icon').forEach(icon => {
-            icon.style.transform = 'rotate(0deg)';
+        // Update sort icons for all columns
+        document.querySelectorAll('[data-sort]').forEach(header => {
+            const icon = header.querySelector('.sort-icon');
+            if (header.dataset.sort === column) {
+                // Update icon for current column
+                icon.style.transform = isAscending ? 'rotate(0deg)' : 'rotate(180deg)';
+                icon.style.opacity = '1';
+            } else {
+                // Reset other columns
+                icon.style.transform = 'rotate(0deg)';
+                icon.style.opacity = '0.5';
+            }
         });
-        const currentIcon = document.querySelector(`[data-sort="${column}"] .sort-icon`);
-        if (currentIcon) {
-            currentIcon.style.transform = isAscending ? 'rotate(0deg)' : 'rotate(180deg)';
-        }
 
-        // Toggle sort state only if not initial sort
-        if (!initialSort) {
-            sortStates[column] = !sortStates[column];
-        }
+        // Toggle sort state for next click
+        sortStates[column].ascending = !isAscending;
     }
 
     // Add click listeners to all sortable columns
@@ -388,7 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Initial sort by employee ID in ascending order
-    sortTable('employee-id', true);
+    sortTable('employee-id');
 
     // Column visibility functionality
     function loadColumnPreferences() {
@@ -564,18 +586,44 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize table and button
     initialSort();
+
+    // Add notification functionality
+    sendNotificationBtn.addEventListener('click', async function() {
+        try {
+            const response = await fetch('{% url "contract:send_notification" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                },
+            });
+
+            const data = await response.json();
+            
+            if (response.ok) {
+                showAlert(data.message, true);
+            } else {
+                showAlert('Error: ' + (data.error || 'Failed to send notifications'), false);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showAlert('Error sending notifications', false);
+        }
+    });
 });
 </script>
 
 <style>
 .sort-icon {
-    transition: transform 0.2s ease-in-out;
+    transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
+    display: inline-block;
+    opacity: 0.5;
 }
 [data-sort] {
     cursor: pointer;
 }
-[data-sort]:hover {
-    color: #4F46E5;
+[data-sort]:hover .sort-icon {
+    opacity: 1;
 }
 .cursor-not-allowed {
     cursor: not-allowed;

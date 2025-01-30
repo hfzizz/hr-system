@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.views.generic import TemplateView, CreateView, ListView, UpdateView
+from django.views.generic import TemplateView, CreateView, ListView, UpdateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.http import JsonResponse, HttpResponseForbidden
 from django.core.cache import cache
@@ -23,6 +23,11 @@ from employees.models import Department
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from .models import ContractRenewalStatus
+from .models import ContractNotification
+from django.contrib.auth.models import Group
+from django.urls import reverse
+from django.db.models import Q
+
 
 class ContractSubmissionView(LoginRequiredMixin, CreateView):
     template_name = 'contract/submission.html'
@@ -63,47 +68,24 @@ class ContractSubmissionView(LoginRequiredMixin, CreateView):
         return context
 
     def form_valid(self, form):
-        try:
-            contract = form.save(commit=False)
-            
-            # Save all the form data exactly as submitted
-            contract.employee = form.cleaned_data['employee']
-            contract.first_name = contract.employee.first_name
-            contract.last_name = contract.employee.last_name
-            contract.ic_no = contract.employee.ic_no
-            contract.ic_colour = contract.employee.ic_colour
-            contract.phone_number = contract.employee.phone_number
-            contract.department = contract.employee.department
-            
-            # Save all the editable fields from the form
-            contract.present_post = form.cleaned_data['present_post']
-            contract.salary_scale_division = form.cleaned_data['salary_scale_division']
-            contract.incremental_date = form.cleaned_data['incremental_date']
-            contract.date_of_last_appraisal = form.cleaned_data['date_of_last_appraisal']
-            contract.current_enrollment = form.cleaned_data['current_enrollment']
-            contract.higher_degree_students_supervised = form.cleaned_data['higher_degree_students_supervised']
-            contract.last_research = form.cleaned_data['last_research']
-            contract.ongoing_research = form.cleaned_data['ongoing_research']
-            contract.publications = form.cleaned_data['publications']
-            contract.attendance = form.cleaned_data['attendance']
-            contract.conference_papers = form.cleaned_data['conference_papers']
-            contract.consultancy_work = form.cleaned_data['consultancy_work']
-            contract.administrative_posts = form.cleaned_data['administrative_posts']
-            contract.participation_within_university = form.cleaned_data['participation_within_university']
-            contract.participation_outside_university = form.cleaned_data['participation_outside_university']
-            contract.objectives_next_year = form.cleaned_data['objectives_next_year']
-            
-            # Save academic qualifications exactly as submitted
-            if 'academic_qualifications_text' in form.cleaned_data:
-                contract.academic_qualifications_text = form.cleaned_data['academic_qualifications_text']
-            
-            contract.save()
-            messages.success(self.request, "Contract renewal submitted successfully.")
-            return super().form_valid(form)
-            
-        except Exception as e:
-            messages.error(self.request, f"Error submitting contract renewal: {str(e)}")
-            return super().form_invalid(form)
+        form.instance.employee = self.request.user.employee
+        form.instance.status = 'pending'
+        response = super().form_valid(form)
+        
+        # Create notification for HR users
+        hr_users = Group.objects.get(name='HR').user_set.all()
+        submission_date = form.instance.submission_date.strftime('%B %d, %Y')
+        message = f"{self.request.user.employee.get_full_name()} has submitted a contract renewal form on {submission_date}"
+        
+        for hr_user in hr_users:
+            ContractNotification.objects.create(
+                employee=hr_user.employee,
+                message=message,
+                read=False,
+                contract=form.instance
+            )
+        
+        return response
 
     def post(self, request, *args, **kwargs):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -115,6 +97,23 @@ class ContractSubmissionView(LoginRequiredMixin, CreateView):
                 'message': f"Contract system has been {'enabled' if contract_status else 'disabled'}"
             })
         return super().post(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        # Check if user has a pending submission
+        existing_submission = Contract.objects.filter(
+            employee=request.user.employee,
+            status__in=['pending', 'smt_review']
+        ).first()
+        
+        if existing_submission:
+            return render(request, 'contract/submission_exists.html', {
+                'submission': existing_submission
+            })
+            
+        return super().get(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse_lazy('contract:thank_you')
 
 def get_employee_data(request, employee_id):
     try:
@@ -135,8 +134,21 @@ def get_employee_data(request, employee_id):
             """
             Process fields that might contain status indicators
             Keep ONGOING items unless they have a FINISHED status
+            Remove duplicates (case-insensitive and punctuation-insensitive)
             """
             status_tracker = {}
+            seen_items = set()
+            
+            def normalize_text(text):
+                """Normalize text for comparison by removing punctuation and extra spaces"""
+                import re
+                # Remove status indicators before normalization
+                text = text.replace('(ONGOING)', '').replace('(FINISHED)', '')
+                # Remove all punctuation and convert to lowercase
+                text = re.sub(r'[^\w\s]', '', text.lower())
+                # Normalize whitespace
+                text = ' '.join(text.split())
+                return text
             
             for appraisal in appraisals:
                 content = getattr(appraisal, field_name, '') or ''
@@ -150,27 +162,70 @@ def get_employee_data(request, employee_id):
                     is_finished = '(FINISHED)' in item
                     is_ongoing = '(ONGOING)' in item
                     
-                    if base_item not in status_tracker:
-                        status_tracker[base_item] = item
+                    # Normalize for comparison
+                    normalized = normalize_text(base_item)
+                    
+                    if normalized not in seen_items:
+                        seen_items.add(normalized)
+                        status_tracker[normalized] = {
+                            'text': base_item,
+                            'status': 'FINISHED' if is_finished else ('ONGOING' if is_ongoing else None),
+                            'original': item
+                        }
                     elif is_finished:
-                        status_tracker[base_item] = item
-                    elif is_ongoing and not '(FINISHED)' in status_tracker[base_item]:
-                        status_tracker[base_item] = item
+                        # Update status to FINISHED if it wasn't already
+                        status_tracker[normalized]['status'] = 'FINISHED'
+                        status_tracker[normalized]['original'] = item
+                    elif is_ongoing and status_tracker[normalized]['status'] != 'FINISHED':
+                        # Update to ONGOING only if not FINISHED
+                        status_tracker[normalized]['status'] = 'ONGOING'
+                        status_tracker[normalized]['original'] = item
 
+            # Sort items by status and original text
             finished_items = []
             ongoing_items = []
             regular_items = []
             
-            for item in status_tracker.values():
-                if '(FINISHED)' in item:
-                    finished_items.append(item)
-                elif '(ONGOING)' in item:
-                    ongoing_items.append(item)
+            for item_data in status_tracker.values():
+                if item_data['status'] == 'FINISHED':
+                    finished_items.append(item_data['original'])
+                elif item_data['status'] == 'ONGOING':
+                    ongoing_items.append(item_data['original'])
                 else:
-                    regular_items.append(item)
+                    regular_items.append(item_data['original'])
             
             all_items = finished_items + ongoing_items + regular_items
             return '\n'.join(all_items) if all_items else ''
+
+        def process_objectives():
+            """
+            Combine all 'Teaching and Research Objectives for Next Year' entries
+            Remove duplicates (case-insensitive and punctuation-insensitive)
+            """
+            seen_objectives = set()
+            unique_objectives = []
+            
+            def normalize_text(text):
+                """Normalize text for comparison by removing punctuation and extra spaces"""
+                import re
+                # Remove all punctuation and convert to lowercase
+                text = re.sub(r'[^\w\s]', '', text.lower())
+                # Normalize whitespace
+                text = ' '.join(text.split())
+                return text
+            
+            for appraisal in appraisals:
+                if appraisal.objectives_next_year and appraisal.objectives_next_year.strip():
+                    objectives = [obj.strip() for obj in appraisal.objectives_next_year.split('\n') if obj.strip()]
+                    
+                    for objective in objectives:
+                        # Normalize for comparison
+                        normalized = normalize_text(objective)
+                        if normalized not in seen_objectives:
+                            seen_objectives.add(normalized)
+                            unique_objectives.append(objective)
+            
+            return '\n'.join(unique_objectives) if unique_objectives else ''
 
         # Process appraiser comments
         appraiser_comments_history = []
@@ -216,6 +271,8 @@ def get_employee_data(request, employee_id):
                     if enrollment not in seen_enrollments:
                         seen_enrollments.add(enrollment)
                         current_enrollments.append(enrollment)
+        
+        contract_count = Contract.objects.filter(employee=employee).count() + 1
 
         combined_data = {
             # Basic information
@@ -226,6 +283,7 @@ def get_employee_data(request, employee_id):
             'phone_number': employee.phone_number,
             'department': employee.department.name if employee.department else '',
             'department_id': employee.department.id if employee.department else '',
+            'contract_count': contract_count, 
             
             # Academic qualifications
             'academic_qualifications_text': json.dumps(all_qualifications),
@@ -251,7 +309,7 @@ def get_employee_data(request, employee_id):
             # Latest values
             'present_post': latest_appraisal.present_post,
             'salary_scale_division': latest_appraisal.salary_scale_division,
-            'objectives_next_year': latest_appraisal.objectives_next_year,
+            'objectives_next_year': process_objectives(),
             'incremental_date': latest_appraisal.incremental_date.strftime('%Y-%m-%d') if latest_appraisal.incremental_date else '',
             'date_of_last_appraisal': latest_appraisal.date_of_last_appraisal.strftime('%Y-%m-%d') if latest_appraisal.date_of_last_appraisal else '',
         }
@@ -296,11 +354,15 @@ class ContractListView(LoginRequiredMixin, View):
             # Get contract renewal status
             status = ContractRenewalStatus.objects.filter(employee=employee).first()
             
+            # Get number of contract submissions plus the default contract (1)
+            contract_count = Contract.objects.filter(employee=employee).count() + 1
+            
             employees_data.append({
                 'employee': employee,
                 'renewal_date': renewal_date,
                 'months_remaining': months_remaining,
-                'is_enabled': status.is_enabled if status else False
+                'is_enabled': status.is_enabled if status else False,
+                'contract_count': contract_count
             })
 
         context = {
@@ -331,6 +393,28 @@ class ContractReviewView(LoginRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         contract = self.get_object()
+        employee = contract.employee
+        
+        # Get the contract count from the specific submission being reviewed
+        submissions_before = Contract.objects.filter(
+            employee=contract.employee,
+            submission_date__lt=contract.submission_date
+        ).count()
+        contract_count = submissions_before + 1
+        
+        # Add personal details to context
+        context.update({
+            'contract': contract,
+            'first_name': employee.first_name,
+            'last_name': employee.last_name,
+            'ic_no': employee.ic_no,
+            'ic_colour': employee.ic_colour,
+            'phone_number': employee.phone_number,
+            'department': employee.department.name if employee.department else '',
+            'contract_count': contract_count,
+            'academic_qualifications': json.loads(contract.academic_qualifications_text) if contract.academic_qualifications_text else [],
+            'is_review': True
+        })
         
         # Get all appraisals for this employee
         appraisals = Appraisal.objects.filter(
@@ -339,7 +423,6 @@ class ContractReviewView(LoginRequiredMixin, UpdateView):
         
         # Format appraiser comments from all appraisals
         appraiser_comments = []
-        
         for appraisal in appraisals:
             if appraisal.appraiser_comments and appraisal.appraiser_comments.strip():
                 comment_data = {
@@ -348,22 +431,8 @@ class ContractReviewView(LoginRequiredMixin, UpdateView):
                     'appraiser_name': appraisal.appraiser.get_full_name() if appraisal.appraiser else 'Unknown Appraiser'
                 }
                 appraiser_comments.append(comment_data)
-
-        # Add current contract comments if they exist
-        if contract.appraiser_comments and contract.appraiser_comments.strip():
-            contract_comment = {
-                'comment': contract.appraiser_comments.strip(),
-                'date': contract.submission_date.strftime('%Y-%m-%d'),
-                'appraiser_name': 'Contract Reviewer'
-            }
-            appraiser_comments.append(contract_comment)
-
-        context.update({
-            'contract': contract,
-            'academic_qualifications': json.loads(contract.academic_qualifications_text) if contract.academic_qualifications_text else [],
-            'appraiser_comments': appraiser_comments,
-            'is_review': True
-        })
+        
+        context['appraiser_comments'] = appraiser_comments
         
         return context
     
@@ -416,5 +485,31 @@ def enable_contract(request):
             status.save()
         
         return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+@login_required
+def send_contract_notifications(request):
+    if not request.user.groups.filter(name='HR').exists():
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
+    try:
+        # Get all employees with enabled contract renewal
+        enabled_statuses = ContractRenewalStatus.objects.filter(is_enabled=True)
+        
+        notification_count = 0
+        for status in enabled_statuses:
+            # Create notification for each employee
+            ContractNotification.objects.create(
+                employee=status.employee,
+                message="Your contract renewal is due. Please submit your renewal application."
+            )
+            notification_count += 1
+        
+        messages.success(request, f'Notifications sent to {notification_count} employees.')
+        return JsonResponse({
+            'status': 'success',
+            'count': notification_count
+        })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)

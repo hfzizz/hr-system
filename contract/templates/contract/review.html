@@ -13,38 +13,38 @@
 
     <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
         <!-- Personal Details Section -->
-        <div class="mb-8">
-            <h2 class="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">Personal Details</h2>
-            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div class="space-y-6">
+            <h3 class="text-lg font-medium text-gray-900">Personal Details</h3>
+            
+            <div class="grid grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">First Name</label>
-                    <p class="mt-1 p-2 bg-gray-50 rounded text-sm text-gray-900">{{ contract.first_name }}</p>
+                    <div class="mt-1 p-2 bg-gray-50 rounded">{{ first_name }}</div>
                 </div>
+                
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Last Name</label>
-                    <p class="mt-1 p-2 bg-gray-50 rounded text-sm text-gray-900">{{ contract.last_name }}</p>
+                    <div class="mt-1 p-2 bg-gray-50 rounded">{{ last_name }}</div>
                 </div>
+                
                 <div>
                     <label class="block text-sm font-medium text-gray-700">IC Number</label>
-                    <p class="mt-1 p-2 bg-gray-50 rounded text-sm text-gray-900">{{ contract.ic_no }}</p>
+                    <div class="mt-1 p-2 bg-gray-50 rounded">{{ ic_no }}</div>
                 </div>
+                
                 <div>
                     <label class="block text-sm font-medium text-gray-700">IC Colour</label>
-                    <p class="mt-1 p-2 bg-gray-50 rounded text-sm text-gray-900">
-                        {% if contract.ic_colour == 'Y' %}Yellow
-                        {% elif contract.ic_colour == 'P' %}Purple
-                        {% elif contract.ic_colour == 'G' %}Green
-                        {% elif contract.ic_colour == 'R' %}Red
-                        {% endif %}
-                    </p>
+                    <div class="mt-1 p-2 bg-gray-50 rounded">{{ ic_colour }}</div>
                 </div>
+                
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Phone Number</label>
-                    <p class="mt-1 p-2 bg-gray-50 rounded text-sm text-gray-900">{{ contract.phone_number }}</p>
+                    <div class="mt-1 p-2 bg-gray-50 rounded">{{ phone_number }}</div>
                 </div>
+                
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Department</label>
-                    <p class="mt-1 p-2 bg-gray-50 rounded text-sm text-gray-900">{{ contract.department.name }}</p>
+                    <div class="mt-1 p-2 bg-gray-50 rounded">{{ department }}</div>
                 </div>
             </div>
         </div>
@@ -109,8 +109,14 @@
 
         <!-- Research and Publications Section -->
         <div class="mb-8">
-            <h2 class="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">Research and Publications</h2>
+            <h2 class="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">Research, Consultancy and Publications</h2>
             <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Consultancy Work</label>
+                    <div class="mt-1 bg-gray-50 rounded p-4">
+                        <p class="text-sm text-gray-900 whitespace-pre-line">{{ contract.consultancy_work }}</p>
+                    </div>
+                </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Last Research Undertaken</label>
                     <div class="mt-1 bg-gray-50 rounded p-4">
@@ -165,12 +171,6 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Consultancy Work</label>
-                    <div class="mt-1 bg-gray-50 rounded p-4">
-                        <p class="text-sm text-gray-900 whitespace-pre-line">{{ contract.consultancy_work }}</p>
-                    </div>
-                </div>
-                <div>
                     <label class="block text-sm font-medium text-gray-700">Administrative Posts</label>
                     <div class="mt-1 bg-gray-50 rounded p-4">
                         <p class="text-sm text-gray-900 whitespace-pre-line">{{ contract.administrative_posts }}</p>
@@ -181,7 +181,7 @@
 
         <!-- University Participation Section -->
         <div class="mb-8">
-            <h2 class="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">University Participation</h2>
+            <h2 class="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">Others Activities</h2>
             <div class="space-y-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Participation Within University</label>
@@ -200,9 +200,9 @@
 
         <!-- Future Plans Section -->
         <div class="mb-8">
-            <h2 class="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">Future Plans</h2>
+            <h2 class="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">Teaching</h2>
             <div>
-                <label class="block text-sm font-medium text-gray-700">Objectives for Next Year</label>
+                <label class="block text-sm font-medium text-gray-700">Future Plans</label>
                 <div class="mt-1 bg-gray-50 rounded p-4">
                     <p class="text-sm text-gray-900 whitespace-pre-line">{{ contract.objectives_next_year }}</p>
                 </div>
@@ -232,6 +232,75 @@
                 {% endif %}
             </div>
         </div>
+
+        <!-- Achievements Section -->
+        <div>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Achievements</h3>
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">What have you achieved in the last contract for Teaching / Research / Administrative Duties?</label>
+                    <div class="mt-1 p-2 bg-gray-50 rounded">
+                        {{ contract.achievements_last_contract|linebreaks }}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">What do you propose to undertake and achieve if your contract is renewed?</label>
+                    <div class="mt-1 p-2 bg-gray-50 rounded">
+                        {{ contract.achievements_proposal|linebreaks }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Others Section -->
+        <div class="mt-8">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Others</h3>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Any other matters you wish to highlight?</label>
+                <div class="mt-1 p-2 bg-gray-50 rounded">
+                    {{ contract.other_matters|linebreaks }}
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end space-x-4 mt-8">
+            {% if contract.status == 'pending' %}
+                <button type="button"
+                        onclick="forwardToSMT({{ contract.id }})"
+                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Forward to SMT
+                </button>
+            {% endif %}
+        </div>
     </div>
 </div>
+
+<script>
+async function forwardToSMT(contractId) {
+    if (!confirm('Are you sure you want to forward this contract to SMT?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/contract/forward-to-smt/${contractId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+        });
+
+        if (response.ok) {
+            window.location.href = "{% url 'contract:view_submissions' employee_id=contract.employee.id %}";
+        } else {
+            const data = await response.json();
+            alert(data.error || 'Failed to forward contract to SMT');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error forwarding contract to SMT');
+    }
+}
+</script>
 {% endblock %} 

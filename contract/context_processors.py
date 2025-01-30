@@ -1,6 +1,6 @@
 from django.core.cache import cache
 from employees.models import Employee
-from .models import ContractRenewalStatus
+from .models import ContractRenewalStatus, ContractNotification
 
 def contract_status(request):
     show_contract = False
@@ -28,4 +28,16 @@ def contract_status(request):
     return {
         'contract_enabled': show_contract,
         'is_hr_contract': is_hr
+    }
+
+def notifications(request):
+    unread_count = 0
+    if request.user.is_authenticated and hasattr(request.user, 'employee'):
+        unread_count = ContractNotification.objects.filter(
+            employee=request.user.employee,
+            read=False
+        ).count()
+    
+    return {
+        'unread_notifications_count': unread_count
     }
