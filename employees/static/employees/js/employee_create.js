@@ -1,5 +1,66 @@
 console.log('JavaScript file loaded');
 
+// Global function declarations
+window.replaceFile = function(button) {
+    console.log('Replace file function called');
+    const row = button.closest('tr');
+    console.log('Found row:', row);
+
+    const fileCell = row.querySelector('.file-container').closest('td'); // Get the file cell by finding the container
+    console.log('Found file cell:', fileCell);
+
+    if (!fileCell) {
+        console.error('File cell not found');
+        return;
+    }
+
+    const employeeInput = row.querySelector('input[name*="document_set-"][name$="-employee"]');
+    if (!employeeInput) {
+        console.error('Employee input not found');
+        return;
+    }
+
+    const formIndex = employeeInput.name.match(/document_set-(\d+)-/)[1];
+    console.log('Form index:', formIndex);
+    
+    // Create the replacement HTML with the indigo button style
+    const replacementHTML = `
+        <div class="relative">
+            <input type="file" 
+                   name="document_set-${formIndex}-file" 
+                   id="id_document_set-${formIndex}-file"
+                   class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                   onchange="updateFileName(this)">
+            <button type="button" 
+                    class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                Choose File
+            </button>
+            <span class="ml-3 text-sm text-gray-500 selected-file-name">No file chosen</span>
+        </div>
+    `;
+
+    // Replace the content of the file cell
+    fileCell.innerHTML = replacementHTML;
+    
+    // Hide the replace button
+    button.style.display = 'none';
+    
+    // Automatically trigger the file input dialog
+    const fileInput = fileCell.querySelector('input[type="file"]');
+    if (fileInput) {
+        fileInput.click();
+    }
+    
+    console.log('Replace file activated for form index:', formIndex);
+};
+
+window.updateFileName = function(input) {
+    const fileName = input.files[0] ? input.files[0].name : 'No file chosen';
+    const fileNameSpan = input.parentElement.querySelector('.selected-file-name');
+    fileNameSpan.textContent = fileName;
+};
+
+// Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM Content Loaded');
     
@@ -27,129 +88,128 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     console.log('Checking for template:', document.getElementById('empty-form-template'));
-    
-    function initializeQualificationFunctions() {
-        window.addQualification = function() {
-            console.log('Adding qualification...');
-            const template = document.getElementById('empty-form-template');
-            
-            if (!template) {
-                console.error('Empty form template not found');
-                return;
-            }
-            
-            // Get the current form count from the management form
-            const totalFormsInput = document.querySelector('[name="qualification_set-TOTAL_FORMS"]');
-            const currentFormCount = parseInt(totalFormsInput.value);
-            console.log('Current form count:', currentFormCount);
-            
-            if (currentFormCount >= window.maxForms) {
-                alert('Maximum number of qualifications reached');
-                return;
-            }
-            
-            // Clone the template content
-            const newRow = template.content.cloneNode(true).querySelector('tr');
-            const tbody = document.getElementById('qualification-formset');
-            
-            if (!tbody) {
-                console.error('Qualification formset tbody not found');
-                return;
-            }
-            
-            // Replace all instances of __prefix__ with the current form count
-            newRow.innerHTML = newRow.innerHTML.replace(/__prefix__/g, currentFormCount);
-            
-            // Update the employee ID in the new row
-            const employeeId = document.querySelector('[name="id"]')?.value;
-            if (employeeId) {
-                const employeeInput = newRow.querySelector(`[name="qualification_set-${currentFormCount}-employee"]`);
-                if (employeeInput) {
-                    employeeInput.value = employeeId;
-                }
-            }
-            
-            tbody.appendChild(newRow);
-            
-            // Update management form
-            totalFormsInput.value = currentFormCount + 1;
-            
-            console.log('Qualification added successfully. New total:', totalFormsInput.value);
-        };
+});
+
+function initializeQualificationFunctions() {
+    window.addQualification = function() {
+        console.log('Adding qualification...');
+        const template = document.getElementById('empty-form-template');
         
-        window.deleteQualification = function(button) {
-            const row = button.closest('tr');
-            const deleteInput = row.querySelector('input[name$="-DELETE"]');
-            const visibleRows = document.querySelectorAll('.qualification-form:not(.d-none)').length;
-            
-            console.log('Deleting qualification row:', row);
-            console.log('Delete input found:', deleteInput);
-            console.log('Visible rows:', visibleRows);
-            
-            if (visibleRows <= 1) {
-                alert('Cannot delete: minimum one qualification is required');
-                return;
-            }
-            
-            if (deleteInput) {
-                // For existing qualifications, mark as deleted and hide the row
-                deleteInput.value = 'on';
-                row.style.display = 'none';
-                row.classList.add('d-none');
-                console.log('Marked for deletion:', deleteInput.value);
-            } else {
-                // For new qualifications, remove the row completely
-                row.remove();
-                updateFormIndices();
-            }
-            
-            // Update the total forms count
-            const totalFormsInput = document.querySelector('[name="qualification_set-TOTAL_FORMS"]');
-            if (totalFormsInput) {
-                const currentTotal = parseInt(totalFormsInput.value);
-                totalFormsInput.value = currentTotal - 1;
-                console.log('Updated total forms:', totalFormsInput.value);
-            }
-        };
+        if (!template) {
+            console.error('Empty form template not found');
+            return;
+        }
         
-        function updateFormIndices() {
-            const tbody = document.getElementById('qualification-formset');
-            if (!tbody) return;
-            
-            const rows = Array.from(tbody.querySelectorAll('.qualification-form:not([style*="display: none"]):not(.d-none)'));
-            const totalFormsInput = document.querySelector('[name="qualification_set-TOTAL_FORMS"]');
-            
-            console.log('Updating indices for rows:', rows.length);
-            
-            rows.forEach((row, index) => {
-                row.querySelectorAll('input').forEach(input => {
-                    const name = input.getAttribute('name');
-                    if (name) {
-                        const newName = name.replace(/-\d+-/, `-${index}-`);
-                        input.setAttribute('name', newName);
-                        input.setAttribute('id', `id_${newName}`);
-                        console.log(`Updated input name from ${name} to ${newName}`);
-                    }
-                });
-            });
-            
-            if (totalFormsInput) {
-                totalFormsInput.value = rows.length;
-                console.log('Updated total forms count:', rows.length);
+        // Get the current form count from the management form
+        const totalFormsInput = document.querySelector('[name="qualification_set-TOTAL_FORMS"]');
+        const currentFormCount = parseInt(totalFormsInput.value);
+        console.log('Current form count:', currentFormCount);
+        
+        if (currentFormCount >= window.maxForms) {
+            alert('Maximum number of qualifications reached');
+            return;
+        }
+        
+        // Clone the template content
+        const newRow = template.content.cloneNode(true).querySelector('tr');
+        const tbody = document.getElementById('qualification-formset');
+        
+        if (!tbody) {
+            console.error('Qualification formset tbody not found');
+            return;
+        }
+        
+        // Replace all instances of __prefix__ with the current form count
+        newRow.innerHTML = newRow.innerHTML.replace(/__prefix__/g, currentFormCount);
+        
+        // Update the employee ID in the new row
+        const employeeId = document.querySelector('[name="id"]')?.value;
+        if (employeeId) {
+            const employeeInput = newRow.querySelector(`[name="qualification_set-${currentFormCount}-employee"]`);
+            if (employeeInput) {
+                employeeInput.value = employeeId;
             }
         }
+        
+        tbody.appendChild(newRow);
+        
+        // Update management form
+        totalFormsInput.value = currentFormCount + 1;
+        
+        console.log('Qualification added successfully. New total:', totalFormsInput.value);
+    };
+    
+    window.deleteQualification = function(button) {
+        const row = button.closest('tr');
+        const deleteInput = row.querySelector('input[name$="-DELETE"]');
+        const visibleRows = document.querySelectorAll('.qualification-form:not(.d-none)').length;
+        
+        console.log('Deleting qualification row:', row);
+        console.log('Delete input found:', deleteInput);
+        console.log('Visible rows:', visibleRows);
+        
+        if (visibleRows <= 1) {
+            alert('Cannot delete: minimum one qualification is required');
+            return;
+        }
+        
+        if (deleteInput) {
+            // For existing qualifications, mark as deleted and hide the row
+            deleteInput.value = 'on';
+            row.style.display = 'none';
+            row.classList.add('d-none');
+            console.log('Marked for deletion:', deleteInput.value);
+        } else {
+            // For new qualifications, remove the row completely
+            row.remove();
+            updateFormIndices();
+        }
+        
+        // Update the total forms count
+        const totalFormsInput = document.querySelector('[name="qualification_set-TOTAL_FORMS"]');
+        if (totalFormsInput) {
+            const currentTotal = parseInt(totalFormsInput.value);
+            totalFormsInput.value = currentTotal - 1;
+            console.log('Updated total forms:', totalFormsInput.value);
+        }
+    };
+    
+    function updateFormIndices() {
+        const tbody = document.getElementById('qualification-formset');
+        if (!tbody) return;
+        
+        const rows = Array.from(tbody.querySelectorAll('.qualification-form:not([style*="display: none"]):not(.d-none)'));
+        const totalFormsInput = document.querySelector('[name="qualification_set-TOTAL_FORMS"]');
+        
+        console.log('Updating indices for rows:', rows.length);
+        
+        rows.forEach((row, index) => {
+            row.querySelectorAll('input').forEach(input => {
+                const name = input.getAttribute('name');
+                if (name) {
+                    const newName = name.replace(/-\d+-/, `-${index}-`);
+                    input.setAttribute('name', newName);
+                    input.setAttribute('id', `id_${newName}`);
+                    console.log(`Updated input name from ${name} to ${newName}`);
+                }
+            });
+        });
+        
+        if (totalFormsInput) {
+            totalFormsInput.value = rows.length;
+            console.log('Updated total forms count:', rows.length);
+        }
     }
+}
 
-    function initializeDocumentFunctions() {
+function initializeDocumentFunctions() {
+    // Initialize other document-related functions
+    const template = document.querySelector('#empty-document-template');
+    console.log('Checking for template:', template);
+    
+    if (template) {
         window.addDocument = function() {
             console.log('Adding document...');
-            const template = document.getElementById('empty-document-template');
-            
-            if (!template) {
-                console.error('Empty document template not found');
-                return;
-            }
-            
             const totalFormsInput = document.querySelector('[name="document_set-TOTAL_FORMS"]');
             const currentFormCount = parseInt(totalFormsInput.value);
             
@@ -181,9 +241,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log('Document added successfully. New total:', totalFormsInput.value);
         };
-        
+
         window.deleteDocument = function(button) {
-            const row = button.closest('tr');  // Changed from '.document-form' to 'tr' for better compatibility
+            const row = button.closest('tr');
             const deleteInput = row.querySelector('input[name$="-DELETE"]');
             
             if (deleteInput) {
@@ -193,12 +253,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Hide the row visually
                 row.style.display = 'none';
                 row.classList.add('d-none');
-                
-                // If there's a file input, mark it as not required since we're deleting
-                const fileInput = row.querySelector('input[type="file"]');
-                if (fileInput) {
-                    fileInput.required = false;
-                }
                 
                 console.log('Document marked for deletion:', deleteInput.value);
             } else {
@@ -212,58 +266,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     totalFormsInput.value = currentTotal - 1;
                 }
             }
-        };
-        
-        function updateDocumentFormIndices() {
-            const tbody = document.getElementById('document-formset');
-            if (!tbody) return;
-            
-            const rows = Array.from(tbody.querySelectorAll('.document-form:not([style*="display: none"]):not(.d-none)'));
-            const totalFormsInput = document.querySelector('[name="document_set-TOTAL_FORMS"]');
-            
-            console.log('Updating indices for rows:', rows.length);
-            
-            rows.forEach((row, index) => {
-                row.querySelectorAll('input').forEach(input => {
-                    const name = input.getAttribute('name');
-                    if (name) {
-                        const newName = name.replace(/-\d+-/, `-${index}-`);
-                        input.setAttribute('name', newName);
-                        input.setAttribute('id', `id_${newName}`);
-                        console.log(`Updated input name from ${name} to ${newName}`);
-                    }
-                });
-            });
-            
-            if (totalFormsInput) {
-                totalFormsInput.value = rows.length;
-                console.log('Updated total forms count:', rows.length);
-            }
-        }
-
-        // Move replaceFile to window object
-        window.replaceFile = function(button) {
-            const row = button.closest('tr');
-            const fileContainer = row.querySelector('.file-container');
-            const formIndex = row.querySelector('input[name*="document_set-"][name$="-employee"]').name.match(/document_set-(\d+)-/)[1];
-            
-            // Create new file input
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.name = `document_set-${formIndex}-file`;
-            fileInput.id = `id_document_set-${formIndex}-file`;
-            fileInput.required = true;
-            fileInput.className = 'block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100';
-            
-            // Create a new container div for the file input
-            const newContainer = document.createElement('div');
-            newContainer.appendChild(fileInput);
-            
-            // Replace the existing file container with the new container
-            fileContainer.parentNode.replaceChild(newContainer, fileContainer);
-            
-            // Remove the replace button
-            button.remove();
         };
 
         // Preview modal functions
@@ -316,7 +318,7 @@ document.addEventListener('DOMContentLoaded', function() {
             initializeEventListeners();
         }
     }
-});
+}
 
 function loadSavedQualifications() {
     const savedData = localStorage.getItem('draft_qualifications');
@@ -431,6 +433,3 @@ function initializePasswordFunctions() {
         }, 2000);
     };
 }
-
-// Initialize the document functions when the script loads
-initializeDocumentFunctions();
