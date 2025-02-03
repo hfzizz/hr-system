@@ -4,6 +4,7 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
+from django.conf import settings
 
 class RoleListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     model = Group
@@ -26,9 +27,14 @@ class RoleCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
 
     def get_permission_categories(self):
         categories = {}
-        relevant_apps = ['employees', 'appraisals', 'auth']  # Add your app names here
         
-        for app in relevant_apps:
+        # Get all installed apps dynamically
+        installed_apps = [app.split('.')[-1] for app in settings.INSTALLED_APPS 
+                         if not app.startswith('django.') and 
+                         not app.startswith('allauth.') and
+                         not app.startswith('crispy_')]  # Exclude Django's built-in apps and third-party apps
+        
+        for app in installed_apps:
             content_types = ContentType.objects.filter(app_label=app)
             
             for ct in content_types:
@@ -90,9 +96,14 @@ class RoleUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
 
     def get_permission_categories(self):
         categories = {}
-        relevant_apps = ['employees', 'appraisals', 'auth']  # Add your app names here
         
-        for app in relevant_apps:
+        # Get all installed apps dynamically
+        installed_apps = [app.split('.')[-1] for app in settings.INSTALLED_APPS 
+                         if not app.startswith('django.') and 
+                         not app.startswith('allauth.') and
+                         not app.startswith('crispy_')]  # Exclude Django's built-in apps and third-party apps
+        
+        for app in installed_apps:
             content_types = ContentType.objects.filter(app_label=app)
             
             for ct in content_types:
