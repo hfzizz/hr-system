@@ -6,7 +6,7 @@ window.replaceFile = function(button) {
     const row = button.closest('tr');
     console.log('Found row:', row);
 
-    const fileCell = row.querySelector('.file-container').closest('td'); // Get the file cell by finding the container
+    const fileCell = row.querySelector('.file-container').closest('td');
     console.log('Found file cell:', fileCell);
 
     if (!fileCell) {
@@ -23,20 +23,17 @@ window.replaceFile = function(button) {
     const formIndex = employeeInput.name.match(/document_set-(\d+)-/)[1];
     console.log('Form index:', formIndex);
     
-    // Create the replacement HTML with the indigo button style
+    // Create the replacement HTML with the original file input styling
     const replacementHTML = `
-        <div class="relative">
-            <input type="file" 
-                   name="document_set-${formIndex}-file" 
-                   id="id_document_set-${formIndex}-file"
-                   class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                   onchange="updateFileName(this)">
-            <button type="button" 
-                    class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                Choose File
-            </button>
-            <span class="ml-3 text-sm text-gray-500 selected-file-name">No file chosen</span>
-        </div>
+        <input type="file" 
+               name="document_set-${formIndex}-file" 
+               id="id_document_set-${formIndex}-file"
+               class="block w-full text-sm text-gray-500
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-md file:border-0
+                      file:text-sm file:font-semibold
+                      file:bg-indigo-50 file:text-indigo-700
+                      hover:file:bg-indigo-100">
     `;
 
     // Replace the content of the file cell
