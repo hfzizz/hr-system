@@ -57,6 +57,33 @@ window.updateFileName = function(input) {
     fileNameSpan.textContent = fileName;
 };
 
+window.handleFileSelect = function(input) {
+    if (input.files && input.files[0]) {
+        const container = input.closest('tr');
+        const filename = input.files[0].name;
+        
+        // Update filename display
+        const filenameSpan = container.querySelector('.selected-filename');
+        filenameSpan.textContent = filename;
+        
+        // Hide file input and show filename
+        input.style.display = 'none';
+        filenameSpan.style.display = 'inline';
+        
+        // Show replace button in actions column
+        const replaceButton = container.querySelector('.replace-button');
+        replaceButton.style.display = 'inline-flex';
+    }
+};
+
+window.triggerFileInput = function(button) {
+    const row = button.closest('tr');
+    const fileInput = row.querySelector('input[type="file"]');
+    if (fileInput) {
+        fileInput.click();
+    }
+};
+
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM Content Loaded');
