@@ -480,10 +480,14 @@ def employee_create(request):
         'empty_form': empty_form,
     })
 
-class EmployeeDetailView(DetailView):
+class EmployeeDetailView(LoginRequiredMixin, DetailView):
     model = Employee
     template_name = 'employees/employee_detail.html'
     context_object_name = 'employee'
+
+    def get_queryset(self):
+        # Prefetch the documents to optimize queries
+        return super().get_queryset().prefetch_related('documents')
 
 class SettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'employees/settings.html'

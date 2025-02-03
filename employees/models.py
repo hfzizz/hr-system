@@ -199,35 +199,56 @@ class Qualification(models.Model):
     class Meta:
         ordering = ['-from_date']
 
+def validate_file_size(value):
+    filesize = value.size
+    
+    if filesize > 10 * 1024 * 1024:  # 10MB limit
+        raise ValidationError("The maximum file size that can be uploaded is 10MB")
+
+def employee_document_path(instance, filename):
+    # Store the original filename for display
+    instance.original_filename = filename
+    # Get just the filename without any path
+    clean_filename = os.path.basename(filename)
+    return f'employee_documents/{instance.employee.id}/{clean_filename}'
+
 class Document(models.Model):
     employee = models.ForeignKey(
-        'Employee',
+        'Employee', 
         on_delete=models.CASCADE,
         related_name='documents'
     )
-    title = models.CharField(
-        max_length=255,
-        help_text=_('Title of the document')
-    )
-    file = models.FileField(
-        upload_to='employee_documents/',
-        help_text=_('Upload document file')
-    )
-    uploaded_at = models.DateTimeField(
-        auto_now_add=True
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True
-    )
-
-    class Meta:
-        ordering = ['-uploaded_at']
-        verbose_name = _('Document')
-        verbose_name_plural = _('Documents')
+    title = models.CharField(max_length=255)
+    file = models.FileField(upload_to=employee_document_path)
+    original_filename = models.CharField(max_length=255, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.title} - {self.employee.get_full_name()}"
+        return f"{self.employee.first_name}'s document - {self.title}"
+
+    def save(self, *args, **kwargs):
+        if not self.original_filename and self.file:
+            self.original_filename = os.path.basename(self.file.name)
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.file:
+            try:
+                # Check if file exists before trying to delete
+                if os.path.isfile(self.file.path):
+                    os.remove(self.file.path)
+            except (FileNotFoundError, ValueError):
+                # If file is missing or path is invalid, just log it or pass
+                print(f"File not found: {self.file.path}")
+                pass
+        super().delete(*args, **kwargs)
 
     @property
-    def filename(self):
-        return os.path.basename(self.file.name)
+    def file_exists(self):
+        """Check if the physical file exists"""
+        if self.file:
+            try:
+                return os.path.isfile(self.file.path)
+            except (FileNotFoundError, ValueError):
+                return False
+        return False

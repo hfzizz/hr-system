@@ -1,0 +1,156 @@
+<div x-data="{ 
+    open: false,
+    columnId: null,
+    columnData: {},
+    dataType: 'text',
+    
+    init() {
+        this.$watch('open', value => {
+            if (!value) this.resetForm();
+        });
+    },
+
+    resetForm() {
+        this.columnId = null;
+        this.columnData = {};
+        this.dataType = 'text';
+    },
+
+    async saveColumn() {
+        // Get form data
+        const form = document.getElementById('column-form');
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+        
+        // Dispatch event for the table to handle
+        document.dispatchEvent(new CustomEvent('save-column', { 
+            detail: { ...data, id: this.columnId }
+        }));
+        
+        this.open = false;
+    }
+}" 
+     @edit-column.window="
+        open = true; 
+        columnId = $event.detail.id;
+        columnData = $event.detail.data || {};
+        dataType = columnData.data_type || 'text';"
+     @add-column.window="open = true"
+     x-show="open"
+     class="relative z-50"
+     aria-labelledby="modal-title" 
+     role="dialog" 
+     aria-modal="true">
+    
+    <!-- Background backdrop -->
+    <div x-show="open" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+
+    <div class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div x-show="open"
+                 class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                
+                <!-- Header -->
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold" x-text="columnId ? 'Edit Column' : 'Add New Column'"></h3>
+                </div>
+
+                <!-- Form -->
+                <form id="column-form" class="space-y-4" @submit.prevent="saveColumn">
+                    <input type="hidden" name="column_id" x-model="columnId">
+                    
+                    <!-- Display Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Display Name</label>
+                        <input type="text" name="display_name" class="form-input mt-1" x-model="columnData.display_name">
+                    </div>
+
+                    <!-- Field Path -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Field Path</label>
+                        <input type="text" name="field_path" class="form-input mt-1" x-model="columnData.field_path">
+                        <p class="mt-1 text-sm text-gray-500">Use dot notation for nested fields (e.g., department.name)</p>
+                    </div>
+
+                    <!-- Data Type -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Data Type</label>
+                        <select name="data_type" 
+                                class="form-select mt-1" 
+                                x-model="dataType"
+                                x-ref="dataType">
+                            <option value="text">Text</option>
+                            <option value="number">Number</option>
+                            <option value="date">Date</option>
+                            <option value="boolean">Boolean</option>
+                            <option value="email">Email</option>
+                            <option value="url">URL</option>
+                            <option value="choice">Choice</option>
+                        </select>
+                    </div>
+
+                    <!-- Choices (only shown for choice data type) -->
+                    <div x-show="dataType === 'choice'" class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700">Choices</label>
+                        <template x-for="(choice, index) in columnData.choices || []" :key="index">
+                            <div class="flex items-center space-x-2">
+                                <input type="text" 
+                                       class="form-input flex-1" 
+                                       x-model="columnData.choices[index]">
+                                <button type="button" 
+                                        class="text-red-600" 
+                                        @click="columnData.choices.splice(index, 1)">
+                                    Remove
+                                </button>
+                            </div>
+                        </template>
+                        <button type="button" 
+                                class="btn-secondary text-sm"
+                                @click="columnData.choices = [...(columnData.choices || []), '']">
+                            Add Choice
+                        </button>
+                    </div>
+
+                    <!-- Column Options -->
+                    <div class="space-y-2">
+                        <div class="flex items-center">
+                            <input type="checkbox" 
+                                   name="is_sortable" 
+                                   class="form-checkbox"
+                                   x-model="columnData.is_sortable">
+                            <label class="ml-2 text-sm text-gray-700">Sortable</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" 
+                                   name="is_filterable" 
+                                   class="form-checkbox"
+                                   x-model="columnData.is_filterable">
+                            <label class="ml-2 text-sm text-gray-700">Filterable</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" 
+                                   name="is_visible" 
+                                   class="form-checkbox"
+                                   x-model="columnData.is_visible">
+                            <label class="ml-2 text-sm text-gray-700">Visible</label>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Footer -->
+                <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+                    <button type="button"
+                            class="btn-primary sm:col-start-2"
+                            @click="saveColumn">
+                        Save
+                    </button>
+                    <button type="button"
+                            class="btn-secondary mt-3 sm:col-start-1 sm:mt-0"
+                            @click="open = false">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

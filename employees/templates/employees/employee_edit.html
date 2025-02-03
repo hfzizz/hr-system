@@ -4,7 +4,11 @@
 
 {% block title %}Edit Employee - HR System{% endblock %}
 
-{% block extra_js %}
+{% block javascript %}
+<!-- First, include the parent block's JavaScript if any -->
+{{ block.super }}
+
+<!-- Then add your specific scripts -->
 <script src="{% static 'employees/js/employee_create.js' %}"></script>
 {% endblock %}
 
@@ -327,7 +331,7 @@
                             <div class="w-full">
                                 {{ document_formset.management_form }}
                                 
-                                <!-- Document template -->
+                                <!-- Add the document template before the table -->
                                 <template id="empty-document-template">
                                     <tr class="document-form">
                                         <input type="hidden" 
@@ -339,8 +343,7 @@
                                             <input type="text" 
                                                    name="document_set-__prefix__-title" 
                                                    id="id_document_set-__prefix__-title"
-                                                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                                   placeholder="Document Title">
+                                                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
                                         </td>
                                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                                             <input type="file" 
@@ -354,14 +357,16 @@
                                                           hover:file:bg-indigo-100">
                                         </td>
                                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                            <input type="hidden" 
-                                                   name="document_set-__prefix__-DELETE" 
-                                                   id="id_document_set-__prefix__-DELETE">
-                                            <button type="button" 
-                                                    onclick="window.deleteDocument(this)"
-                                                    class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
-                                                Delete
-                                            </button>
+                                            <div class="flex items-center space-x-3">
+                                                <input type="hidden" 
+                                                       name="document_set-__prefix__-DELETE" 
+                                                       id="id_document_set-__prefix__-DELETE">
+                                                <button type="button" 
+                                                        onclick="window.deleteDocument(this)"
+                                                        class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
+                                                    Delete
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 </template>
@@ -389,37 +394,52 @@
                                                                name="document_set-{{ forloop.counter0 }}-title" 
                                                                id="id_document_set-{{ forloop.counter0 }}-title"
                                                                value="{{ form.instance.title|default:'' }}"
-                                                               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                                               placeholder="Enter document title"
+                                                               class="block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
                                                     </td>
                                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                                                         {% if form.instance.file %}
-                                                            <div class="flex items-center space-x-2">
-                                                                <a href="{{ form.instance.file.url }}" 
-                                                                   class="text-indigo-600 hover:text-indigo-900"
-                                                                   target="_blank">
-                                                                    Current: {{ form.instance.file.name|slice:"11:" }}
-                                                                </a>
+                                                            <div class="flex items-center space-x-3 file-container">
+                                                                {% if form.instance.file_exists %}
+                                                                    <a href="{{ form.instance.file.url }}" 
+                                                                       class="text-indigo-600 hover:text-indigo-900"
+                                                                       target="_blank">
+                                                                        {{ form.instance.original_filename }}
+                                                                    </a>
+                                                                {% else %}
+                                                                    <span class="text-red-600">File not found</span>
+                                                                {% endif %}
                                                             </div>
+                                                        {% else %}
+                                                            <input type="file" 
+                                                                   name="document_set-{{ forloop.counter0 }}-file" 
+                                                                   id="id_document_set-{{ forloop.counter0 }}-file"
+                                                                   class="block w-full text-sm text-gray-500
+                                                                          file:mr-4 file:py-2 file:px-4
+                                                                          file:rounded-md file:border-0
+                                                                          file:text-sm file:font-semibold
+                                                                          file:bg-indigo-50 file:text-indigo-700
+                                                                          hover:file:bg-indigo-100">
                                                         {% endif %}
-                                                        <input type="file" 
-                                                               name="document_set-{{ forloop.counter0 }}-file" 
-                                                               id="id_document_set-{{ forloop.counter0 }}-file"
-                                                               class="block w-full text-sm text-gray-500
-                                                                      file:mr-4 file:py-2 file:px-4
-                                                                      file:rounded-md file:border-0
-                                                                      file:text-sm file:font-semibold
-                                                                      file:bg-indigo-50 file:text-indigo-700
-                                                                      hover:file:bg-indigo-100">
                                                     </td>
                                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                                        <input type="hidden" 
-                                                               name="document_set-{{ forloop.counter0 }}-DELETE" 
-                                                               id="id_document_set-{{ forloop.counter0 }}-DELETE">
-                                                        <button type="button" 
-                                                                onclick="window.deleteDocument(this)"
-                                                                class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
-                                                            Delete
-                                                        </button>
+                                                        <div class="flex items-center space-x-3">
+                                                            {% if form.instance.file %}
+                                                                <button type="button" 
+                                                                        onclick="replaceFile(this)"
+                                                                        class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                                                    Replace
+                                                                </button>
+                                                            {% endif %}
+                                                            <input type="hidden" 
+                                                                   name="document_set-{{ forloop.counter0 }}-DELETE" 
+                                                                   id="id_document_set-{{ forloop.counter0 }}-DELETE">
+                                                            <button type="button" 
+                                                                    onclick="window.deleteDocument(this)"
+                                                                    class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
+                                                                Delete
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             {% endfor %}
@@ -482,13 +502,4 @@
     </div>
 </div>
 
-<script>
-    console.log('Template loaded');
-</script>
-<script src="{% static 'employees/js/employee_create.js' %}"></script>
-{% if not form.errors and not form.non_field_errors %}
-    <script>
-        localStorage.removeItem('draft_qualifications');
-    </script>
-{% endif %}
 {% endblock %} 

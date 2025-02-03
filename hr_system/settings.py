@@ -142,3 +142,12 @@ AUTHENTICATION_BACKENDS = [
     'hr_system.backends.EmailOrUsernameModelBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+#Media files configuration
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+#File upload configuration
+FILE_UPLOAD_PERMISSIONS = 0o644
+
+

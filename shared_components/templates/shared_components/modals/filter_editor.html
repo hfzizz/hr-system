@@ -1,0 +1,73 @@
+<div x-data="{ 
+    open: false,
+    conditions: [],
+    
+    addFilterCondition() {
+        this.conditions.push({
+            column: '',
+            operator: 'equals',
+            value: ''
+        });
+    },
+    
+    removeCondition(index) {
+        this.conditions.splice(index, 1);
+    },
+    
+    applyFilters() {
+        document.dispatchEvent(new CustomEvent('apply-filters', {
+            detail: this.conditions
+        }));
+        this.open = false;
+    }
+}" 
+     @toggle-filters.window="open = !open"
+     x-show="open"
+     class="relative z-50"
+     aria-labelledby="modal-title" 
+     role="dialog" 
+     aria-modal="true">
+    
+    <!-- Background backdrop -->
+    <div x-show="open" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+
+    <div class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div x-show="open"
+                 class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                
+                <!-- Header -->
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold">Filter Records</h3>
+                </div>
+
+                <!-- Filter Builder -->
+                <div class="space-y-4">
+                    <div id="filter-conditions" class="space-y-2">
+                        <!-- Filter conditions will be dynamically added here -->
+                    </div>
+
+                    <button type="button" 
+                            @click="addFilterCondition"
+                            class="btn-secondary text-sm">
+                        Add Condition
+                    </button>
+                </div>
+
+                <!-- Footer -->
+                <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+                    <button type="button"
+                            class="btn-primary sm:col-start-2"
+                            @click="applyFilters()">
+                        Apply Filters
+                    </button>
+                    <button type="button"
+                            class="btn-secondary mt-3 sm:col-start-1 sm:mt-0"
+                            @click="open = false">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

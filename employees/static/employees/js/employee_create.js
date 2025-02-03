@@ -9,12 +9,22 @@ document.addEventListener('DOMContentLoaded', function() {
     
     initializePasswordFunctions();
     initializeQualificationFunctions();
+    initializeDocumentFunctions();
     
     // Load saved qualifications if they exist
     loadSavedQualifications();
     
-    // Add form submission handler
-    document.querySelector('form').addEventListener('submit', saveQualifications);
+    // Add form submission handler directly
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Save qualifications before submitting
+            saveQualifications();
+            
+            // Allow the form to submit normally
+            return true;
+        });
+    }
     
     console.log('Checking for template:', document.getElementById('empty-form-template'));
     
@@ -127,6 +137,183 @@ document.addEventListener('DOMContentLoaded', function() {
                 totalFormsInput.value = rows.length;
                 console.log('Updated total forms count:', rows.length);
             }
+        }
+    }
+
+    function initializeDocumentFunctions() {
+        window.addDocument = function() {
+            console.log('Adding document...');
+            const template = document.getElementById('empty-document-template');
+            
+            if (!template) {
+                console.error('Empty document template not found');
+                return;
+            }
+            
+            const totalFormsInput = document.querySelector('[name="document_set-TOTAL_FORMS"]');
+            const currentFormCount = parseInt(totalFormsInput.value);
+            
+            // Clone the template content
+            const newRow = template.content.cloneNode(true).querySelector('tr');
+            const tbody = document.getElementById('document-formset');
+            
+            if (!tbody) {
+                console.error('Document formset tbody not found');
+                return;
+            }
+            
+            // Replace all instances of __prefix__ with the current form count
+            newRow.innerHTML = newRow.innerHTML.replace(/__prefix__/g, currentFormCount);
+            
+            // Update the employee ID in the new row
+            const employeeId = document.querySelector('[name="id"]')?.value;
+            if (employeeId) {
+                const employeeInput = newRow.querySelector(`[name="document_set-${currentFormCount}-employee"]`);
+                if (employeeInput) {
+                    employeeInput.value = employeeId;
+                }
+            }
+            
+            tbody.appendChild(newRow);
+            
+            // Update management form
+            totalFormsInput.value = currentFormCount + 1;
+            
+            console.log('Document added successfully. New total:', totalFormsInput.value);
+        };
+        
+        window.deleteDocument = function(button) {
+            const row = button.closest('tr');  // Changed from '.document-form' to 'tr' for better compatibility
+            const deleteInput = row.querySelector('input[name$="-DELETE"]');
+            
+            if (deleteInput) {
+                // Mark for deletion in Django
+                deleteInput.value = 'on';
+                
+                // Hide the row visually
+                row.style.display = 'none';
+                row.classList.add('d-none');
+                
+                // If there's a file input, mark it as not required since we're deleting
+                const fileInput = row.querySelector('input[type="file"]');
+                if (fileInput) {
+                    fileInput.required = false;
+                }
+                
+                console.log('Document marked for deletion:', deleteInput.value);
+            } else {
+                // If no DELETE input found (new unsaved row), just remove the row
+                row.remove();
+                
+                // Update the total forms count
+                const totalFormsInput = document.querySelector('[name="document_set-TOTAL_FORMS"]');
+                if (totalFormsInput) {
+                    const currentTotal = parseInt(totalFormsInput.value);
+                    totalFormsInput.value = currentTotal - 1;
+                }
+            }
+        };
+        
+        function updateDocumentFormIndices() {
+            const tbody = document.getElementById('document-formset');
+            if (!tbody) return;
+            
+            const rows = Array.from(tbody.querySelectorAll('.document-form:not([style*="display: none"]):not(.d-none)'));
+            const totalFormsInput = document.querySelector('[name="document_set-TOTAL_FORMS"]');
+            
+            console.log('Updating indices for rows:', rows.length);
+            
+            rows.forEach((row, index) => {
+                row.querySelectorAll('input').forEach(input => {
+                    const name = input.getAttribute('name');
+                    if (name) {
+                        const newName = name.replace(/-\d+-/, `-${index}-`);
+                        input.setAttribute('name', newName);
+                        input.setAttribute('id', `id_${newName}`);
+                        console.log(`Updated input name from ${name} to ${newName}`);
+                    }
+                });
+            });
+            
+            if (totalFormsInput) {
+                totalFormsInput.value = rows.length;
+                console.log('Updated total forms count:', rows.length);
+            }
+        }
+
+        // Move replaceFile to window object
+        window.replaceFile = function(button) {
+            const row = button.closest('tr');
+            const fileContainer = row.querySelector('.file-container');
+            const formIndex = row.querySelector('input[name*="document_set-"][name$="-employee"]').name.match(/document_set-(\d+)-/)[1];
+            
+            // Create new file input
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.name = `document_set-${formIndex}-file`;
+            fileInput.id = `id_document_set-${formIndex}-file`;
+            fileInput.required = true;
+            fileInput.className = 'block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100';
+            
+            // Create a new container div for the file input
+            const newContainer = document.createElement('div');
+            newContainer.appendChild(fileInput);
+            
+            // Replace the existing file container with the new container
+            fileContainer.parentNode.replaceChild(newContainer, fileContainer);
+            
+            // Remove the replace button
+            button.remove();
+        };
+
+        // Preview modal functions
+        window.showPreviewModal = function(title, url) {
+            console.log('Showing preview modal:', title, url);
+            const modal = document.getElementById('previewModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const preview = document.getElementById('documentPreview');
+            
+            if (!modal || !modalTitle || !preview) {
+                console.error('Modal elements not found');
+                return;
+            }
+
+            modalTitle.textContent = title;
+            preview.src = url;
+            modal.classList.remove('hidden');
+        };
+
+        window.closePreviewModal = function() {
+            const modal = document.getElementById('previewModal');
+            const preview = document.getElementById('documentPreview');
+            
+            if (modal && preview) {
+                preview.src = '';
+                modal.classList.add('hidden');
+            }
+        };
+
+        // Initialize event listeners
+        function initializeEventListeners() {
+            console.log('Initializing document event listeners...');
+            
+            // Preview buttons
+            document.querySelectorAll('.preview-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const title = this.getAttribute('data-title');
+                    const url = this.getAttribute('data-url');
+                    console.log('Preview clicked:', title, url);
+                    showPreviewModal(title, url);
+                });
+            });
+        }
+
+        // Call the initialization when the DOM is loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeEventListeners);
+        } else {
+            initializeEventListeners();
         }
     }
 });
@@ -245,32 +432,5 @@ function initializePasswordFunctions() {
     };
 }
 
-// Add document formset handling
-window.addDocument = function() {
-    const totalForms = document.querySelector("#id_document_set-TOTAL_FORMS");
-    const currentForms = document.querySelectorAll(".document-form").length;
-    const template = document.querySelector("#empty-document-template");
-    const newForm = template.content.cloneNode(true);
-    
-    // Replace all __prefix__ in the template with the current form count
-    newForm.querySelectorAll("input").forEach(input => {
-        input.name = input.name.replace("__prefix__", currentForms);
-        input.id = input.id.replace("__prefix__", currentForms);
-    });
-    
-    document.querySelector("#document-formset").appendChild(newForm);
-    totalForms.value = currentForms + 1;
-};
-
-window.deleteDocument = function(button) {
-    const row = button.closest("tr");
-    const deleteInput = row.querySelector("input[name$='-DELETE']");
-    
-    if (deleteInput) {
-        deleteInput.value = "on";
-        row.classList.add("d-none");
-        row.style.display = "none";
-    } else {
-        row.remove();
-    }
-};
+// Initialize the document functions when the script loads
+initializeDocumentFunctions();

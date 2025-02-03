@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load employee_tags %}
 
 {% block title %}{{ employee.get_full_name }} - HR System{% endblock %}
 
@@ -180,7 +181,7 @@
             <!-- Documents -->
             <div class="mt-8 space-y-6">
                 <h3 class="text-lg font-medium leading-6 text-gray-900">Documents</h3>
-                {% if employee.documents.exists %}
+                {% if employee.documents.all %}
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-300">
                         <thead class="bg-gray-50">
@@ -194,15 +195,29 @@
                         <tbody class="divide-y divide-gray-200 bg-white">
                             {% for document in employee.documents.all %}
                             <tr>
-                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900">{{ document.title }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ document.filename }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ document.uploaded_at|date:"d M Y H:i" }}</td>
+                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900">
+                                    {{ document.title }}
+                                </td>
                                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                                     <a href="{{ document.file.url }}" 
                                        target="_blank"
-                                       class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                                        Download
+                                       class="text-indigo-600 hover:text-indigo-900">
+                                        {{ document.original_filename }}
                                     </a>
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ document.uploaded_at|date:"d M Y H:i" }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                    <div class="flex space-x-3">
+                                        {% if document.file %}
+                                            <a href="{{ document.file.url }}" 
+                                               target="_blank"
+                                               class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                                Download
+                                            </a>
+                                        {% else %}
+                                            <span class="text-red-600">File not found</span>
+                                        {% endif %}
+                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -216,4 +231,12 @@
         </div>
     </div>
 </div>
+
+
+
+
+{% block javascript %}
+<script src="{% static 'employees/js/document_preview.js' %}"></script>
+{% endblock %}
+
 {% endblock %} 
