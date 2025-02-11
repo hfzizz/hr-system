@@ -3,7 +3,7 @@ from django.urls import reverse_lazy
 from django.views.generic import TemplateView, ListView, CreateView, DetailView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from .models import Employee, Department, Qualification, Document
+from .models import Employee, Department, Qualification, Document, AppointmentType
 from .forms import EmployeeForm, EmployeeProfileForm, QualificationForm, QualificationFormSet
 from django.views.generic.edit import CreateView
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -133,17 +133,111 @@ class EmployeeListView(LoginRequiredMixin, ListView):
     model = Employee
     template_name = 'employees/employee_list.html'
     context_object_name = 'employees'
-    login_url = 'login'  # Redirect to login if user is not authenticated
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['employee_columns'] = [
+            {
+                'id': 'employee_id',
+                'label': 'Employee ID',
+                'value': 'employee_id',
+                'clickable': True,
+                'url_name': 'employees:employee_detail'
+            },
+            {
+                'id': 'name',
+                'label': 'Name',
+                'value': 'get_full_name',
+                'clickable': True,
+                'url_name': 'employees:employee_detail'
+            },
+            {
+                'id': 'email',
+                'label': 'Email',
+                'value': 'email'
+            },
+            {
+                'id': 'department',
+                'label': 'Department',
+                'value': 'department'
+            },
+            {
+                'id': 'post',
+                'label': 'Position',
+                'value': 'post'
+            },
+            {
+                'id': 'appointment_type',
+                'label': 'Appointment',
+                'value': 'appointment_type'
+            },
+            {
+                'id': 'status',
+                'label': 'Status',
+                'value': 'get_employee_status_display'
+            },
+            {
+                'id': 'hire_date',
+                'label': 'Hire Date',
+                'value': 'hire_date',
+                'type': 'date',
+                'date_format': '%d %b %Y'
+            },
+            {
+                'id': 'ic_no',
+                'label': 'IC Number',
+                'value': 'ic_no'
+            },
+            {
+                'id': 'ic_colour',
+                'label': 'IC Colour',
+                'value': 'get_ic_colour_display'
+            },
+            {
+                'id': 'phone_number',
+                'label': 'Phone',
+                'value': 'phone_number'
+            }
+        ]
+
+        # Table configuration
+        context['table_config'] = {
+            'update_url_name': 'employees:employee_update',
+            'status_column': 'status',
+            'status_field': 'employee_status',
+            'enable_sorting': True,
+            'default_sort': '-hire_date',
+            'enable_reorder': True,  # Enable/disable column reordering
+        }
+
+        # Filter options - only include if they exist in your database
         context['departments'] = Department.objects.all()
-        # Get unique positions
         context['posts'] = Employee.objects.values_list('post', flat=True).distinct()
+        if hasattr(Employee, 'appointment_type'):
+            context['appointment_types'] = AppointmentType.objects.all()
+        context['ic_colours'] = dict(Employee.ICColour.choices)
+        context['statuses'] = dict(Employee.Status.choices)
+
         return context
 
     def get_queryset(self):
         return Employee.objects.select_related('department', 'appointment__type_of_appointment').all()
+    
+    def employee_list(request):
+        employee_columns = [
+            {'id': 'employee_id', 'label': 'Employee ID', 'value': 'employee_id'},
+            {'id': 'name', 'label': 'Name', 'value': 'get_full_name'},
+            {'id': 'email', 'label': 'Email', 'value': 'email'},
+            # ... add all your columns here
+        ]
+    
+        context = {
+            'employees': Employee.objects.all(),
+            'departments': Department.objects.all(),
+            'posts': Employee.POST_CHOICES,
+            'employee_columns': employee_columns,
+    }
+        return render(request, 'employees/employee_list.html', context)
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'employees/dashboard.html'

@@ -404,7 +404,7 @@
                                                                     <a href="{{ form.instance.file.url }}" 
                                                                        class="text-indigo-600 hover:text-indigo-900"
                                                                        target="_blank">
-                                                                        {{ form.instance.file.name|slice:"11:" }}
+                                                                        {{ form.instance.original_filename }}
                                                                     </a>
                                                                 {% else %}
                                                                     <span class="text-red-600">File not found</span>

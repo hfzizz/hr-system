@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'hr_system',
     'widget_tweaks',
     'roles',
+    'components',
 ]
 
 MIDDLEWARE = [

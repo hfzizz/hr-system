@@ -1,0 +1,49 @@
+th[draggable="true"]:hover {
+    background-color: rgba(79, 70, 229, 0.1);
+}
+
+th.dragging {
+    opacity: 0.5;
+    background-color: rgba(79, 70, 229, 0.1);
+}
+
+.drop-zone-highlight {
+    position: relative;
+}
+
+.drop-zone-highlight::before {
+    content: '';
+    position: absolute;
+    left: -2px;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: rgb(79, 70, 229);
+    transition: all 0.2s ease;
+}
+
+.column-ghost {
+    position: fixed;
+    pointer-events: none;
+    background: rgba(0, 0, 0, 0.2);  /* Simple black fade */
+    border-radius: 4px;
+    z-index: 1000;
+    transition: transform 0.1s ease;
+}
+
+th {
+    transition: transform 0.2s ease;
+}
+
+@keyframes ghostAppear {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.column-ghost {
+    animation: ghostAppear 0.2s ease;
+} 

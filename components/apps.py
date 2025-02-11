@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class SharedComponentsConfig(AppConfig):
+class ComponentsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'shared_components'
+    name = 'components'
