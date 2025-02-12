@@ -1,3 +1,18 @@
+"""
+Employee Management System Views.
+
+This module contains all the view classes for handling employee management,
+authentication, and administrative functions.
+
+Classes:
+    - Authentication Views (Login/Logout)
+    - Department Management Views
+    - Employee Management Views
+    - Dashboard and Analytics Views
+    - Profile Management Views
+    - System Configuration Views
+"""
+
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, ListView, CreateView, DetailView, DeleteView
@@ -23,6 +38,7 @@ from django.db.models import Count, Q
 from appraisals.models import Appraisal, AppraisalPeriod
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
+# Formset Configurations
 QualificationFormSet = inlineformset_factory(
     Employee,
     Qualification,
@@ -45,10 +61,26 @@ DocumentFormSet = inlineformset_factory(
 )
 
 class HRRequiredMixin(UserPassesTestMixin):
+    """
+    Mixin to enforce HR role-based access control.
+    
+    This mixin ensures that only users belonging to the HR group can access
+    the protected views. It should be used in conjunction with LoginRequiredMixin.
+    """
     def test_func(self):
         return self.request.user.groups.filter(name='HR').exists()
 
 class DepartmentListView(LoginRequiredMixin, HRRequiredMixin, ListView):
+    """
+    Display a paginated list of all departments.
+    
+    Requires:
+        - User authentication
+        - HR group membership
+    
+    Template: employees/department_list.html
+    Context: departments (queryset of Department objects)
+    """
     model = Department
     template_name = 'employees/department_list.html'
     context_object_name = 'departments'
@@ -70,8 +102,18 @@ class DepartmentDeleteView(LoginRequiredMixin, HRRequiredMixin, DeleteView):
     template_name = 'employees/department_confirm_delete.html'
     success_url = reverse_lazy('employees:department_list')
 
-
 class CustomLoginView(LoginView):
+    """
+    Custom authentication view with enhanced functionality.
+    
+    Features:
+        - Combined username/email authentication
+        - Custom form styling
+        - Success/error message handling
+        - Authenticated user redirection
+    
+    Template: auth/login.html
+    """
     template_name = 'auth/login.html'
     redirect_authenticated_user = True
     success_url = reverse_lazy('dashboard')
@@ -80,14 +122,21 @@ class CustomLoginView(LoginView):
         return self.success_url
 
     def form_valid(self, form):
-        """Security check complete. Log the user in."""
-        username = form.cleaned_data.get('login')  # Get the login field value
+        """
+        Process valid form submission and authenticate user.
+        
+        Args:
+            form: The submitted authentication form
+            
+        Returns:
+            HttpResponse: Redirects to success URL or renders form with errors
+        """
+        username = form.cleaned_data.get('login')
         password = form.cleaned_data.get('password')
         
-        # Explicitly authenticate the user
         user = authenticate(
             self.request,
-            username=username,  # Use username parameter as that's what your backend expects
+            username=username,
             password=password
         )
         
@@ -130,11 +179,38 @@ class CustomLogoutView(LogoutView):
         return super().dispatch(request, *args, **kwargs)
 
 class EmployeeListView(LoginRequiredMixin, ListView):
+    """
+    Display a comprehensive list of employees with advanced filtering and sorting.
+    
+    Features:
+        - Configurable column display
+        - Dynamic sorting
+        - Multi-criteria filtering
+        - Role-based access control
+        - Optimized database queries
+    
+    Template: employees/employee_list.html
+    Context:
+        - employees: QuerySet of Employee objects
+        - employee_columns: List of column configurations
+        - table_config: Dictionary of table settings
+        - filter options: Departments, posts, appointment types, etc.
+    """
     model = Employee
     template_name = 'employees/employee_list.html'
     context_object_name = 'employees'
 
     def get_context_data(self, **kwargs):
+        """
+        Prepare and return the context data for the employee list view.
+        
+        Returns:
+            dict: Context containing:
+                - Column configurations
+                - Table settings
+                - Filter options
+                - Employee data
+        """
         context = super().get_context_data(**kwargs)
         context['employee_columns'] = [
             {
@@ -240,16 +316,38 @@ class EmployeeListView(LoginRequiredMixin, ListView):
         return render(request, 'employees/employee_list.html', context)
 
 class DashboardView(LoginRequiredMixin, TemplateView):
+    """
+    Main dashboard displaying system analytics and recent activities.
+    
+    Provides:
+        - Employee statistics
+        - Department analytics
+        - Appraisal status overview
+        - Recent employee additions
+        - Latest appraisal activities
+    
+    Access: All authenticated users
+    Template: employees/dashboard.html
+    """
     template_name = 'employees/dashboard.html'
 
     def get_context_data(self, **kwargs):
+        """
+        Gather and prepare dashboard analytics data.
+        
+        Returns:
+            dict: Context containing:
+                - Statistical counters
+                - Recent activity lists
+                - Role-specific information
+        """
         context = super().get_context_data(**kwargs)
         
-        # Get basic stats
+        # Core statistics
         context['total_employees'] = Employee.objects.count()
         context['total_departments'] = Department.objects.count()
         
-        # Get appraisal stats
+        # Appraisal analytics
         active_period = AppraisalPeriod.objects.filter(is_active=True).first()
         if active_period:
             context['ongoing_appraisals'] = Appraisal.objects.filter(
@@ -507,10 +605,26 @@ class EmployeeDetailView(LoginRequiredMixin, DetailView):
         return super().get_queryset().prefetch_related('documents')
 
 class SettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    """
+    System configuration interface for HR administrators.
+    
+    Provides access to:
+        - System settings
+        - Configuration options
+        - Administrative controls
+    
+    Access: HR personnel only
+    Template: employees/settings.html
+    """
     template_name = 'employees/settings.html'
     
     def test_func(self):
-        """Only allow HR users to access settings"""
+        """
+        Verify user has HR privileges.
+        
+        Returns:
+            bool: True if user belongs to HR group, False otherwise
+        """
         return self.request.user.groups.filter(name='HR').exists()
     
     def handle_no_permission(self):
