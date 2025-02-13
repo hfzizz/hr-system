@@ -1,0 +1,11 @@
+<div class="flex items-center space-x-3">
+    <a href="{% url 'appraisals:form_detail' item.id %}" 
+       class="text-indigo-600 hover:text-indigo-900 font-medium text-sm">
+        View Form
+    </a>
+    <button type="button"
+            onclick="downloadPDF('{{ item.id }}')"
+            class="text-gray-600 hover:text-gray-900 font-medium text-sm">
+        Download PDF
+    </button>
+</div> 

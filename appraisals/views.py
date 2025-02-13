@@ -103,19 +103,72 @@ class AppraisalListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         if status:
             queryset = queryset.filter(status=status)
             
-        return queryset.order_by('-created_date')
+        return queryset.order_by('-date_created')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({
-            'current_status': self.request.GET.get('status', 'all'),
-            'status_counts': {
-                'all': Appraisal.objects.count(),
-                'pending': Appraisal.objects.filter(status='pending').count(),
-                'in_review': Appraisal.objects.filter(status='in_review').count(),
-                'completed': Appraisal.objects.filter(status='completed').count(),
+        
+        # Common data
+        context['departments'] = Department.objects.all()
+        
+        # Pending Submissions tab
+        context['pending_appraisals'] = Appraisal.objects.filter(status='pending')
+        context['pending_columns'] = [
+            {'id': 'employee', 'label': 'Employee', 'value': 'employee'},
+            {'id': 'appraiser', 'label': 'Appraiser', 'value': 'appraiser'},
+            {'id': 'review_period', 'label': 'Review Period', 'value': 'review_period_start'},
+            {'id': 'deadline', 'label': 'Deadline', 'value': 'review_period_end'},
+            {'id': 'status', 'label': 'Status', 'value': 'status'},
+            {
+                'id': 'actions',
+                'label': 'Actions',
+                'value': 'id',
+                'template': 'appraisals/includes/pending_actions.html'
             }
-        })
+        ]
+        context['pending_config'] = {
+            'actions': True,
+            'action_url_name': 'appraisals:form_detail'
+        }
+        
+        # Review Submissions tab
+        context['review_appraisals'] = Appraisal.objects.filter(status='submitted')
+        context['review_columns'] = [
+            {'id': 'employee', 'label': 'Employee', 'value': 'employee'},
+            {'id': 'department', 'label': 'Department', 'value': 'employee.department'},
+            {'id': 'submitted_date', 'label': 'Submitted', 'value': 'date_created'},
+            {'id': 'status', 'label': 'Status', 'value': 'status'},
+            {
+                'id': 'actions',
+                'label': 'Actions',
+                'value': 'id',
+                'template': 'appraisals/includes/review_actions.html'
+            }
+        ]
+        context['review_config'] = {
+            'actions': True,
+            'action_url_name': 'appraisals:form_review'
+        }
+        
+        # Completed Appraisals tab
+        context['completed_appraisals'] = Appraisal.objects.filter(status='completed')
+        context['completed_columns'] = [
+            {'id': 'employee', 'label': 'Employee', 'value': 'employee'},
+            {'id': 'appraiser', 'label': 'Appraiser', 'value': 'appraiser'},
+            {'id': 'review_period', 'label': 'Review Period', 'value': 'review_period_start'},
+            {'id': 'completion_date', 'label': 'Completed', 'value': 'last_modified_date'},
+            {
+                'id': 'actions',
+                'label': 'Actions',
+                'value': 'id',
+                'template': 'appraisals/includes/completed_actions.html'
+            }
+        ]
+        context['completed_config'] = {
+            'actions': True,
+            'action_url_name': 'appraisals:form_detail'
+        }
+        
         return context
 
 class AppraisalDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
@@ -479,3 +532,71 @@ def role_update(request, employee_id):
             'success': False,
             'error': str(e)
         }, status=400)
+
+class AppraisalCreateView(CreateView):
+    model = Appraisal
+    template_name = 'appraisals/appraisal_form.html'
+    fields = [
+        'employee',
+        'appraiser',
+        'review_period_start',
+        'review_period_end',
+        'status'
+    ]
+    success_url = reverse_lazy('appraisals:form_list')
+
+class AppraisalReviewView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    model = Appraisal
+    template_name = 'appraisals/appraisal_form.html'
+    permission_required = 'appraisals.change_appraisal'
+    fields = [
+        # Core Information
+        'employee',
+        'appraiser',
+        'review_period_start',
+        'review_period_end',
+        'status',
+        
+        # Employment Details
+        'present_post',
+        'salary_scale_division',
+        'incremental_date',
+        'date_of_last_appraisal',
+        
+        # Academic Information
+        'current_enrollment',
+        'higher_degree_students_supervised',
+        
+        # Research and Publications
+        'last_research',
+        'ongoing_research',
+        'publications',
+        'conference_papers',
+        
+        # Professional Activities
+        'attendance',
+        'consultancy_work',
+        'administrative_posts',
+        
+        # Participation
+        'participation_within_university',
+        'participation_outside_university',
+        
+        # Objectives and Comments
+        'objectives_next_year',
+        'appraiser_comments',
+    ]
+
+    def get_success_url(self):
+        return reverse_lazy('appraisals:form_detail', kwargs={'pk': self.object.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Review Appraisal'
+        context['submit_text'] = 'Save Review'
+        return context
+
+    def form_valid(self, form):
+        # Add any additional processing before saving
+        form.instance.last_modified_by = self.request.user
+        return super().form_valid(form)

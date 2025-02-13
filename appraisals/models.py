@@ -150,17 +150,26 @@ class Appraisal(models.Model):
             for appointment in self.employee.appointments.all():
                 self.appointments_at_time_of_review.add(appointment)
 
+    def get_employee_appointment_type(self):
+        """Returns the employee's appointment type or a default message."""
+        try:
+            # Assuming the field in Employee model is 'appointment_type'
+            if hasattr(self.employee, 'appointment_type'):
+                return self.employee.appointment_type.name
+            return "Not specified"
+        except AttributeError:
+            return "Not specified"
+
     def get_employee_name(self):
-        """Get employee's full name"""
-        return self.employee.get_full_name()
+        """Returns the employee's full name."""
+        return self.employee.get_full_name() if self.employee else "Not assigned"
 
     def get_employee_ic_details(self):
-        """Get employee's IC details"""
-        return f"{self.employee.ic_no} ({self.employee.ic_colour})"
-
-    def get_employee_appointment_type(self):
-        """Get employee's appointment type"""
-        return self.employee.type_of_appointment
+        """Returns the employee's IC details."""
+        try:
+            return self.employee.ic_no or "Not provided"
+        except AttributeError:
+            return "Not provided"
 
 class AppraisalPeriod(models.Model):
     start_date = models.DateField()

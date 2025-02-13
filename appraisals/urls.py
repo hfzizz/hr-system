@@ -18,8 +18,9 @@ urlpatterns = [
     path('appraisers/roles/', views.AppraiserRoleView.as_view(), name='appraiser_roles'),
     path('appraisers/role/<int:employee_id>/', views.role_update, name='role_update'),
     
-    # Appraisal Forms (Single view with filters)
-    path('forms/', views.AppraisalListView.as_view(), name='appraisal_list'),
-    path('<int:pk>/', views.AppraisalDetailView.as_view(), name='appraisal_detail'),
-    path('<int:pk>/edit/', views.AppraisalEditView.as_view(), name='appraisal_edit'),
+    # Appraisal Forms
+    path('forms/', views.AppraisalListView.as_view(), name='form_list'),
+    path('forms/create/', views.AppraisalCreateView.as_view(), name='form_create'),
+    path('forms/<int:pk>/', views.AppraisalDetailView.as_view(), name='form_detail'),
+    path('forms/<int:pk>/review/', views.AppraisalReviewView.as_view(), name='form_review'),
 ] 
