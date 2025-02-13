@@ -1,0 +1,11 @@
+<div class="flex items-center space-x-3">
+    <a href="{% url 'appraisals:form_review' item.id %}" 
+       class="text-indigo-600 hover:text-indigo-900 font-medium text-sm">
+        Review
+    </a>
+    <button type="button"
+            onclick="requestAmendment('{{ item.id }}')"
+            class="text-yellow-600 hover:text-yellow-900 font-medium text-sm">
+        Request Amendment
+    </button>
+</div> 

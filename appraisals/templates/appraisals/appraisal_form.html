@@ -20,203 +20,328 @@
 
     <!-- Form -->
     <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
-        <form method="post" class="space-y-8 p-6">
+        <form method="post" class="space-y-8 p-6" action="{% if form.instance.pk %}{% url 'appraisals:appraisal_edit' form.instance.pk %}{% else %}{% url 'appraisals:appraisal_create' %}{% endif %}">
             {% csrf_token %}
+            
+            <!-- Core Details -->
+            <div>
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Core Details</h3>
+                <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                    <!-- Employee -->
+                    <div class="sm:col-span-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            {{ form.employee.label }}
+                        </label>
+                        <div class="mt-1">
+                            <input type="text" 
+                                   value="{{ form.employee.value }}" 
+                                   readonly
+                                   class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm">
+                            {{ form.employee.as_hidden }}
+                        </div>
+                    </div>
 
-            {% if form.non_field_errors %}
-            <div class="rounded-md bg-red-50 p-4">
-                <div class="flex">
-                    <div class="ml-3">
-                        <h3 class="text-sm font-medium text-red-800">There were errors with your submission</h3>
-                        <div class="mt-2 text-sm text-red-700">
-                            <ul class="list-disc space-y-1 pl-5">
-                                {% for error in form.non_field_errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
+                    <!-- Appraiser -->
+                    <div class="sm:col-span-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            {{ form.appraiser.label }}
+                        </label>
+                        <div class="mt-1">
+                            <input type="text" 
+                                   value="{{ form.appraiser.value }}" 
+                                   readonly
+                                   class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm">
+                            {{ form.appraiser.as_hidden }}
+                        </div>
+                    </div>
+
+                    <!-- Review Period Start -->
+                    <div class="sm:col-span-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            {{ form.review_period_start.label }}
+                        </label>
+                        <div class="mt-1">
+                            <input type="text" 
+                                   value="{{ form.review_period_start.value|date:'Y-m-d' }}" 
+                                   readonly
+                                   class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm">
+                            {{ form.review_period_start.as_hidden }}
+                        </div>
+                    </div>
+
+                    <!-- Review Period End -->
+                    <div class="sm:col-span-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            {{ form.review_period_end.label }}
+                        </label>
+                        <div class="mt-1">
+                            <input type="text" 
+                                   value="{{ form.review_period_end.value|date:'Y-m-d' }}" 
+                                   readonly
+                                   class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm">
+                            {{ form.review_period_end.as_hidden }}
                         </div>
                     </div>
                 </div>
             </div>
-            {% endif %}
 
-            <!-- Basic Information -->
+            <!-- Employment Details -->
             <div>
-                <h3 class="text-lg font-medium leading-6 text-gray-900">Basic Information</h3>
-                <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                    <!-- Employee Selection -->
-                    <div class="sm:col-span-3">
-                        <label for="{{ form.employee.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Employee
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Employment Details</h3>
+                <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                    <!-- Present Post -->
+                    <div class="sm:col-span-1">
+                        <label for="{{ form.present_post.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.present_post.label }}
                         </label>
                         <div class="mt-1">
-                            {% render_field form.employee class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %}
+                            {{ form.present_post|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
+                            {% if form.present_post.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.present_post.errors.0 }}</p>
+                            {% endif %}
                         </div>
-                        {% if form.employee.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.employee.errors.0 }}</p>
-                        {% endif %}
                     </div>
 
-                    <!-- Review Period -->
-                    <div class="sm:col-span-3">
-                        <label for="{{ form.review_period_start.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Review Period Start
+                    <!-- Salary Scale/Division -->
+                    <div class="sm:col-span-1">
+                        <label for="{{ form.salary_scale_division.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.salary_scale_division.label }}
                         </label>
                         <div class="mt-1">
-                            {% render_field form.review_period_start class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %}
+                            {{ form.salary_scale_division|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
+                            {% if form.salary_scale_division.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.salary_scale_division.errors.0 }}</p>
+                            {% endif %}
                         </div>
-                        {% if form.review_period_start.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.review_period_start.errors.0 }}</p>
-                        {% endif %}
                     </div>
 
-                    <div class="sm:col-span-3">
-                        <label for="{{ form.review_period_end.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Review Period End
+                    <!-- Incremental Date -->
+                    <div class="sm:col-span-1">
+                        <label for="{{ form.incremental_date.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.incremental_date.label }}
                         </label>
                         <div class="mt-1">
-                            {% render_field form.review_period_end class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %}
+                            {{ form.incremental_date|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
+                            {% if form.incremental_date.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.incremental_date.errors.0 }}</p>
+                            {% endif %}
                         </div>
-                        {% if form.review_period_end.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.review_period_end.errors.0 }}</p>
-                        {% endif %}
+                    </div>
+
+                    <!-- Date of Last Appraisal -->
+                    <div class="sm:col-span-1">
+                        <label for="{{ form.date_of_last_appraisal.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.date_of_last_appraisal.label }}
+                        </label>
+                        <div class="mt-1">
+                            {{ form.date_of_last_appraisal|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
+                            {% if form.date_of_last_appraisal.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.date_of_last_appraisal.errors.0 }}</p>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Performance Ratings -->
+            <!-- Academic Qualifications -->
             <div>
-                <h3 class="text-lg font-medium leading-6 text-gray-900">Performance Ratings</h3>
-                <p class="mt-1 text-sm text-gray-500">Rate on a scale of 1-5 (1 being lowest, 5 being highest)</p>
-                <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-5">
-                    <!-- Job Knowledge -->
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Academic Qualifications</h3>
+                <div class="mt-6">
+                    {{ academic_formset.management_form }}
+                    <table class="min-w-full divide-y divide-gray-300">
+                        <thead>
+                            <tr>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Degree/Diploma</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">University/College</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">From Date</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">To Date</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200" id="academic-qualifications">
+                            {% for form in academic_formset %}
+                                <tr class="qualification-row {% if form.DELETE.value %}d-none{% endif %}">
+                                    {{ form.id }}
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        {{ form.degree_diploma|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        {{ form.university_college|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        {{ form.from_date|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        {{ form.to_date|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        {{ form.DELETE.as_hidden }}
+                                        <button type="button" 
+                                                onclick="deleteQualification(this)"
+                                                class="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <button type="button" 
+                            onclick="addQualification()"
+                            class="mt-4 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                        Add Another Qualification
+                    </button>
+                </div>
+            </div>
+
+            <!-- Current Enrollment -->
+            <div>
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Current Enrollment</h3>
+                <div class="mt-6">
+                    <label for="{{ form.current_enrollment.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Currently Enrolled in Higher/Professional Qualifications
+                    </label>
+                    <div class="mt-1">
+                        {{ form.current_enrollment|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Research and Publications -->
+            <div>
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Research and Publications</h3>
+                <div class="mt-6 space-y-6">
                     <div>
-                        <label for="{{ form.job_knowledge.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Job Knowledge
+                        <label for="{{ form.higher_degree_students_supervised.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Higher Degree Students Supervised
                         </label>
                         <div class="mt-1">
-                            {% render_field form.job_knowledge class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %}
+                            {{ form.higher_degree_students_supervised|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
                         </div>
-                        {% if form.job_knowledge.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.job_knowledge.errors.0 }}</p>
-                        {% endif %}
                     </div>
-
-                    <!-- Work Quality -->
                     <div>
-                        <label for="{{ form.work_quality.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Work Quality
+                        <label for="{{ form.last_research.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Last Research Undertaken
                         </label>
                         <div class="mt-1">
-                            {% render_field form.work_quality class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %}
+                            {{ form.last_research|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
                         </div>
-                        {% if form.work_quality.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.work_quality.errors.0 }}</p>
-                        {% endif %}
                     </div>
+                    <div>
+                        <label for="{{ form.ongoing_research.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Ongoing Research
+                        </label>
+                        <div class="mt-1">
+                            {{ form.ongoing_research|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
+                        </div>
+                    </div>
+                    <div>
+                        <label for="{{ form.publications.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Publications
+                        </label>
+                        <div class="mt-1">
+                            {{ form.publications|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                    <!-- Attendance -->
+            <!-- Conference and Consultancy -->
+            <div>
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Conference and Consultancy</h3>
+                <div class="mt-6 space-y-6">
                     <div>
                         <label for="{{ form.attendance.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Attendance
+                            Attendance at Conferences, Seminars, Workshops
                         </label>
                         <div class="mt-1">
-                            {% render_field form.attendance class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %}
+                            {{ form.attendance|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
                         </div>
-                        {% if form.attendance.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.attendance.errors.0 }}</p>
-                        {% endif %}
                     </div>
-
-                    <!-- Communication -->
                     <div>
-                        <label for="{{ form.communication.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Communication
+                        <label for="{{ form.conference_papers.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Conference Papers
                         </label>
                         <div class="mt-1">
-                            {% render_field form.communication class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %}
+                            {{ form.conference_papers|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
                         </div>
-                        {% if form.communication.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.communication.errors.0 }}</p>
-                        {% endif %}
                     </div>
-
-                    <!-- Teamwork -->
                     <div>
-                        <label for="{{ form.teamwork.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Teamwork
+                        <label for="{{ form.consultancy_work.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Consultancy Work
                         </label>
                         <div class="mt-1">
-                            {% render_field form.teamwork class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %}
+                            {{ form.consultancy_work|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
                         </div>
-                        {% if form.teamwork.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.teamwork.errors.0 }}</p>
-                        {% endif %}
                     </div>
                 </div>
             </div>
 
-            <!-- Comments and Goals -->
+            <!-- Administrative Posts and Memberships -->
             <div>
-                <h3 class="text-lg font-medium leading-6 text-gray-900">Comments and Goals</h3>
-                <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4">
-                    <!-- Achievements -->
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Administrative Posts and Memberships</h3>
+                <div class="mt-6 space-y-6">
                     <div>
-                        <label for="{{ form.achievements.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Achievements
+                        <label for="{{ form.administrative_posts.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Administrative Posts Held
                         </label>
                         <div class="mt-1">
-                            {% render_field form.achievements class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" rows="3" %}
+                            {{ form.administrative_posts|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
                         </div>
-                        {% if form.achievements.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.achievements.errors.0 }}</p>
-                        {% endif %}
                     </div>
-
-                    <!-- Areas for Improvement -->
                     <div>
-                        <label for="{{ form.areas_for_improvement.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Areas for Improvement
+                        <label for="{{ form.memberships.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Memberships of Committees
                         </label>
                         <div class="mt-1">
-                            {% render_field form.areas_for_improvement class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" rows="3" %}
+                            {{ form.memberships|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
                         </div>
-                        {% if form.areas_for_improvement.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.areas_for_improvement.errors.0 }}</p>
-                        {% endif %}
                     </div>
+                </div>
+            </div>
 
-                    <!-- Comments -->
+            <!-- Participation and Objectives -->
+            <div>
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Participation and Objectives</h3>
+                <div class="mt-6 space-y-6">
                     <div>
-                        <label for="{{ form.comments.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Comments
+                        <label for="{{ form.participation_within_university.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Participation in Activities Within University
                         </label>
                         <div class="mt-1">
-                            {% render_field form.comments class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" rows="3" %}
+                            {{ form.participation_within_university|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
                         </div>
-                        {% if form.comments.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.comments.errors.0 }}</p>
-                        {% endif %}
                     </div>
-
-                    <!-- Goals -->
                     <div>
-                        <label for="{{ form.goals.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Goals
+                        <label for="{{ form.participation_outside_university.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Participation in Activities Outside University
                         </label>
                         <div class="mt-1">
-                            {% render_field form.goals class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" rows="3" %}
+                            {{ form.participation_outside_university|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
                         </div>
-                        {% if form.goals.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.goals.errors.0 }}</p>
-                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.objectives_next_year.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Teaching and Research Objectives for Next Year
+                        </label>
+                        <div class="mt-1">
+                            {{ form.objectives_next_year|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
+                        </div>
+                    </div>
+                    <div>
+                        <label for="{{ form.appraiser_comments.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Appraiser's Comments
+                        </label>
+                        <div class="mt-1">
+                            {{ form.appraiser_comments|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" }}
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Form Actions -->
             <div class="flex justify-end gap-x-3">
-                <a href="{% url 'appraisals:appraisal_list' %}"
+                <a href="{% url 'appraisals:appraisal_detail' form.instance.pk %}"
                    class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Cancel
                 </a>
@@ -228,4 +353,77 @@
         </form>
     </div>
 </div>
+
+<script>
+function addQualification() {
+    const table = document.querySelector('#academic-qualifications');
+    const rows = table.getElementsByClassName('qualification-row');
+    const lastRow = rows[rows.length - 1];
+    const newRow = lastRow.cloneNode(true);
+    
+    // Clear all input values
+    newRow.querySelectorAll('input').forEach(input => {
+        const inputName = input.getAttribute('name');
+        if (inputName.includes('DELETE')) {
+            input.value = '';  // Clear DELETE field
+        } else {
+            input.value = '';  // Clear other fields
+        }
+        
+        // Update the form index
+        const oldName = input.getAttribute('name');
+        const newName = oldName.replace(/\d+/, rows.length);
+        input.setAttribute('name', newName);
+        input.setAttribute('id', `id_${newName}`);
+    });
+    
+    // Make sure the new row is visible
+    newRow.classList.remove('d-none');
+    
+    table.appendChild(newRow);
+    
+    // Update the management form TOTAL_FORMS
+    const totalForms = document.querySelector('[name="academic_qualifications-TOTAL_FORMS"]');
+    totalForms.value = parseInt(totalForms.value) + 1;
+}
+
+function deleteQualification(button) {
+    const row = button.closest('tr');
+    const deleteInput = row.querySelector('input[name$="-DELETE"]');
+    
+    if (document.getElementsByClassName('qualification-row').length > 1) {
+        if (deleteInput) {
+            // For existing records, mark for deletion
+            deleteInput.value = 'on';
+            row.style.display = 'none';
+        } else {
+            // For new records, remove the row entirely
+            row.remove();
+            updateTotalForms();
+        }
+    } else {
+        // If it's the last row, just clear the inputs
+        row.querySelectorAll('input:not([name$="-DELETE"])').forEach(input => {
+            input.value = '';
+        });
+    }
+}
+
+function updateTotalForms() {
+    const totalForms = document.querySelector('[name="academic_qualifications-TOTAL_FORMS"]');
+    const visibleRows = Array.from(document.getElementsByClassName('qualification-row')).filter(row => row.style.display !== 'none').length;
+    totalForms.value = visibleRows;
+}
+
+// Add this to handle initial form state
+document.addEventListener('DOMContentLoaded', function() {
+    const deletedRows = document.querySelectorAll('input[name$="-DELETE"][value="on"]');
+    deletedRows.forEach(input => {
+        const row = input.closest('tr');
+        if (row) {
+            row.style.display = 'none';
+        }
+    });
+});
+</script>
 {% endblock %} 

@@ -1,0 +1,79 @@
+{% load static %}
+{% load table_tags %}
+
+<!-- Debug output -->
+<div style="background: #eee; padding: 10px; margin: 10px 0;">
+    <p>Template Debug:</p>
+    <p>Table ID: {{ table_id }}</p>
+    <p>Columns: {{ columns|safe }}</p>
+    <p>Data Count: {{ table_data|length }}</p>
+</div>
+
+<div class="table-component" id="table-{{ table_id }}" 
+     data-content-type="{{ content_type }}" 
+     data-object-id="{{ object_id }}"
+     data-preferences="{{ table_config.preferences|default:'{}' }}">
+    
+    <!-- Table Configuration Controls -->
+    <div class="table-controls mb-3">
+        <button class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#columnModal-{{ table_id }}">
+            Manage Columns
+        </button>
+    </div>
+
+    <!-- Main Table -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    {% for column in columns %}
+                    <th scope="col" data-column="{{ column.key }}" class="sortable">
+                        {{ column.label }}
+                        <span class="sort-indicator"></span>
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in table_data %}
+                <tr>
+                    {% for column in columns %}
+                    <td>{{ row|get_attribute:column.key }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Column Management Modal -->
+    <div class="modal fade" id="columnModal-{{ table_id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Manage Columns</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="columnForm-{{ table_id }}">
+                        {% csrf_token %}
+                        {% for column in all_columns %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" 
+                                   name="columns" value="{{ column.key }}"
+                                   {% if column.key in columns|map_column_keys %}checked{% endif %}>
+                            <label class="form-check-label">
+                                {{ column.label }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary save-columns">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

@@ -6,10 +6,13 @@ class EmailOrUsernameModelBackend(ModelBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
         UserModel = get_user_model()
         
+        if username is None:
+            username = kwargs.get('login')
+        
         try:
-            # Check if the input matches either username or email
+            # Attempt to get the user by email or username
             user = UserModel.objects.get(
-                Q(username__iexact=username) | Q(email__iexact=username)
+                Q(email__iexact=username) | Q(username__iexact=username)
             )
             
             # Check the password
