@@ -1,4 +1,4 @@
-from django.views.generic import ListView, CreateView, UpdateView, DetailView
+from django.views.generic import ListView, CreateView, UpdateView, DetailView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.decorators import login_required, permission_required
 from django.urls import reverse_lazy
@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.contrib.auth.models import Group
 from .models import Appraisal, AppraisalPeriod, AcademicQualification
-from employees.models import Employee
+from employees.models import Employee, Department
 from django.http import JsonResponse
 from django.shortcuts import redirect, get_object_or_404, render
 from django.views.decorators.http import require_http_methods
@@ -88,32 +88,35 @@ def create_period(request):
 
 class AppraisalListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     """
-    Displays a list of all appraisals.
-    Provides context for filtering and managing appraisals.
+    Display all appraisals with filtering capabilities.
+    Provides tabs for different statuses (pending, review, completed)
     """
     model = Appraisal
     template_name = 'appraisals/appraisal_list.html'
     context_object_name = 'appraisals'
     permission_required = 'appraisals.view_appraisal'
 
+    def get_queryset(self):
+        queryset = Appraisal.objects.all()
+        status = self.request.GET.get('status')
+        
+        if status:
+            queryset = queryset.filter(status=status)
+            
+        return queryset.order_by('-created_date')
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
-            'active_periods': AppraisalPeriod.objects.filter(is_active=True).order_by('start_date'),
-            'is_hr': self.request.user.groups.filter(name=HR_GROUP_NAME).exists(),
-            'employees': Employee.objects.all().order_by('department', 'last_name'),
-            'appraisers': self._get_appraisers()
+            'current_status': self.request.GET.get('status', 'all'),
+            'status_counts': {
+                'all': Appraisal.objects.count(),
+                'pending': Appraisal.objects.filter(status='pending').count(),
+                'in_review': Appraisal.objects.filter(status='in_review').count(),
+                'completed': Appraisal.objects.filter(status='completed').count(),
+            }
         })
         return context
-
-    def _get_appraisers(self):
-        """Helper method to get all appraisers"""
-        try:
-            appraiser_group = Group.objects.get(name=APPRAISER_GROUP_NAME)
-            return Employee.objects.filter(user__groups=appraiser_group)
-        except Group.DoesNotExist:
-            logger.warning("Appraiser group not found")
-            return Employee.objects.none()
 
 class AppraisalDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
     """
@@ -337,3 +340,142 @@ def get_appraisal_context(request):
         'is_appraiser': request.user.groups.filter(name=APPRAISER_GROUP_NAME).exists(),
         'can_manage_appraisals': request.user.has_perm('appraisals.can_manage_appraisals'),
     }
+
+class AppraisalDashboardView(LoginRequiredMixin, TemplateView):
+    """
+    Overview dashboard showing key metrics and summaries
+    """
+    template_name = 'appraisals/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'active_periods': AppraisalPeriod.objects.filter(is_active=True).count(),
+            'pending_appraisals': Appraisal.objects.filter(status='pending').count(),
+            'completed_appraisals': Appraisal.objects.filter(status='completed').count(),
+            'recent_activities': Appraisal.objects.order_by('-last_modified_date')[:5],
+        })
+        return context
+
+class AppraiserListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    """
+    Display and manage list of appraisers
+    """
+    model = Employee
+    template_name = 'appraisals/appraiser_list.html'
+    permission_required = 'appraisals.view_appraiser'
+    context_object_name = 'employees'
+
+    def get_queryset(self):
+        return Employee.objects.filter(user__groups__name=APPRAISER_GROUP_NAME)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Common data
+        context['departments'] = Department.objects.all()
+        context['periods'] = AppraisalPeriod.objects.all()
+        
+        # Assign Appraisers tab configuration
+        context['assign_columns'] = [
+            {'id': 'employee_id', 'label': 'Employee ID', 'value': 'employee_id'},
+            {'id': 'name', 'label': 'Name', 'value': 'get_full_name'},
+            {'id': 'department', 'label': 'Department', 'value': 'department'},
+            {'id': 'post', 'label': 'Position', 'value': 'post'},
+            {'id': 'status', 'label': 'Status', 'value': 'employee_status'},
+            {
+                'id': 'actions',
+                'label': 'Actions',
+                'value': 'id',
+                'template': 'appraisals/includes/assign_actions.html'
+            }
+        ]
+        context['assign_config'] = {
+            'actions': True,
+            'action_url_name': 'appraisals:appraiser_assign'
+        }
+        
+        # Manage Roles tab configuration
+        context['role_columns'] = [
+            {'id': 'employee_id', 'label': 'Employee ID', 'value': 'employee_id'},
+            {'id': 'name', 'label': 'Name', 'value': 'get_full_name'},
+            {'id': 'department', 'label': 'Department', 'value': 'department'},
+            {'id': 'current_role', 'label': 'Current Role', 'value': 'role'},
+            {
+                'id': 'actions',
+                'label': 'Actions',
+                'value': 'id',
+                'template': 'appraisals/includes/role_actions.html'
+            }
+        ]
+        context['role_config'] = {
+            'actions': True,
+            'action_url_name': 'appraisals:role_update'
+        }
+        
+        return context
+
+class AppraiserRoleView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
+    """
+    Manage appraiser roles and permissions
+    """
+    template_name = 'appraisals/appraiser_roles.html'
+    permission_required = 'auth.change_group'
+
+class PendingAppraisalsView(LoginRequiredMixin, ListView):
+    """
+    Display pending appraisals
+    """
+    model = Appraisal
+    template_name = 'appraisals/pending_list.html'
+    context_object_name = 'appraisals'
+    
+    def get_queryset(self):
+        return Appraisal.objects.filter(status='pending')
+
+class ReviewAppraisalsView(LoginRequiredMixin, ListView):
+    """
+    Display appraisals under review
+    """
+    model = Appraisal
+    template_name = 'appraisals/review_list.html'
+    context_object_name = 'appraisals'
+    
+    def get_queryset(self):
+        return Appraisal.objects.filter(status='in_review')
+
+class CompletedAppraisalsView(LoginRequiredMixin, ListView):
+    """
+    Display completed appraisals
+    """
+    model = Appraisal
+    template_name = 'appraisals/completed_list.html'
+    context_object_name = 'appraisals'
+    
+    def get_queryset(self):
+        return Appraisal.objects.filter(status='completed')
+
+@require_http_methods(["POST"])
+def role_update(request, employee_id):
+    try:
+        employee = Employee.objects.get(id=employee_id)
+        role = request.POST.get('role')
+        
+        # Update the employee's role
+        employee.role = role
+        employee.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Role updated successfully for {employee.get_full_name()}'
+        })
+    except Employee.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Employee not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
