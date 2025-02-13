@@ -23,7 +23,74 @@ from django.template.context_processors import request
 
 logger = logging.getLogger(__name__)
 
+# Constants
+HR_GROUP_NAME = 'HR'
+APPRAISER_GROUP_NAME = 'Appraiser'
+
+# ============================================================================
+# Appraisal Period Management Views
+# ============================================================================
+
+class AppraisalPeriodListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    """
+    Displays a list of all appraisal periods.
+    Only HR and users with specific permissions can access this view.
+    """
+    model = AppraisalPeriod
+    template_name = 'appraisals/period_list.html'
+    context_object_name = 'periods'
+    permission_required = ('appraisals.view_appraisalperiod',)
+    
+    def has_permission(self):
+        return self.request.user.groups.filter(name=HR_GROUP_NAME).exists() or super().has_permission()
+
+@login_required
+@permission_required('appraisals.add_appraisalperiod', raise_exception=True)
+def create_period(request):
+    """
+    Creates a new appraisal period.
+    Requires POST request with start_date and end_date.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+    try:
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        
+        if not all([start_date, end_date]):
+            return JsonResponse({
+                'success': False,
+                'error': 'Both start date and end date are required'
+            }, status=400)
+
+        period = AppraisalPeriod(
+            start_date=start_date,
+            end_date=end_date,
+            is_active=False
+        )
+        
+        period.full_clean()
+        period.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Appraisal period created successfully'
+        })
+            
+    except Exception as e:
+        logger.error(f"Error creating appraisal period: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+# ============================================================================
+# Appraisal Management Views
+# ============================================================================
+
 class AppraisalListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    """
+    Displays a list of all appraisals.
+    Provides context for filtering and managing appraisals.
+    """
     model = Appraisal
     template_name = 'appraisals/appraisal_list.html'
     context_object_name = 'appraisals'
@@ -31,167 +98,133 @@ class AppraisalListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['active_periods'] = AppraisalPeriod.objects.filter(is_active=True).order_by('start_date')
-        context['is_hr'] = self.request.user.groups.filter(name='HR').exists()
-        
-        # Get all employees for the main list
-        context['employees'] = Employee.objects.all().order_by('department', 'last_name')
-        
-        # Add some debug printing
-        try:
-            appraiser_group = Group.objects.get(name='Appraiser')
-            appraisers = Employee.objects.filter(user__groups=appraiser_group)
-            print("Number of appraisers found:", appraisers.count())
-            for appraiser in appraisers:
-                print(f"Appraiser: {appraiser.first_name} {appraiser.last_name}, Dept: {appraiser.department}")
-        except Group.DoesNotExist:
-            print("Appraiser group not found")
-            appraisers = Employee.objects.none()
-        
-        context['appraisers'] = appraisers
+        context.update({
+            'active_periods': AppraisalPeriod.objects.filter(is_active=True).order_by('start_date'),
+            'is_hr': self.request.user.groups.filter(name=HR_GROUP_NAME).exists(),
+            'employees': Employee.objects.all().order_by('department', 'last_name'),
+            'appraisers': self._get_appraisers()
+        })
         return context
 
-class AppraisalAssignView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
-    model = Appraisal
-    permission_required = 'appraisals.can_create_appraisal'
-    http_method_names = ['post']
-
-    def form_invalid(self, form):
-        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': False,
-                'error': form.errors
-            }, status=400)
-        return super().form_invalid(form)
-
-    def post(self, request, *args, **kwargs):
+    def _get_appraisers(self):
+        """Helper method to get all appraisers"""
         try:
-            # Get the employee and appraiser
-            employee = get_object_or_404(Employee, id=request.POST.get('employee_id'))
-            appraiser = get_object_or_404(Employee, id=request.POST.get('appraiser'))
+            appraiser_group = Group.objects.get(name=APPRAISER_GROUP_NAME)
+            return Employee.objects.filter(user__groups=appraiser_group)
+        except Group.DoesNotExist:
+            logger.warning("Appraiser group not found")
+            return Employee.objects.none()
+
+class AppraisalDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    """
+    Displays detailed information about a specific appraisal.
+    """
+    model = Appraisal
+    template_name = 'appraisals/appraisal_detail.html'
+    context_object_name = 'appraisal'
+    permission_required = 'appraisals.view_appraisal'
+
+class AppraisalUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    """
+    Handles updating existing appraisals including academic qualifications.
+    """
+    model = Appraisal
+    form_class = AppraisalForm
+    template_name = 'appraisals/appraisal_form.html'
+    success_url = reverse_lazy('appraisals:appraisal_list')
+    permission_required = 'appraisals.change_appraisal'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['academic_formset'] = AcademicQualificationFormSet(
+            self.request.POST if self.request.POST else None,
+            instance=self.object
+        )
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        academic_formset = context['academic_formset']
+        
+        if form.is_valid() and academic_formset.is_valid():
+            self.object = form.save(commit=False)
+            self.object.last_modified_by = self.request.user
+            self.object.last_modified_date = timezone.now()
+            self.object.save()
             
-            # Create the appraisal
-            appraisal = Appraisal.objects.create(
-                employee=employee,
-                appraiser=appraiser,
-                review_period_start=request.POST.get('review_period_start'),
-                review_period_end=request.POST.get('review_period_end'),
-                status='pending',
-                last_modified_by=request.user  # Add this line
-            )
-
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({
-                    'success': True,
-                    'message': 'Appraisal assigned successfully'
-                })
-            return redirect('appraisals:appraisal_list')
-
-        except Exception as e:
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({
-                    'success': False,
-                    'error': str(e)
-                }, status=400)
-            messages.error(request, f'Error assigning appraisal: {str(e)}')
-            return redirect('appraisals:appraisal_list')
+            academic_formset.instance = self.object
+            academic_formset.save()
+            
+            messages.success(self.request, 'Appraisal updated successfully.')
+            return super().form_valid(form)
+            
+        return self.render_to_response(self.get_context_data(form=form))
 
 @login_required
 @require_http_methods(["POST"])
 def appraisal_assign(request):
+    """
+    Assigns an appraisal to an employee with a designated appraiser.
+    
+    Args:
+        request: HTTP request containing employee_id, appraiser_id, and review period dates
+        
+    Returns:
+        JsonResponse with success/failure status and appropriate message
+    """
     try:
-        # Get form data
-        employee_id = request.POST.get('employee_id')
-        appraiser_id = request.POST.get('appraiser')
-        review_period_start = request.POST.get('review_period_start')
-        review_period_end = request.POST.get('review_period_end')
+        data = {
+            'employee_id': request.POST.get('employee_id'),
+            'appraiser_id': request.POST.get('appraiser'),
+            'review_period_start': request.POST.get('review_period_start'),
+            'review_period_end': request.POST.get('review_period_end')
+        }
 
         # Validate required fields
-        if not all([employee_id, appraiser_id, review_period_start, review_period_end]):
+        if not all(data.values()):
             return JsonResponse({
                 'success': False,
                 'error': 'All fields are required'
-            })
+            }, status=400)
 
         # Get the employee and appraiser
         try:
-            employee = Employee.objects.get(id=employee_id)
-            appraiser = Employee.objects.get(id=appraiser_id)
+            employee = Employee.objects.get(id=data['employee_id'])
+            appraiser = Employee.objects.get(id=data['appraiser_id'])
         except Employee.DoesNotExist as e:
             logger.error(f"Employee/Appraiser not found: {str(e)}")
             return JsonResponse({
                 'success': False,
                 'error': 'Employee or appraiser not found'
-            })
+            }, status=404)
 
-        # Create the appraisal
         appraisal = Appraisal.objects.create(
             employee=employee,
             appraiser=appraiser,
-            review_period_start=review_period_start,
-            review_period_end=review_period_end,
+            review_period_start=data['review_period_start'],
+            review_period_end=data['review_period_end'],
             status='pending',
             last_modified_by=request.user
         )
 
+        # Send notification (implement your notification system)
+        # notify_appraisal_assignment(appraisal)
+
         return JsonResponse({
             'success': True,
-            'message': 'Appraisal assigned successfully'
+            'message': 'Appraisal assigned successfully',
+            'appraisal_id': appraisal.id
         })
 
     except Exception as e:
         logger.error(f"Error in appraisal_assign: {str(e)}")
         return JsonResponse({
             'success': False,
-            'error': str(e)
-        })
-
-class AppraisalDetailView(DetailView):
-    model = Appraisal
-    template_name = 'appraisals/appraisal_detail.html'
-    context_object_name = 'appraisal'
-
-class AppraisalUpdateView(UpdateView):
-    model = Appraisal
-    form_class = AppraisalForm
-    template_name = 'appraisals/appraisal_form.html'
-    success_url = reverse_lazy('appraisals:appraisal_list')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.request.POST:
-            context['academic_formset'] = AcademicQualificationFormSet(
-                self.request.POST,
-                instance=self.object
-            )
-        else:
-            context['academic_formset'] = AcademicQualificationFormSet(
-                instance=self.object
-            )
-        return context
-
-    def form_valid(self, form):
-        context = self.get_context_data()
-        academic_formset = context['academic_formset']
-        if form.is_valid() and academic_formset.is_valid():
-            self.object = form.save()
-            academic_formset.instance = self.object
-            academic_formset.save()
-            return super().form_valid(form)
-        return self.render_to_response(self.get_context_data(form=form))
-
-class AppraisalPeriodListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
-    model = AppraisalPeriod
-    template_name = 'appraisals/period_list.html'
-    context_object_name = 'periods'
-    permission_required = ('appraisals.view_appraisalperiod',)
-    
-    def has_permission(self):
-        user = self.request.user
-        return user.groups.filter(name='HR').exists() or super().has_permission()
+            'error': 'An error occurred while assigning the appraisal'
+        }, status=500)
 
 @login_required
-@permission_required('appraisals.change_appraisalperiod')
+@require_http_methods(["POST"])
 def toggle_appraisal_period(request, pk):
     period = get_object_or_404(AppraisalPeriod, pk=pk)
     period.is_active = not period.is_active
@@ -209,62 +242,29 @@ def toggle_appraisal_period(request, pk):
     messages.add_message(request, messages.INFO if status == 'success' else messages.ERROR, message)
     return redirect('appraisals:period_list')
 
-@csrf_exempt  # Only for testing, remove in production
-@require_http_methods(["POST"])
-@login_required
-@permission_required('appraisals.add_appraisalperiod', raise_exception=True)
-def create_period(request):
-    try:
-        start_date = request.POST.get('start_date')
-        end_date = request.POST.get('end_date')
-        
-        print(f"Received dates - Start: {start_date}, End: {end_date}")  # Debug print
-        
-        if not start_date or not end_date:
-            return JsonResponse({
-                'success': False,
-                'error': 'Both start date and end date are required'
-            }, status=400)
-
-        period = AppraisalPeriod(
-            start_date=start_date,
-            end_date=end_date,
-            is_active=False
-        )
-        
-        try:
-            period.full_clean()
-            period.save()
-            return JsonResponse({
-                'success': True,
-                'message': 'Appraisal period created successfully'
-            })
-        except ValidationError as e:
-            return JsonResponse({
-                'success': False,
-                'error': str(e)
-            }, status=400)
-            
-    except Exception as e:
-        print(f"Error creating period: {str(e)}")  # Debug print
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
-
-@require_http_methods(["POST"])
 @login_required
 @permission_required('appraisals.change_appraisalperiod')
 def toggle_period(request, pk):
+    """
+    Toggles the active status of an appraisal period.
+    
+    Args:
+        request: HTTP request
+        pk: Primary key of the AppraisalPeriod
+        
+    Returns:
+        JsonResponse with updated status
+    """
     try:
         period = get_object_or_404(AppraisalPeriod, pk=pk)
         period.is_active = not period.is_active
         period.full_clean()
         period.save()
         
+        message = 'Period activated' if period.is_active else 'Period deactivated'
         return JsonResponse({
             'status': 'success',
-            'message': 'Period status updated successfully',
+            'message': f'Appraisal {message} successfully',
             'is_active': period.is_active
         })
     except ValidationError as e:
@@ -273,98 +273,67 @@ def toggle_period(request, pk):
             'message': str(e)
         }, status=400)
     except Exception as e:
+        logger.error(f"Error toggling period status: {str(e)}")
         return JsonResponse({
             'status': 'error',
             'message': 'An error occurred while updating the period'
         }, status=500)
 
-def appraisal_update_view(request, pk):
-    appraisal = get_object_or_404(Appraisal, pk=pk)
-    if request.method == 'POST':
-        form = AppraisalForm(request.POST, instance=appraisal)
-        formset = AcademicQualificationFormSet(request.POST, queryset=appraisal.academic_qualifications.all())
-        if form.is_valid() and formset.is_valid():
-            form.save()
-            formset.save()
-            # Redirect or render success message
-    else:
-        form = AppraisalForm(instance=appraisal)
-        formset = AcademicQualificationFormSet(queryset=appraisal.academic_qualifications.all())
-
-    return render(request, 'appraisals/appraisal_form.html', {'form': form, 'formset': formset})
-
-def appraisal_edit(request, pk=None):
-    # Check permissions
-    if not request.user.has_perm('appraisals.change_appraisal'):
-        raise PermissionDenied
+class AppraisalEditView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    """
+    Handles the editing of appraisals and their associated academic qualifications.
+    Provides form handling for both the main appraisal form and academic qualification formset.
+    """
+    model = Appraisal
+    form_class = AppraisalForm
+    template_name = 'appraisals/appraisal_form.html'
+    permission_required = 'appraisals.change_appraisal'
     
-    # Define the formset outside try block since we'll need it in both cases
-    AcademicQualificationFormSet = inlineformset_factory(
-        Appraisal,
-        AcademicQualification,
-        fields=('degree_diploma', 'university_college', 'from_date', 'to_date'),
-        extra=1,
-        can_delete=True,
-        min_num=1,  # Require at least one form
-        validate_min=True
-    )
-    
-    try:
-        appraisal = get_object_or_404(Appraisal, pk=pk) if pk else None
-        
-        if request.method == 'POST':
-            form = AppraisalForm(request.POST, instance=appraisal)
-            academic_formset = AcademicQualificationFormSet(
-                request.POST, 
-                instance=appraisal,
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['academic_formset'] = AcademicQualificationFormSet(
+                self.request.POST,
+                instance=self.object,
                 prefix='qualifications'
             )
-            
-            if form.is_valid() and academic_formset.is_valid():
-                appraisal = form.save(commit=False)
-                appraisal.last_modified_by = request.user
-                appraisal.last_modified_date = timezone.now()
-                appraisal.save()
-                
-                academic_formset.save()
-                messages.success(request, 'Appraisal updated successfully.')
-                return redirect('appraisals:appraisal_detail', pk=appraisal.pk)
-            else:
-                messages.error(request, 'Please correct the errors below.')
         else:
-            form = AppraisalForm(instance=appraisal)
-            academic_formset = AcademicQualificationFormSet(
-                instance=appraisal,
+            context['academic_formset'] = AcademicQualificationFormSet(
+                instance=self.object,
                 prefix='qualifications'
             )
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        academic_formset = context['academic_formset']
         
-        context = {
-            'form': form,
-            'academic_formset': academic_formset,
-        }
-        return render(request, 'appraisals/appraisal_form.html', context)
-    except Exception as e:
-        messages.error(request, f'An error occurred while editing the appraisal: {str(e)}')
-        return redirect('appraisals:appraisal_list')
+        if academic_formset.is_valid():
+            self.object = form.save(commit=False)
+            self.object.last_modified_by = self.request.user
+            self.object.last_modified_date = timezone.now()
+            self.object.save()
+            
+            academic_formset.instance = self.object
+            academic_formset.save()
+            
+            messages.success(self.request, 'Appraisal updated successfully.')
+            return redirect('appraisals:appraisal_detail', pk=self.object.pk)
+        
+        return self.render_to_response(self.get_context_data(form=form))
 
-def appraisal_list(request):
-    context = {
-        'is_hr': request.user.has_perm('appraisals.can_manage_appraisals'),
-        'employees': Employee.objects.all(),
-        'appraisers': User.objects.filter(groups__name='Appraisers'),
-        'active_period': AppraisalPeriod.objects.filter(is_active=True).first(),
-        # ... other context data ...
-    }
-    return render(request, 'appraisals/appraisal_list.html', context)
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
 
-def appraisal_context_processor(request):
+def get_appraisal_context(request):
     """
-    Context processor to add appraisal-related data to all templates
+    Common context processor for appraisal-related views.
+    Provides consistent context data across multiple views.
     """
-    active_period = AppraisalPeriod.objects.filter(is_active=True).exists()
-    is_hr = request.user.groups.filter(name='HR').exists() if request.user.is_authenticated else False
-    
     return {
-        'active_period': active_period,
-        'is_hr': is_hr,
+        'active_periods': AppraisalPeriod.objects.filter(is_active=True),
+        'is_hr': request.user.groups.filter(name=HR_GROUP_NAME).exists(),
+        'is_appraiser': request.user.groups.filter(name=APPRAISER_GROUP_NAME).exists(),
+        'can_manage_appraisals': request.user.has_perm('appraisals.can_manage_appraisals'),
     }
