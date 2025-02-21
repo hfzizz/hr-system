@@ -1,0 +1,16 @@
+<div class="flex space-x-3">
+    {% if record and record.appraisal_id %}
+        <a href="{% url 'appraisals:form_detail' pk=record.appraisal_id %}" 
+           class="text-indigo-600 hover:text-indigo-900 font-medium">
+            View Details
+        </a>
+        {% if record.status != 'completed' %}
+            <a href="{% url 'appraisals:form_edit' pk=record.appraisal_id %}"
+               class="text-blue-600 hover:text-blue-900 font-medium">
+                Edit
+            </a>
+        {% endif %}
+    {% else %}
+        <span class="text-gray-400">No actions available</span>
+    {% endif %}
+</div>

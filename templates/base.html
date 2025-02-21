@@ -6,21 +6,46 @@
     <title>{% block title %}UBD HR System{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <style>
+        [x-cloak] { display: none !important; }
+        .fixed-content {
+            width: calc(100% - 16rem); /* when sidebar is open */
+            transition: width 300ms ease-in-out;
+        }
+        .fixed-content.ml-20 {
+            width: calc(100% - 5rem); /* when sidebar is collapsed */
+        }
+    </style>
 </head>
 <body class="bg-gray-50">
-    <div class="flex min-h-screen">
+    <div x-data="{ sidebarOpen: true }">
         <!-- Sidebar -->
         {% include 'sidebar.html' %}
     
         <!-- Main Content Area -->
-        <div class="flex-1 flex flex-col">
-            <!-- Top Navigation Bar -->
-            <header class="bg-white shadow">
-                <div class="flex justify-between items-center px-8 py-4">
-                    <!-- Page Title -->
-                    <h1 class="text-2xl font-semibold text-gray-900">
-                        {% block header %} HR System {% endblock %}
-                    </h1>
+        <div class="ml-64">
+            <div class="flex-1 flex flex-col min-h-screen">
+                <!-- Top Navigation Bar -->
+                <header class="bg-white shadow">
+                    <div class="flex justify-between items-center px-8 py-4">
+                        <!-- Breadcrumb Navigation -->
+                        <nav class="flex" aria-label="Breadcrumb">
+                            <ol role="list" class="flex items-center space-x-4">
+                                <li>
+                                    <div>
+                                        <a href="{% url 'dashboard' %}" class="text-gray-400 hover:text-gray-500">
+                                            <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd" />
+                                            </svg>
+                                            <span class="sr-only">Home</span>
+                                        </a>
+                                    </div>
+                                </li>
+                                {% block breadcrumbs %}{% endblock %}
+                            </ol>
+                        </nav>
 
                     <!-- User Menu -->
                     {% if user.is_authenticated %}
@@ -41,70 +66,62 @@
                             </svg>
                         </button>
 
-                        <!-- Dropdown Menu -->
-                        <div class="hidden absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
-                             role="menu" 
-                             id="user-menu-dropdown">
-                            <!-- Profile Link -->
-                            <a href="{% url 'employees:profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                Your Profile
-                            </a>
-                            <!-- Settings Link -->
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                Settings
-                            </a>
-                            <!-- Logout Form -->
-                            <form method="post" action="{% url 'logout' %}" class="block">
-                                {% csrf_token %}
-                                <button type="submit" 
-                                        class="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-gray-100">
-                                    Sign out
-                                </button>
-                            </form>
+                            <!-- Dropdown Menu -->
+                            <div x-show="open" 
+                                 @click.away="open = false"
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="transform opacity-0 scale-95"
+                                 x-transition:enter-end="transform opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-75"
+                                 x-transition:leave-start="transform opacity-100 scale-100"
+                                 x-transition:leave-end="transform opacity-0 scale-95"
+                                 class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                <!-- Profile Link -->
+                                <a href="{% url 'employees:profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    Your Profile
+                                </a>
+                                <!-- Settings Link -->
+                                <a href="{% url 'settings' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    Settings
+                                </a>
+                                <!-- Logout Form -->
+                                <form method="post" action="{% url 'logout' %}" class="block">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            class="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-gray-100">
+                                        Sign out
+                                    </button>
+                                </form>
+                            </div>
                         </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
-                </div>
-            </header>
+                </header>
 
-            <!-- Main Content -->
-            <main class="flex-1 p-8">
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="mb-4 rounded-md {% if message.tags %}{{ message.tags }}{% endif %} p-4">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
+                <!-- Main Content -->
+                <main class="flex-1 p-8">
+                    <div class="min-w-0 w-full max-w-[calc(100vw-16rem)] transition-all duration-300 ease-in-out">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="mb-4 rounded-md p-4 {% if message.tags %}
+                                    {% if message.tags == 'error' %}bg-red-100 text-red-700
+                                    {% elif message.tags == 'success' %}bg-green-100 text-green-700
+                                    {% elif message.tags == 'warning' %}bg-yellow-100 text-yellow-700
+                                    {% elif message.tags == 'info' %}bg-blue-100 text-blue-700
+                                    {% endif %}{% endif %}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
 
-                {% block content %}
-                <!-- Content will be injected here -->
-                {% endblock %}
-            </main>
+                        {% block content %}
+                        <!-- Content will be injected here -->
+                        {% endblock %}
+                    </div>
+                </main>
+            </div>
         </div>
     </div>
-
-    <!-- JavaScript for dropdown menu -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const menuButton = document.getElementById('user-menu-button');
-            const menuDropdown = document.getElementById('user-menu-dropdown');
-            
-            if (menuButton && menuDropdown) {
-                // Toggle menu on button click
-                menuButton.addEventListener('click', function() {
-                    menuDropdown.classList.toggle('hidden');
-                });
-
-                // Close menu when clicking outside
-                document.addEventListener('click', function(event) {
-                    if (!menuButton.contains(event.target) && !menuDropdown.contains(event.target)) {
-                        menuDropdown.classList.add('hidden');
-                    }
-                });
-            }
-        });
-    </script>
 
     <!-- JavaScript -->
     {% block javascript %}{% endblock %}

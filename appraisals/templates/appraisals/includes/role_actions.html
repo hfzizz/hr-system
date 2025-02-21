@@ -1,0 +1,50 @@
+<!-- Debug info at the top -->
+<div class="text-xs text-gray-500 mb-2">
+    Record Data: {{ record.value|pprint }}
+</div>
+
+<div class="flex items-center space-x-3">
+    {% with emp_id=record.value.id employee_code=record.value.employee_code %}
+    {% if record.value %}
+        {% if record.value.is_appraiser %}
+            <button 
+                type="button"
+                hx-post="{% url 'appraisals:role_update' employee_id=emp_id %}"
+                hx-vals='{"action": "remove"}'
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                hx-target="#roles-tab"
+                hx-swap="innerHTML"
+                class="text-red-600 hover:text-red-900 font-medium text-sm transition-colors duration-200"
+            >
+                <span class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Remove Appraiser Role ({{ employee_code }})
+                </span>
+            </button>
+        {% else %}
+            <button 
+                type="button"
+                hx-post="{% url 'appraisals:role_update' employee_id=emp_id %}"
+                hx-vals='{"action": "add"}'
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                hx-target="#roles-tab"
+                hx-swap="innerHTML"
+                class="text-green-600 hover:text-green-900 font-medium text-sm transition-colors duration-200"
+            >
+                <span class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    Make Appraiser ({{ employee_code }})
+                </span>
+            </button>
+        {% endif %}
+    {% else %}
+        <span class="text-gray-400">
+            No record data available (Debug: {{ record|pprint }})
+        </span>
+    {% endif %}
+    {% endwith %}
+</div>

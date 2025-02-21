@@ -6,3 +6,4 @@ class EmployeesConfig(AppConfig):
 
     def ready(self):
         import employees.signals
+        import employees.templatetags.employee_tags
