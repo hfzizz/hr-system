@@ -2,35 +2,47 @@
 <div id="assignModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div class="relative inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <!-- Close Button -->
             <div class="hidden sm:block absolute top-0 right-0 pt-4 pr-4">
-                <button type="button" onclick="document.getElementById('assignModal').classList.add('hidden')" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <button type="button" onclick="closeModal()" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     <span class="sr-only">Close</span>
-                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
 
+            <!-- Modal Content -->
             <div class="sm:flex sm:items-start">
                 <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
                     <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                        Assign Appraiser
+                        Assign Appraisal
                     </h3>
                     
-                    <form id="assignForm" method="post" action="{% url 'appraisals:appraiser_assign' 0 %}" onsubmit="submitAssignForm(event)" class="mt-4">
+                    <form id="assignForm" method="post" action="{% url 'appraisals:appraiser_assign' 0 %}" class="mt-4">
                         {% csrf_token %}
                         <input type="hidden" id="selected_employee_id" name="employee_id" value="">
                         
                         <div class="space-y-4">
+                            <!-- Employee Display -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">
+                                    Employee
+                                </label>
+                                <p id="selected_employee_name" class="mt-1 text-sm text-gray-900 border-b border-gray-200 pb-2">
+                                    <!-- Will be populated by JavaScript -->
+                                </p>
+                            </div>
+
                             <!-- Appraiser Selection -->
                             <div>
                                 <label for="appraiser" class="block text-sm font-medium text-gray-700">
-                                    Select Appraiser
+                                    Appraiser <span class="text-red-500">*</span>
                                 </label>
-                                <select id="appraiser" name="appraiser" required
+                                <select id="appraiser" name="appraiser" 
                                         class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                                     <option value="">Select an appraiser</option>
-                                    {% for employee in employees %}
+                                    {% for employee in appraisers %}
                                         <option value="{{ employee.id }}">{{ employee.get_full_name }}</option>
                                     {% endfor %}
                                 </select>
@@ -39,48 +51,31 @@
                             <!-- Appraisal Period Selection -->
                             <div>
                                 <label for="period_select" class="block text-sm font-medium text-gray-700">
-                                    Appraisal Period
+                                    Appraisal Period <span class="text-red-500">*</span>
                                 </label>
-                                <select id="period_select" name="period" required onchange="updatePeriodDates()"
+                                <select id="period_select" name="period" required
                                         class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                                     <option value="">Select a period</option>
                                     {% for period in periods %}
-                                        <option value="{{ period.id }}" 
-                                                data-start="{{ period.start_date|date:'Y-m-d' }}"
-                                                data-end="{{ period.end_date|date:'Y-m-d' }}">
-                                            {{ period.name }}
+                                        <option value="{{ period.id }}">
+                                            {{ period.name }} ({{ period.start_date|date:"M d, Y" }} - {{ period.end_date|date:"M d, Y" }})
                                         </option>
                                     {% endfor %}
                                 </select>
                             </div>
-
-                            <!-- Review Period Dates -->
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label for="review_period_start" class="block text-sm font-medium text-gray-700">
-                                        Start Date
-                                    </label>
-                                    <input type="date" name="review_period_start" id="review_period_start" required
-                                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                </div>
-                                <div>
-                                    <label for="review_period_end" class="block text-sm font-medium text-gray-700">
-                                        End Date
-                                    </label>
-                                    <input type="date" name="review_period_end" id="review_period_end" required
-                                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                </div>
-                            </div>
                         </div>
+
+                        <!-- Error Message Display -->
+                        <div id="errorMessage" class="mt-2 text-sm text-red-600 hidden"></div>
 
                         <!-- Form Actions -->
                         <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                             <button type="submit"
                                     class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
-                                Assign
+                                Assign Appraisal
                             </button>
                             <button type="button"
-                                    onclick="document.getElementById('assignModal').classList.add('hidden')"
+                                    onclick="closeModal()"
                                     class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm">
                                 Cancel
                             </button>
@@ -90,4 +85,80 @@
             </div>
         </div>
     </div>
-</div> 
+</div>
+
+<script>
+function closeModal() {
+    document.getElementById('assignModal').classList.add('hidden');
+    document.getElementById('errorMessage').classList.add('hidden');
+    document.getElementById('assignForm').reset();
+}
+
+function showAssignModal(employeeId, employeeName) {
+    document.getElementById('selected_employee_id').value = employeeId;
+    document.getElementById('selected_employee_name').textContent = employeeName;
+    document.getElementById('assignModal').classList.remove('hidden');
+}
+
+document.getElementById('assignForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    
+    // Disable the submit button to prevent double submission
+    const submitButton = this.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    
+    // Clear previous error
+    const errorMessage = document.getElementById('errorMessage');
+    errorMessage.classList.add('hidden');
+    
+    // Validate form
+    const appraiser = document.getElementById('appraiser').value;
+    const period = document.getElementById('period_select').value;
+    
+    if (!appraiser || !period) {
+        errorMessage.textContent = 'Please select both an appraiser and an appraisal period.';
+        errorMessage.classList.remove('hidden');
+        submitButton.disabled = false;
+        return;
+    }
+    
+    try {
+        const response = await fetch(this.action, {
+            method: 'POST',
+            body: new FormData(this),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Show success message
+            const successMessage = document.createElement('div');
+            successMessage.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded shadow-lg z-50';
+            successMessage.textContent = data.message;
+            document.body.appendChild(successMessage);
+            
+            // Close modal
+            closeModal();
+            
+            // Delay reload to show the success message
+            setTimeout(() => {
+                window.location.reload();
+            }, 3000); // Wait 1.5 seconds before reloading
+        } else {
+            errorMessage.textContent = data.error || 'An error occurred while assigning the appraisal.';
+            errorMessage.classList.remove('hidden');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        errorMessage.textContent = 'A network error occurred. Please try again.';
+        errorMessage.classList.remove('hidden');
+    } finally {
+        // Re-enable the submit button
+        submitButton.disabled = false;
+    }
+});
+</script>

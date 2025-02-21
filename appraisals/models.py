@@ -53,6 +53,7 @@ class Membership(models.Model):
     to_date = models.DateField()
 
 class Appraisal(models.Model):
+    appraisal_id = models.AutoField(primary_key=True)
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('in_progress', 'In Progress'),
@@ -170,6 +171,22 @@ class Appraisal(models.Model):
             return self.employee.ic_no or "Not provided"
         except AttributeError:
             return "Not provided"
+
+    def get_review_period_display(self):
+        """Returns formatted review period string."""
+        if self.review_period_start and self.review_period_end:
+            return f"{self.review_period_start.strftime('%d %b %Y')} - {self.review_period_end.strftime('%d %b %Y')}"
+        return 'Not Set'
+
+    def get_date_created_display(self):
+        """Returns formatted creation date."""
+        return self.date_created.strftime('%d %b %Y') if self.date_created else '-'
+
+    def get_department_display(self):
+        """Returns department name with proper null handling."""
+        if self.employee and self.employee.department:
+            return self.employee.department.name
+        return 'Not Assigned'
 
 class AppraisalPeriod(models.Model):
     start_date = models.DateField()
