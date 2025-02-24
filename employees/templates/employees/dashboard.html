@@ -1,31 +1,132 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - Your App{% endblock %}
+{% block title %}Dashboard - HR System{% endblock %}
+
+{% block breadcrumbs %}
+<li>
+    <div class="flex items-center">
+        <svg class="h-5 w-5 flex-shrink-0 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+        </svg>
+        <span class="ml-4 text-lg font-medium text-gray-700">Dashboard</span>
+    </div>
+</li>
+{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <button class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
-            New Project
-        </button>
-    </div>
-
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <!-- Sample Stat Card -->
-        <div class="rounded-lg bg-white p-6 shadow">
-            <h3 class="text-sm font-medium text-gray-500">Total Projects</h3>
-            <p class="mt-2 text-3xl font-bold text-gray-900">12</p>
+<div class="min-w-0 w-full max-w-[calc(100vw-16rem)] transition-all duration-300 ease-in-out">
+    <div class="py-6 px-4 sm:px-6 lg:px-8 space-y-6">
+        <!-- Header -->
+        <div class="md:flex md:items-center md:justify-between">
+            <div class="min-w-0 flex-1">
+                <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">Dashboard</h2>
+            </div>
         </div>
-        <!-- Add more stat cards as needed -->
-    </div>
 
-    <!-- Recent Activity -->
-    <div class="rounded-lg bg-white p-6 shadow">
-        <h2 class="text-lg font-semibold text-gray-900">Recent Activity</h2>
-        <!-- Add activity list here -->
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <!-- Total Employees -->
+            <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                <dt class="truncate text-sm font-medium text-gray-500">Total Employees</dt>
+                <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ total_employees }}</dd>
+            </div>
+
+            <!-- Active Departments -->
+            <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                <dt class="truncate text-sm font-medium text-gray-500">Departments</dt>
+                <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ total_departments }}</dd>
+            </div>
+
+            <!-- Ongoing Appraisals -->
+            <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                <dt class="truncate text-sm font-medium text-gray-500">Ongoing Appraisals</dt>
+                <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ ongoing_appraisals }}</dd>
+            </div>
+
+            <!-- Pending Reviews -->
+            <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                <dt class="truncate text-sm font-medium text-gray-500">Pending Reviews</dt>
+                <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ pending_reviews }}</dd>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <!-- Recent Employees -->
+            <div class="overflow-hidden rounded-lg bg-white shadow">
+                <div class="p-6">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Recent Employees</h3>
+                        <a href="{% url 'employees:employee_list' %}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">View all</a>
+                    </div>
+                    <div class="mt-6 flow-root">
+                        <ul role="list" class="divide-y divide-gray-200">
+                            {% for employee in recent_employees %}
+                            <li class="py-4">
+                                <div class="flex items-center space-x-4">
+                                    <div class="flex-shrink-0">
+                                        {% if employee.profile_picture %}
+                                            <img class="h-8 w-8 rounded-full" src="{{ employee.profile_picture.url }}" alt="">
+                                        {% else %}
+                                            <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                                <span class="text-sm font-medium text-gray-500">{{ employee.first_name|first }}{{ employee.last_name|first }}</span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate text-sm font-medium text-gray-900">{{ employee.get_full_name }}</p>
+                                        <p class="truncate text-sm text-gray-500">{{ employee.department.name }}</p>
+                                    </div>
+                                </div>
+                            </li>
+                            {% empty %}
+                            <li class="py-4 text-center text-sm text-gray-500">
+                                No recent employees
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Appraisals -->
+            <div class="overflow-hidden rounded-lg bg-white shadow">
+                <div class="p-6">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Recent Appraisals</h3>
+                        <a href="{% url 'appraisals:form_list' %}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">View all</a>
+                    </div>
+                    <div class="mt-6 flow-root">
+                        <ul role="list" class="divide-y divide-gray-200">
+                            {% for appraisal in recent_appraisals %}
+                            <li class="py-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex min-w-0 flex-1 items-center space-x-4">
+                                        <div class="min-w-0 flex-1">
+                                            <p class="truncate text-sm font-medium text-gray-900">{{ appraisal.employee.get_full_name }}</p>
+                                            <p class="truncate text-sm text-gray-500">{{ appraisal.period.name }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4 flex-shrink-0">
+                                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+                                            {% if appraisal.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                            {% elif appraisal.status == 'completed' %}bg-green-100 text-green-800
+                                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {{ appraisal.get_status_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </li>
+                            {% empty %}
+                            <li class="py-4 text-center text-sm text-gray-500">
+                                No recent appraisals
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %} 

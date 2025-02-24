@@ -1,6 +1,7 @@
 # Ignore virtual environments
 venv/
 .venv/
+
 # Add these lines to .gitignore
 __pycache__/
 *.py[cod]

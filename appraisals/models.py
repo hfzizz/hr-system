@@ -1,27 +1,39 @@
 from django.db import models
 from django.core.exceptions import ValidationError
-from employees.models import Employee
+from employees.models import Employee, AppointmentType, Qualification, Department
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 class Appointment(models.Model):
-    type_of_appointment = models.CharField(max_length=50, choices=[
-        ('Permanent', 'Permanent'),
-        ('Contract', 'Contract'),
-        ('Month-to-Month', 'Month-to-Month'),
-        ('Daily Rated', 'Daily Rated')
-    ])
+    employee = models.OneToOneField(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name='appointment',
+        null=True,
+        blank=True
+    )
+    type_of_appointment = models.ForeignKey(
+        AppointmentType,
+        on_delete=models.PROTECT,
+        related_name='appointments'
+    )
     first_appointment_govt = models.DateField(null=True, blank=True)
     first_appointment_ubd = models.DateField(null=True, blank=True)
-    post = models.CharField(max_length=100)
-    faculty_programme = models.CharField(max_length=100)
+    faculty_programme = models.ForeignKey(
+        Department,
+        on_delete=models.PROTECT,
+        related_name='appointments',
+        verbose_name=_('Faculty/Department')
+    )
     from_date = models.DateField()
     to_date = models.DateField()
 
-class Qualification(models.Model):
-    degree_diploma = models.CharField(max_length=100)
-    university_college = models.CharField(max_length=100)
-    from_date = models.DateField()
-    to_date = models.DateField()
+    def __str__(self):
+        employee_name = self.employee.last_name if self.employee else "No Employee"
+        return f"{self.type_of_appointment.name} - {employee_name} ({self.from_date} to {self.to_date})"
+
+    class Meta:
+        ordering = ['-from_date']
 
 class Module(models.Model):
     title = models.CharField(max_length=100)
@@ -41,6 +53,7 @@ class Membership(models.Model):
     to_date = models.DateField()
 
 class Appraisal(models.Model):
+    appraisal_id = models.AutoField(primary_key=True)
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('in_progress', 'In Progress'),
@@ -68,8 +81,6 @@ class Appraisal(models.Model):
         default='pending'
     )
     
-    appointments = models.ManyToManyField(Appointment, blank=True)
-    present_post = models.CharField(max_length=100, null=True, blank=True)
     salary_scale_division = models.CharField(max_length=50, null=True, blank=True)
     incremental_date = models.DateField(null=True, blank=True)
     date_of_last_appraisal = models.DateField(null=True, blank=True)
@@ -100,6 +111,10 @@ class Appraisal(models.Model):
     )
     last_modified_date = models.DateTimeField(auto_now=True)
     
+    # Keep these fields but rename them to clarify they're snapshots
+    appointments_at_time_of_review = models.ManyToManyField('Appointment', blank=True)
+    post_at_time_of_review = models.CharField(max_length=100, null=True, blank=True)
+    
     class Meta:
         ordering = ['-date_created']
         permissions = [
@@ -125,20 +140,53 @@ class Appraisal(models.Model):
         super().clean()
 
     def save(self, *args, **kwargs):
-        self.full_clean()
+        # If this is a new appraisal, populate the snapshot fields from employee
+        if not self.pk:  # Check if this is a new instance
+            self.post_at_time_of_review = self.employee.post
+        
         super().save(*args, **kwargs)
-
-    def get_employee_name(self):
-        """Get employee's full name"""
-        return self.employee.get_full_name()
-
-    def get_employee_ic_details(self):
-        """Get employee's IC details"""
-        return f"{self.employee.ic_no} ({self.employee.ic_colour})"
+        
+        # Need to handle M2M relationships after save
+        if not self.pk:
+            for appointment in self.employee.appointments.all():
+                self.appointments_at_time_of_review.add(appointment)
 
     def get_employee_appointment_type(self):
-        """Get employee's appointment type"""
-        return self.employee.type_of_appointment
+        """Returns the employee's appointment type or a default message."""
+        try:
+            # Assuming the field in Employee model is 'appointment_type'
+            if hasattr(self.employee, 'appointment_type'):
+                return self.employee.appointment_type.name
+            return "Not specified"
+        except AttributeError:
+            return "Not specified"
+
+    def get_employee_name(self):
+        """Returns the employee's full name."""
+        return self.employee.get_full_name() if self.employee else "Not assigned"
+
+    def get_employee_ic_details(self):
+        """Returns the employee's IC details."""
+        try:
+            return self.employee.ic_no or "Not provided"
+        except AttributeError:
+            return "Not provided"
+
+    def get_review_period_display(self):
+        """Returns formatted review period string."""
+        if self.review_period_start and self.review_period_end:
+            return f"{self.review_period_start.strftime('%d %b %Y')} - {self.review_period_end.strftime('%d %b %Y')}"
+        return 'Not Set'
+
+    def get_date_created_display(self):
+        """Returns formatted creation date."""
+        return self.date_created.strftime('%d %b %Y') if self.date_created else '-'
+
+    def get_department_display(self):
+        """Returns department name with proper null handling."""
+        if self.employee and self.employee.department:
+            return self.employee.department.name
+        return 'Not Assigned'
 
 class AppraisalPeriod(models.Model):
     start_date = models.DateField()
