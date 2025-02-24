@@ -1,5 +1,6 @@
 from django.urls import path
-from .views import ContractSubmissionView, get_employee_data, ContractListView, ContractDeleteView, ContractReviewView, ThankYouView, ViewSubmissionsView, enable_contract, send_notification, NotificationsView, delete_notification, forward_to_smt, mark_notification_read, ViewAllSubmissionsView, EmployeeContractView, ContractRedirectView, ContractDetailView
+from .views import ContractSubmissionView, get_employee_data, ContractListView, ContractDeleteView, ContractReviewView, ThankYouView, ViewSubmissionsView, enable_contract, send_notification, NotificationsView, delete_notification, forward_to_smt, mark_notification_read, ViewAllSubmissionsView, EmployeeContractView, ContractRedirectView, ContractDetailView, delete_all_notifications, fetch_publications, download_document
+from . import views
 
 app_name = 'contract'
 
@@ -21,4 +22,7 @@ urlpatterns = [
     path('employee-contracts/', EmployeeContractView.as_view(), name='employee_contracts'),
     path('redirect/', ContractRedirectView.as_view(), name='redirect'),
     path('contract/view/<int:pk>/', ContractDetailView.as_view(), name='contract_detail'),
+    path('delete-all-notifications/', delete_all_notifications, name='delete_all_notifications'),
+    path('fetch-publications/<str:scopus_id>/', fetch_publications, name='fetch_publications'),
+    path('download-document/<int:contract_id>/<str:doc_type>/', download_document, name='download_document'),
 ]

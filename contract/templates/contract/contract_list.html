@@ -12,19 +12,6 @@
     </div>
 
     {% if is_hr %}
-    <!-- Contract Settings -->
-    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-6">
-        <h2 class="text-xl font-semibold mb-4">Contract Settings</h2>
-        <form method="post" class="space-y-4">
-            {% csrf_token %}
-            <button type="button" 
-                    id="sendNotificationBtn"
-                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                Send Notification
-            </button>
-        </form>
-    </div>
-
     <!-- Add this after the header section, before the filters -->
     <div class="flex gap-4 mb-6">
         <!-- Column Selector Dropdown -->
@@ -530,6 +517,31 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (response.ok) {
+                // Send notification only when enabling contract renewal
+                if (action === 'enable') {
+                    // Send a single notification for all enabled employees
+                    try {
+                        const notifyResponse = await fetch('{% url "contract:send_notification" %}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                            },
+                            body: JSON.stringify({ employee_ids: selectedEmployees })
+                        });
+
+                        const notifyData = await notifyResponse.json();
+
+                        if (notifyResponse.ok) {
+                            showAlert(notifyData.message, true);
+                        } else {
+                            showAlert('Error: ' + (notifyData.error || 'Failed to send notifications'), false);
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        showAlert('Error sending notifications', false);
+                    }
+                }
                 window.location.reload();
             }
         } catch (error) {
@@ -629,5 +641,4 @@ document.addEventListener('DOMContentLoaded', function() {
     cursor: not-allowed;
 }
 </style>
-{% endblock %}
-{% endblock %}
+{% endblock %}{% endblock %}

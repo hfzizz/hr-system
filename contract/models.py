@@ -2,6 +2,8 @@ from django.db import models
 from django.utils import timezone
 from employees.models import Employee
 from appraisals.models import Module, Membership
+import os
+from django.core.exceptions import ValidationError
 
 class Contract(models.Model):
     STATUS_CHOICES = [
@@ -52,8 +54,8 @@ class Contract(models.Model):
     consultancy_work = models.TextField(blank=True, null=True)
     administrative_posts = models.TextField(blank=True, null=True)
     memberships = models.ManyToManyField(Membership, blank=True)
-    participation_within_university = models.TextField(blank=True, null=True)
-    participation_outside_university = models.TextField(blank=True, null=True)
+    participation_within_text = models.TextField(blank=True, null=True)
+    participation_outside_text = models.TextField(blank=True, null=True)
     objectives_next_year = models.TextField(blank=True, null=True)
     appraiser_comments = models.TextField(blank=True, null=True)
     contract_type = models.CharField(
@@ -61,6 +63,12 @@ class Contract(models.Model):
         choices=CONTRACT_TYPE_CHOICES,
         verbose_name='Type of contract applied',
         default='RENEWAL_3'
+    )
+    teaching_modules_text = models.TextField(blank=True, null=True)
+    teaching_future_plan = models.TextField(
+        verbose_name="Teaching Future Plan",
+        blank=True,
+        null=True
     )
     
     # Achievement Section
@@ -79,11 +87,25 @@ class Contract(models.Model):
         blank=True
     )
 
+    # Store teaching documents as binary data
+    teaching_documents = models.BinaryField(null=True, blank=True)
+    teaching_documents_name = models.CharField(max_length=255, null=True, blank=True)  # To store the original filename
+
+    university_committees_text = models.TextField(blank=True, null=True)
+    external_committees_text = models.TextField(blank=True, null=True)
+
     class Meta:
         ordering = ['-submission_date']
 
     def __str__(self):
         return f"Contract Renewal - {self.employee.get_full_name()} ({self.submission_date.date()})"
+
+    def clean(self):
+        if self.teaching_documents:
+            ext = os.path.splitext(self.teaching_documents_name)[1]
+            valid_extensions = ['.pdf', '.docx']
+            if ext.lower() not in valid_extensions:
+                raise ValidationError('Only PDF and DOCX files are allowed.')
 
 class ContractRenewalStatus(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
@@ -107,3 +129,13 @@ class ContractNotification(models.Model):
 
     def __str__(self):
         return f"Contract Notification for {self.employee.get_full_name()} ({self.created_at.date()})"
+
+class AdministrativePosition(models.Model):
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='administrative_positions')
+    title = models.CharField(max_length=255)
+    from_date = models.DateField()
+    to_date = models.DateField()
+    details = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.title

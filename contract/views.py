@@ -1,9 +1,9 @@
 from django.shortcuts import render, redirect
 from django.views.generic import TemplateView, CreateView, ListView, UpdateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponseForbidden, HttpResponse, FileResponse, HttpResponseNotFound
 from django.core.cache import cache
-from .models import Contract
+from .models import Contract, AdministrativePosition
 from .forms import ContractRenewalForm
 from appraisals.models import Appraisal
 from django.contrib import messages
@@ -27,6 +27,12 @@ from .models import ContractNotification
 from django.contrib.auth.models import Group
 from django.urls import reverse
 from django.db.models import Q
+from django.views.decorators.csrf import csrf_exempt
+import spacy
+from django.conf import settings
+import en_core_web_sm
+from .scopus import ScopusPublicationsFetcher
+import os
 
 
 class ContractSubmissionView(LoginRequiredMixin, CreateView):
@@ -67,36 +73,122 @@ class ContractSubmissionView(LoginRequiredMixin, CreateView):
                 
         return context
 
+
     def form_valid(self, form):
         form.instance.employee = self.request.user.employee
         form.instance.status = 'pending'
+
+        # Handle teaching documents data
+        teaching_documents = self.request.FILES.get('teaching_documents')
+        if teaching_documents:
+            form.instance.teaching_documents = teaching_documents.read()  # Read the file content
+            form.instance.teaching_documents_name = teaching_documents.name  # Store the original filename
+
+        # Handle teaching modules data
+        teaching_modules_data = self.request.POST.get('teaching_modules_text')
+        if teaching_modules_data:
+            try:
+                modules = json.loads(teaching_modules_data)
+                valid_modules = [
+                    module for module in modules 
+                    if any(str(value).strip() for value in module.values())
+                ]
+                form.instance.teaching_modules_text = json.dumps(valid_modules)
+            except json.JSONDecodeError:
+                form.instance.teaching_modules_text = '[]'
+        else:
+            form.instance.teaching_modules_text = '[]'
+        
+        # Handle attendance data
+        attendance_data = self.request.POST.get('attendance_data')
+        if attendance_data:
+            try:
+                json.loads(attendance_data)
+                form.instance.attendance = attendance_data
+            except json.JSONDecodeError:
+                form.instance.attendance = '[]'
+        else:
+            form.instance.attendance = '[]'
+            
+        # Handle administrative positions data
         response = super().form_valid(form)
+        administrative_positions_data = self.request.POST.get('administrative_positions_text')
+        form.instance.administrative_positions_text = '[]'  # Default to empty list
+        if administrative_positions_data:
+            try:
+                positions = json.loads(administrative_positions_data)
+                for position in positions:
+                    # Create and save each administrative position
+                    AdministrativePosition.objects.create(
+                        contract=form.instance,
+                        title=position.get('position', ''),
+                        from_date=position.get('fromDate', None),
+                        to_date=position.get('toDate', None),
+                        details=position.get('details', '')
+                    )
+            except json.JSONDecodeError:
+                pass
         
-        # Create notification for HR users
-        hr_users = Group.objects.get(name='HR').user_set.all()
-        submission_date = form.instance.submission_date.strftime('%B %d, %Y')
-        message = f"{self.request.user.employee.get_full_name()} has submitted a contract renewal form on {submission_date}"
+        # Handle university committees data
+        university_committees_data = self.request.POST.get('university_committees_text')
+        if university_committees_data:
+            try:
+                committees = json.loads(university_committees_data)
+                # Modified validation: only filter out completely empty committees
+                valid_committees = [
+                    committee for committee in committees 
+                    if any(value.strip() for value in committee.values() if value)  # Check if any field has content
+                ]
+                form.instance.university_committees_text = json.dumps(valid_committees)
+            except json.JSONDecodeError:
+                form.instance.university_committees_text = '[]'
+        else:
+            form.instance.university_committees_text = '[]'
+
+        # Handle external committees data
+        external_committees_data = self.request.POST.get('external_committees_text')
+        if external_committees_data:
+            try:
+                committees = json.loads(external_committees_data)
+                # Modified validation: only filter out completely empty committees
+                valid_committees = [
+                    committee for committee in committees 
+                    if any(value.strip() for value in committee.values() if value)  # Check if any field has content
+                ]
+                form.instance.external_committees_text = json.dumps(valid_committees)
+            except json.JSONDecodeError:
+                form.instance.external_committees_text = '[]'
+        else:
+            form.instance.external_committees_text = '[]'
         
-        for hr_user in hr_users:
-            ContractNotification.objects.create(
-                employee=hr_user.employee,
-                message=message,
-                read=False,
-                contract=form.instance
-            )
+        try:
+            # Create notification for HR users
+            hr_group = Group.objects.get(name='HR')
+            hr_users = hr_group.user_set.all()
+            submission_date = form.instance.submission_date.strftime('%B %d, %Y')
+            message = f"{self.request.user.employee.get_full_name()} has submitted a contract renewal form on {submission_date}"
+            
+            for hr_user in hr_users:
+                try:
+                    hr_employee = Employee.objects.get(user=hr_user)
+                    ContractNotification.objects.create(
+                        employee=hr_employee,
+                        message=message,
+                        read=False,
+                        contract=form.instance
+                    )
+                except Employee.DoesNotExist:
+                    continue
+        except Group.DoesNotExist:
+            print("HR group not found")
+        except Exception as e:
+            print(f"Error creating HR notification: {str(e)}")
+        
+        contract = form.save()
+        print("Debug: Saved University Committees Text:", contract.university_committees_text)
+        print("Debug: Saved External Committees Text:", contract.external_committees_text)
         
         return response
-
-    def post(self, request, *args, **kwargs):
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            # Handle the contract system toggle
-            contract_status = request.POST.get('contract_status') == 'on'
-            cache.set('contract_enabled', contract_status, timeout=86400)
-            return JsonResponse({
-                'success': True,
-                'message': f"Contract system has been {'enabled' if contract_status else 'disabled'}"
-            })
-        return super().post(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         # Check if user has a pending submission
@@ -130,6 +222,127 @@ def get_employee_data(request, employee_id):
 
         latest_appraisal = appraisals.first()
 
+        def process_research_fields():
+            """
+            Process research fields using NLP to identify similar research topics
+            and categorize them based on the most recent appraisal
+            """
+            try:
+                nlp = en_core_web_sm.load()
+            except OSError:
+                # Fallback if spaCy model isn't installed
+                return latest_appraisal.last_research or '', latest_appraisal.ongoing_research or ''
+
+            def normalize_text(text):
+                """Normalize text for NLP processing"""
+                # Convert to lowercase and remove extra whitespace
+                text = ' '.join(text.lower().split())
+                # Process with spaCy
+                doc = nlp(text)
+                # Return processed tokens, excluding stopwords and punctuation
+                return ' '.join(token.text for token in doc if not token.is_stop and not token.is_punct)
+
+            def are_similar(text1, text2, threshold=0.85):
+                """Compare two texts for similarity using spaCy"""
+                if not text1 or not text2:
+                    return False
+                doc1 = nlp(normalize_text(text1))
+                doc2 = nlp(normalize_text(text2))
+                return doc1.similarity(doc2) > threshold
+
+            # Get research entries from latest appraisal
+            latest_research = set(
+                item.strip() 
+                for item in (latest_appraisal.last_research or '').split('\n') 
+                if item.strip()
+            )
+            latest_ongoing = set(
+                item.strip() 
+                for item in (latest_appraisal.ongoing_research or '').split('\n') 
+                if item.strip()
+            )
+
+            # Track all unique research entries
+            all_research = {}  # {normalized_text: {original_text, status, appraisal_date}}
+
+            # Process all appraisals from newest to oldest
+            for appraisal in appraisals:
+                appraisal_date = appraisal.date_of_last_appraisal
+
+                # Process completed research
+                if appraisal.last_research:
+                    for research in appraisal.last_research.split('\n'):
+                        research = research.strip()
+                        if not research:
+                            continue
+
+                        # Check if this research is similar to any we've seen
+                        is_new = True
+                        normalized = normalize_text(research)
+                        
+                        for existing in all_research:
+                            if are_similar(normalized, existing):
+                                is_new = False
+                                # Update only if this is from a newer appraisal
+                                if appraisal_date > all_research[existing]['date']:
+                                    all_research[existing] = {
+                                        'text': research,
+                                        'status': 'completed',
+                                        'date': appraisal_date
+                                    }
+                                break
+                        
+                        if is_new:
+                            all_research[normalized] = {
+                                'text': research,
+                                'status': 'completed',
+                                'date': appraisal_date
+                            }
+
+                # Process ongoing research
+                if appraisal.ongoing_research:
+                    for research in appraisal.ongoing_research.split('\n'):
+                        research = research.strip()
+                        if not research:
+                            continue
+
+                        normalized = normalize_text(research)
+                        is_new = True
+
+                        for existing in all_research:
+                            if are_similar(normalized, existing):
+                                is_new = False
+                                # Update only if this is from a newer appraisal
+                                if appraisal_date > all_research[existing]['date']:
+                                    all_research[existing] = {
+                                        'text': research,
+                                        'status': 'ongoing',
+                                        'date': appraisal_date
+                                    }
+                                break
+                        
+                        if is_new:
+                            all_research[normalized] = {
+                                'text': research,
+                                'status': 'ongoing',
+                                'date': appraisal_date
+                            }
+
+            # Separate research based on latest status
+            completed_research = []
+            ongoing_research = []
+
+            for entry in all_research.values():
+                if entry['status'] == 'completed':
+                    completed_research.append(entry['text'])
+                else:
+                    ongoing_research.append(entry['text'])
+
+            return '\n'.join(completed_research), '\n'.join(ongoing_research)
+
+        # Get processed research data
+        last_research, ongoing_research = process_research_fields()
+
         def process_status_fields(field_name):
             """
             Process fields that might contain status indicators
@@ -162,7 +375,6 @@ def get_employee_data(request, employee_id):
                     is_finished = '(FINISHED)' in item
                     is_ongoing = '(ONGOING)' in item
                     
-                    # Normalize for comparison
                     normalized = normalize_text(base_item)
                     
                     if normalized not in seen_items:
@@ -295,8 +507,6 @@ def get_employee_data(request, employee_id):
             'current_enrollment': '\n'.join(current_enrollments),
             
             # Status fields
-            'last_research': process_status_fields('last_research'),
-            'ongoing_research': process_status_fields('ongoing_research'),
             'publications': process_status_fields('publications'),
             'conference_papers': process_status_fields('conference_papers'),
             'consultancy_work': process_status_fields('consultancy_work'),
@@ -312,6 +522,8 @@ def get_employee_data(request, employee_id):
             'objectives_next_year': process_objectives(),
             'incremental_date': latest_appraisal.incremental_date.strftime('%Y-%m-%d') if latest_appraisal.incremental_date else '',
             'date_of_last_appraisal': latest_appraisal.date_of_last_appraisal.strftime('%Y-%m-%d') if latest_appraisal.date_of_last_appraisal else '',
+            'last_research': last_research,
+            'ongoing_research': ongoing_research,
         }
 
         return JsonResponse({
@@ -395,25 +607,76 @@ class ContractReviewView(LoginRequiredMixin, UpdateView):
         contract = self.get_object()
         employee = contract.employee
         
-        # Get the contract count from the specific submission being reviewed
-        submissions_before = Contract.objects.filter(
-            employee=contract.employee,
-            submission_date__lt=contract.submission_date
-        ).count()
-        contract_count = submissions_before + 1
+        # Fetch administrative positions
+        administrative_positions = contract.administrative_positions.all()
+        context['administrative_positions'] = administrative_positions
         
-        # Add personal details to context
+        try:
+            # Parse academic qualifications
+            academic_quals = json.loads(contract.academic_qualifications_text) if contract.academic_qualifications_text else []
+        except json.JSONDecodeError:
+            academic_quals = []
+            print("Error parsing academic qualifications")
+        
+        # Parse teaching modules
+        try:
+            teaching_modules = json.loads(contract.teaching_modules_text) if contract.teaching_modules_text else []
+        except json.JSONDecodeError:
+            teaching_modules = []
+            print("Error parsing teaching modules")
+
+        # Parse participation data
+        try:
+            participation_within = json.loads(contract.participation_within_text) if contract.participation_within_text else []
+            participation_outside = json.loads(contract.participation_outside_text) if contract.participation_outside_text else []
+        except json.JSONDecodeError:
+            participation_within = []
+            participation_outside = []
+        
+        # Parse university committees
+        try:
+            university_committees = json.loads(contract.university_committees_text) if contract.university_committees_text else []
+        except json.JSONDecodeError:
+            university_committees = []
+        
+        # Parse external committees
+        try:
+            external_committees = json.loads(contract.external_committees_text) if contract.external_committees_text else []
+        except json.JSONDecodeError:
+            external_committees = []
+        
+        # Add committee data to context
+        context['university_committees'] = university_committees
+        context['external_committees'] = external_committees
+        
+        # IC Color mapping
+        IC_COLOURS = {
+            'Y': 'Yellow',
+            'P': 'Purple',
+            'G': 'Green',
+            'R': 'Red'
+        }
+        
         context.update({
             'contract': contract,
             'first_name': employee.first_name,
             'last_name': employee.last_name,
             'ic_no': employee.ic_no,
-            'ic_colour': employee.ic_colour,
+            'ic_colour': IC_COLOURS.get(employee.ic_colour, employee.ic_colour),
             'phone_number': employee.phone_number,
             'department': employee.department.name if employee.department else '',
-            'contract_count': contract_count,
-            'academic_qualifications': json.loads(contract.academic_qualifications_text) if contract.academic_qualifications_text else [],
-            'is_review': True
+            'contract_count': Contract.objects.filter(
+                employee=contract.employee,
+                submission_date__lt=contract.submission_date
+            ).count() + 1,
+            'academic_qualifications': academic_quals,
+            'teaching_modules': teaching_modules,
+            'participation_within': participation_within,
+            'participation_outside': participation_outside,
+            'teaching_future_plan': contract.teaching_future_plan,
+            'is_review': True,
+            'university_committees': university_committees,
+            'external_committees': external_committees,
         })
         
         # Get all appraisals for this employee
@@ -434,6 +697,12 @@ class ContractReviewView(LoginRequiredMixin, UpdateView):
         
         context['appraiser_comments'] = appraiser_comments
         
+        # Add attendance data to context
+        try:
+            context['attendance_events'] = json.loads(contract.attendance) if contract.attendance else []
+        except json.JSONDecodeError:
+            context['attendance_events'] = []
+
         return context
     
     def get_form(self, form_class=None):
@@ -726,5 +995,131 @@ class ContractDetailView(LoginRequiredMixin, DetailView):
             context['academic_qualifications'] = json.loads(self.object.academic_qualifications_text or '[]')
         except json.JSONDecodeError:
             context['academic_qualifications'] = []
-            
+        
+        try:
+            context['teaching_modules'] = json.loads(self.object.teaching_modules_text or '[]')
+        except json.JSONDecodeError:
+            context['teaching_modules'] = []
+        
+        try:
+            context['participation_within'] = json.loads(self.object.participation_within_text or '[]')
+            context['participation_outside'] = json.loads(self.object.participation_outside_text or '[]')
+        except json.JSONDecodeError:
+            context['participation_within'] = []
+            context['participation_outside'] = []
+        
         return context
+
+@login_required
+@require_POST
+@csrf_exempt  # Optionally exempt CSRF for AJAX calls if needed
+def delete_all_notifications(request):
+    try:
+        notifications = ContractNotification.objects.filter(employee__user=request.user)
+        count = notifications.count()
+        notifications.delete()
+        return JsonResponse({'status': 'success', 'deleted_count': count})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def fetch_publications(request, scopus_id):
+    try:
+        # Initialize the fetcher with your API key
+        api_key = settings.SCOPUS_API_KEY
+        fetcher = ScopusPublicationsFetcher(api_key)
+        
+        # Add some debug logging
+        print(f"Fetching publications for Scopus ID: {scopus_id}")
+        
+        # Fetch publications
+        publications = fetcher.fetch_publications(scopus_id)
+        
+        # Debug print
+        print(f"Found {len(publications)} publications")
+        
+        return JsonResponse({
+            'success': True,
+            'publications': publications,
+            'count': len(publications)
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e),
+            'error_details': str(e)
+        })
+
+def review_contract(request, contract_id):
+    contract = get_object_or_404(Contract, id=contract_id)
+    
+    # Debugging line to check the contract data
+    print("Reviewing Contract ID:", contract_id)
+    print("Contract Data:", contract)  # Debugging line
+
+    # Parse teaching modules data
+    teaching_modules = []
+    if contract.teaching_modules_text:
+        try:
+            teaching_modules = json.loads(contract.teaching_modules_text)
+        except json.JSONDecodeError:
+            teaching_modules = []
+    
+    # Parse university committees data
+    university_committees = []
+    if contract.university_committees_text:
+        try:
+            university_committees = json.loads(contract.university_committees_text)
+        except json.JSONDecodeError:
+            university_committees = []
+    
+    # Parse external committees data
+    external_committees = []
+    if contract.external_committees_text:
+        try:
+            external_committees = json.loads(contract.external_committees_text)
+        except json.JSONDecodeError:
+            external_committees = []
+    
+    context = {
+        'contract': contract,
+        'teaching_modules': teaching_modules,
+        'university_committees': university_committees,
+        'external_committees': external_committees,
+        # ... rest of your context data ...
+    }
+    
+    return render(request, 'contract/review.html', context)
+
+@login_required
+def download_document(request, contract_id, doc_type):
+    contract = get_object_or_404(Contract, id=contract_id)
+    
+    if doc_type == 'teaching' and contract.teaching_documents:
+        response = HttpResponse(contract.teaching_documents, content_type='application/pdf')  # Adjust content type as needed
+        response['Content-Disposition'] = f'attachment; filename="{contract.teaching_documents_name}"'
+        return response
+    
+    return HttpResponseNotFound('Document not found')
+
+@login_required
+@require_POST
+def submit_contract(request):
+    # Assuming you have a form to handle the contract submission
+    form = ContractForm(request.POST)
+    if form.is_valid():
+        contract = form.save(commit=False)
+        
+        # Save university committees data
+        university_committees_data = request.POST.get('university_committees_text')
+        contract.university_committees_text = university_committees_data
+        
+        # Save external committees data
+        external_committees_data = request.POST.get('external_committees_text')
+        contract.external_committees_text = external_committees_data
+        
+        contract.save()
+        messages.success(request, "Contract submitted successfully.")
+        return redirect('contract:review', contract_id=contract.id)
+    else:
+        messages.error(request, "There was an error submitting the contract.")
+        return render(request, 'contract/submission.html', {'form': form})

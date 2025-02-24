@@ -37,13 +37,15 @@ class ContractRenewalForm(forms.ModelForm):
             'consultancy_work',
             'administrative_posts',
             'memberships',
-            'participation_within_university',
-            'participation_outside_university',
             'objectives_next_year',
             'appraiser_comments',
             'achievements_last_contract',
             'achievements_proposal',
             'other_matters',
+            'teaching_modules_text',
+            'participation_within_text',
+            'participation_outside_text',
+            'teaching_future_plan',
         ]
         widgets = {
             'academic_qualifications_text': forms.Textarea(attrs={'rows': 4}),
@@ -56,12 +58,16 @@ class ContractRenewalForm(forms.ModelForm):
             'conference_papers': forms.Textarea(attrs={'rows': 4}),
             'consultancy_work': forms.Textarea(attrs={'rows': 4}),
             'administrative_posts': forms.Textarea(attrs={'rows': 4}),
-            'participation_within_university': forms.Textarea(attrs={'rows': 4}),
-            'participation_outside_university': forms.Textarea(attrs={'rows': 4}),
             'objectives_next_year': forms.Textarea(attrs={'rows': 4}),
             'achievements_last_contract': forms.Textarea(attrs={'rows': 4, 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm'}),
             'achievements_proposal': forms.Textarea(attrs={'rows': 4, 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm'}),
             'other_matters': forms.Textarea(attrs={'rows': 4, 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm'}),
+            'teaching_documents': forms.FileInput(
+                attrs={
+                    'class': 'block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100',
+                    'accept': '.pdf,.docx'
+                }
+            ),
         }
 
     def __init__(self, *args, **kwargs):

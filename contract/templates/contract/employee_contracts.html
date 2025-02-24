@@ -15,38 +15,30 @@
         </a>
     </div>
 
-    <!-- Previous Contract Renewal Section -->
-    <div class="mb-8">
-        <h2 class="text-xl font-semibold mb-4">Previous Contract Renewal</h2>
-        
-        <!-- Search and Filter Section for Previous Contracts -->
-        <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <!-- Search Box -->
-            <div class="relative">
-                <input 
-                    type="text" 
-                    id="search-input-previous"
-                    placeholder="Search by employee name..."
-                    class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                >
-                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <svg class="w-5 h-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-            </div>
+    <!-- Tab Navigation -->
+    <div class="mb-4 border-b border-gray-200">
+        <ul class="flex -mb-px" role="tablist">
+            <li class="mr-2" role="presentation">
+                <button class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 tab-button active" 
+                        id="previous-tab" 
+                        data-target="previous-content"
+                        type="button">
+                    Previous Contract Renewal
+                </button>
+            </li>
+            <li class="mr-2" role="presentation">
+                <button class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 tab-button" 
+                        id="current-tab" 
+                        data-target="current-content"
+                        type="button">
+                    Current Contract Renewal
+                </button>
+            </li>
+        </ul>
+    </div>
 
-            <!-- Department Filter -->
-            <div>
-                <select id="department-filter-previous" class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                    <option value="">All Departments</option>
-                    {% for department in departments %}
-                    <option value="{{ department.name }}">{{ department.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-
+    <!-- Tab Content -->
+    <div id="previous-content" class="tab-content">
         <div class="bg-white shadow overflow-hidden sm:rounded-lg">
             <table class="min-w-full divide-y divide-gray-200" id="previous-table">
                 <thead class="bg-gray-50">
@@ -97,38 +89,7 @@
         </div>
     </div>
 
-    <!-- Current Contract Renewal Section -->
-    <div class="mb-8">
-        <h2 class="text-xl font-semibold mb-4">Current Contract Renewal</h2>
-        
-        <!-- Search and Filter Section for Current Contracts -->
-        <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <!-- Search Box -->
-            <div class="relative">
-                <input 
-                    type="text" 
-                    id="search-input-current"
-                    placeholder="Search by employee name..."
-                    class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                >
-                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <svg class="w-5 h-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-            </div>
-
-            <!-- Department Filter -->
-            <div>
-                <select id="department-filter-current" class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                    <option value="">All Departments</option>
-                    {% for department in departments %}
-                    <option value="{{ department.name }}">{{ department.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-
+    <div id="current-content" class="tab-content hidden">
         <div class="bg-white shadow overflow-hidden sm:rounded-lg">
             <table class="min-w-full divide-y divide-gray-200" id="current-table">
                 <thead class="bg-gray-50">
@@ -180,50 +141,38 @@
     </div>
 </div>
 
-{% block extra_js %}
+<!-- Add JavaScript for tab functionality -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    function filterTable(tableId, searchInputId, departmentFilterId) {
-        const searchInput = document.getElementById(searchInputId);
-        const departmentFilter = document.getElementById(departmentFilterId);
-        const table = document.getElementById(tableId);
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
 
-        function filterRows() {
-            const searchTerm = searchInput.value.toLowerCase();
-            const departmentValue = departmentFilter.value.toLowerCase();
-            const rows = table.querySelectorAll('tbody tr');
-            
-            rows.forEach(row => {
-                if (row.querySelector('td[colspan]')) {
-                    // This is an empty message row, skip filtering
-                    return;
-                }
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active state from all buttons and hide all contents
+                tabButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.classList.remove('border-indigo-600');
+                    btn.classList.remove('text-indigo-600');
+                });
+                tabContents.forEach(content => content.classList.add('hidden'));
 
-                const nameCell = row.querySelector('td:nth-child(2)');
-                const departmentCell = row.querySelector('td:nth-child(3)');
-                
-                const name = nameCell ? nameCell.textContent.toLowerCase() : '';
-                const department = departmentCell ? departmentCell.textContent.toLowerCase() : '';
-                
-                const matchesSearch = name.includes(searchTerm);
-                const matchesDepartment = !departmentValue || department.includes(departmentValue);
-                
-                row.style.display = (matchesSearch && matchesDepartment) ? '' : 'none';
+                // Add active state to clicked button and show corresponding content
+                button.classList.add('active');
+                button.classList.add('border-indigo-600');
+                button.classList.add('text-indigo-600');
+                const targetId = button.getAttribute('data-target');
+                document.getElementById(targetId).classList.remove('hidden');
             });
-        }
-
-        // Add event listeners
-        searchInput.addEventListener('input', filterRows);
-        departmentFilter.addEventListener('change', filterRows);
-
-        // Initial filter
-        filterRows();
-    }
-
-    // Initialize filters for both tables
-    filterTable('previous-table', 'search-input-previous', 'department-filter-previous');
-    filterTable('current-table', 'search-input-current', 'department-filter-current');
-});
+        });
+    });
 </script>
-{% endblock %}
+
+<style>
+    .tab-button.active {
+        border-bottom-width: 2px;
+        border-color: #4f46e5;
+        color: #4f46e5;
+    }
+</style>
 {% endblock %}

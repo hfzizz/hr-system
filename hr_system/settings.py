@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -154,3 +155,9 @@ CACHES = {
         'LOCATION': 'django_cache_table',
     }
 }
+
+# OpenAI Settings
+OPENAI_API_KEY = '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'  # Better to use environment variable
+
+# Add this near the top of the file
+SCOPUS_API_KEY = "b00d238c0e21d681e480dfec863bbb9f"
