@@ -75,4 +75,9 @@ class ContractRenewalForm(forms.ModelForm):
         for field in self.fields:
             self.fields[field].widget.attrs.update({
                 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm'
-            }) 
+            })
+
+class ContractForm(forms.ModelForm):
+    class Meta:
+        model = Contract
+        fields = '__all__'  # or specify the fields you need 

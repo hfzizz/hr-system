@@ -4,7 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponse, FileResponse, HttpResponseNotFound
 from django.core.cache import cache
 from .models import Contract, AdministrativePosition
-from .forms import ContractRenewalForm
+from .forms import ContractRenewalForm, ContractForm
 from appraisals.models import Appraisal
 from django.contrib import messages
 from django.urls import reverse_lazy
