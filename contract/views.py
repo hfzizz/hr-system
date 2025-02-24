@@ -758,28 +758,110 @@ def enable_contract(request):
         return JsonResponse({'error': str(e)}, status=400)
 
 @login_required
-def send_contract_notifications(request):
+@require_POST
+def send_notification(request):
     if not request.user.groups.filter(name='HR').exists():
         return JsonResponse({'error': 'Unauthorized'}, status=403)
     
     try:
-        # Get all employees with enabled contract renewal
-        enabled_statuses = ContractRenewalStatus.objects.filter(is_enabled=True)
+        # Get all contract employees with enabled contract renewal status
+        contract_employees = Employee.objects.filter(
+            type_of_appointment='Contract',
+            contractrenewalstatus__is_enabled=True
+        ).select_related('department')
         
-        notification_count = 0
-        for status in enabled_statuses:
-            # Create notification for each employee
-            ContractNotification.objects.create(
-                employee=status.employee,
-                message="Your contract renewal is due. Please submit your renewal application."
+        today = timezone.now().date()
+        notifications_sent = 0
+        
+        for employee in contract_employees:
+            # Calculate next renewal date
+            renewal_date = employee.hire_date + relativedelta(years=3)
+            while renewal_date < today:
+                renewal_date += relativedelta(years=3)
+            
+            # Calculate months remaining
+            months_remaining = ((renewal_date.year - today.year) * 12 + 
+                              renewal_date.month - today.month)
+            
+            # Get the correct URL using reverse()
+            submission_url = '/contract/form/'
+            
+            # Create notification with link to contract renewal form
+            message = (
+                f"Your contract renewal is due on {renewal_date.strftime('%B %d, %Y')}. "
+                f"You have {months_remaining} months remaining. "
+                "Please submit your contract renewal application. Use the link below:<br/>"
+                f'<a href="{submission_url}" class="text-blue-600 hover:underline">Click here to submit</a>'
             )
-            notification_count += 1
+            
+            # Create notification
+            ContractNotification.objects.create(
+                employee=employee,
+                message=message
+            )
+            notifications_sent += 1
         
-        messages.success(request, f'Notifications sent to {notification_count} employees.')
-        return JsonResponse({
-            'status': 'success',
-            'count': notification_count
-        })
+        if notifications_sent > 0:
+            return JsonResponse({
+                'status': 'success',
+                'message': f'Notifications sent to {notifications_sent} employees'
+            })
+        else:
+            return JsonResponse({
+                'status': 'info',
+                'message': 'No employees with enabled contract renewal found'
+            })
+        
+    except Exception as e:
+        print(f"Error sending notifications: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=400)
+
+@login_required
+@require_POST
+def delete_notification(request, notification_id):
+    try:
+        notification = ContractNotification.objects.get(
+            id=notification_id,
+            employee__user=request.user
+        )
+        notification.delete()
+        return JsonResponse({'status': 'success'})
+    except ContractNotification.DoesNotExist:
+        return JsonResponse({'error': 'Notification not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+class NotificationsView(LoginRequiredMixin, ListView):
+    template_name = 'contract/notifications.html'
+    context_object_name = 'notifications'
+    
+    def get_queryset(self):
+        return ContractNotification.objects.filter(
+            employee__user=self.request.user
+        ).order_by('-created_at')
+    
+    def get(self, request, *args, **kwargs):
+        # Mark all notifications as read
+        ContractNotification.objects.filter(
+            employee__user=request.user,
+            read=False
+        ).update(read=True)
+        return super().get(request, *args, **kwargs)
+
+@login_required
+@require_POST
+def forward_to_smt(request, contract_id):
+    if not request.user.groups.filter(name='HR').exists():
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
+    try:
+        contract = Contract.objects.get(id=contract_id)
+        contract.status = 'smt_review'
+        contract.save()
+        
+        return JsonResponse({'status': 'success'})
+    except Contract.DoesNotExist:
+        return JsonResponse({'error': 'Contract not found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
@@ -913,5 +995,131 @@ class ContractDetailView(LoginRequiredMixin, DetailView):
             context['academic_qualifications'] = json.loads(self.object.academic_qualifications_text or '[]')
         except json.JSONDecodeError:
             context['academic_qualifications'] = []
-            
+        
+        try:
+            context['teaching_modules'] = json.loads(self.object.teaching_modules_text or '[]')
+        except json.JSONDecodeError:
+            context['teaching_modules'] = []
+        
+        try:
+            context['participation_within'] = json.loads(self.object.participation_within_text or '[]')
+            context['participation_outside'] = json.loads(self.object.participation_outside_text or '[]')
+        except json.JSONDecodeError:
+            context['participation_within'] = []
+            context['participation_outside'] = []
+        
         return context
+
+@login_required
+@require_POST
+@csrf_exempt  # Optionally exempt CSRF for AJAX calls if needed
+def delete_all_notifications(request):
+    try:
+        notifications = ContractNotification.objects.filter(employee__user=request.user)
+        count = notifications.count()
+        notifications.delete()
+        return JsonResponse({'status': 'success', 'deleted_count': count})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def fetch_publications(request, scopus_id):
+    try:
+        # Initialize the fetcher with your API key
+        api_key = settings.SCOPUS_API_KEY
+        fetcher = ScopusPublicationsFetcher(api_key)
+        
+        # Add some debug logging
+        print(f"Fetching publications for Scopus ID: {scopus_id}")
+        
+        # Fetch publications
+        publications = fetcher.fetch_publications(scopus_id)
+        
+        # Debug print
+        print(f"Found {len(publications)} publications")
+        
+        return JsonResponse({
+            'success': True,
+            'publications': publications,
+            'count': len(publications)
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e),
+            'error_details': str(e)
+        })
+
+def review_contract(request, contract_id):
+    contract = get_object_or_404(Contract, id=contract_id)
+    
+    # Debugging line to check the contract data
+    print("Reviewing Contract ID:", contract_id)
+    print("Contract Data:", contract)  # Debugging line
+
+    # Parse teaching modules data
+    teaching_modules = []
+    if contract.teaching_modules_text:
+        try:
+            teaching_modules = json.loads(contract.teaching_modules_text)
+        except json.JSONDecodeError:
+            teaching_modules = []
+    
+    # Parse university committees data
+    university_committees = []
+    if contract.university_committees_text:
+        try:
+            university_committees = json.loads(contract.university_committees_text)
+        except json.JSONDecodeError:
+            university_committees = []
+    
+    # Parse external committees data
+    external_committees = []
+    if contract.external_committees_text:
+        try:
+            external_committees = json.loads(contract.external_committees_text)
+        except json.JSONDecodeError:
+            external_committees = []
+    
+    context = {
+        'contract': contract,
+        'teaching_modules': teaching_modules,
+        'university_committees': university_committees,
+        'external_committees': external_committees,
+        # ... rest of your context data ...
+    }
+    
+    return render(request, 'contract/review.html', context)
+
+@login_required
+def download_document(request, contract_id, doc_type):
+    contract = get_object_or_404(Contract, id=contract_id)
+    
+    if doc_type == 'teaching' and contract.teaching_documents:
+        response = HttpResponse(contract.teaching_documents, content_type='application/pdf')  # Adjust content type as needed
+        response['Content-Disposition'] = f'attachment; filename="{contract.teaching_documents_name}"'
+        return response
+    
+    return HttpResponseNotFound('Document not found')
+
+@login_required
+@require_POST
+def submit_contract(request):
+    # Assuming you have a form to handle the contract submission
+    form = ContractForm(request.POST)
+    if form.is_valid():
+        contract = form.save(commit=False)
+        
+        # Save university committees data
+        university_committees_data = request.POST.get('university_committees_text')
+        contract.university_committees_text = university_committees_data
+        
+        # Save external committees data
+        external_committees_data = request.POST.get('external_committees_text')
+        contract.external_committees_text = external_committees_data
+        
+        contract.save()
+        messages.success(request, "Contract submitted successfully.")
+        return redirect('contract:review', contract_id=contract.id)
+    else:
+        messages.error(request, "There was an error submitting the contract.")
+        return render(request, 'contract/submission.html', {'form': form})
