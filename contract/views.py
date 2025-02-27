@@ -54,7 +54,7 @@ class ContractSubmissionView(LoginRequiredMixin, CreateView):
             # For non-HR users, check their contract status
             try:
                 employee = Employee.objects.get(user=self.request.user)
-                if employee.type_of_appointment == 'Contract':
+                if employee.appointment_type and employee.appointment_type.name == 'Contract':
                     contract_status = ContractRenewalStatus.objects.filter(
                         employee=employee
                     ).first()
@@ -62,8 +62,15 @@ class ContractSubmissionView(LoginRequiredMixin, CreateView):
             except Employee.DoesNotExist:
                 context['contract_enabled'] = False
         
-        # Get employee's previous contract if it exists
+        # Get employee's previous contracts count
         if hasattr(self.request.user, 'employee'):
+            previous_contracts_count = Contract.objects.filter(
+                employee=self.request.user.employee
+            ).count()
+            # Always show at least 1 contract
+            context['contract_count'] = max(1, previous_contracts_count)
+            
+            # Get employee's previous contract if it exists
             previous_contract = Contract.objects.filter(
                 employee=self.request.user.employee
             ).order_by('-submission_date').first()
@@ -71,6 +78,9 @@ class ContractSubmissionView(LoginRequiredMixin, CreateView):
             if previous_contract:
                 context['previous_contract'] = previous_contract
                 
+        # Add contract type choices
+        context['contract_type_choices'] = Contract.CONTRACT_TYPE_CHOICES
+        
         return context
 
 
@@ -78,11 +88,55 @@ class ContractSubmissionView(LoginRequiredMixin, CreateView):
         form.instance.employee = self.request.user.employee
         form.instance.status = 'pending'
 
+        # Handle consultancy work
+        consultancy_data = self.request.POST.get('consultancy_work')
+        if consultancy_data:
+            try:
+                json.loads(consultancy_data)
+                form.instance.consultancy_work = consultancy_data
+            except json.JSONDecodeError:
+                form.instance.consultancy_work = '[]'
+        else:
+            form.instance.consultancy_work = '[]'
+
+        # Handle research history
+        research_history = self.request.POST.get('last_research')
+        if research_history:
+            try:
+                json.loads(research_history)
+                form.instance.last_research = research_history
+            except json.JSONDecodeError:
+                form.instance.last_research = '[]'
+        else:
+            form.instance.last_research = '[]'
+
+        # Handle ongoing research
+        ongoing_research = self.request.POST.get('ongoing_research')
+        if ongoing_research:
+            try:
+                json.loads(ongoing_research)
+                form.instance.ongoing_research = ongoing_research
+            except json.JSONDecodeError:
+                form.instance.ongoing_research = '[]'
+        else:
+            form.instance.ongoing_research = '[]'
+
+        # Handle conference papers
+        conference_papers = self.request.POST.get('conference_papers')
+        if conference_papers:
+            try:
+                json.loads(conference_papers)
+                form.instance.conference_papers = conference_papers
+            except json.JSONDecodeError:
+                form.instance.conference_papers = '[]'
+        else:
+            form.instance.conference_papers = '[]'
+
         # Handle teaching documents data
         teaching_documents = self.request.FILES.get('teaching_documents')
         if teaching_documents:
-            form.instance.teaching_documents = teaching_documents.read()  # Read the file content
-            form.instance.teaching_documents_name = teaching_documents.name  # Store the original filename
+            form.instance.teaching_documents = teaching_documents.read()
+            form.instance.teaching_documents_name = teaching_documents.name
 
         # Handle teaching modules data
         teaching_modules_data = self.request.POST.get('teaching_modules_text')
@@ -185,9 +239,6 @@ class ContractSubmissionView(LoginRequiredMixin, CreateView):
             print(f"Error creating HR notification: {str(e)}")
         
         contract = form.save()
-        print("Debug: Saved University Committees Text:", contract.university_committees_text)
-        print("Debug: Saved External Committees Text:", contract.external_committees_text)
-        
         return response
 
     def get(self, request, *args, **kwargs):
@@ -546,7 +597,7 @@ class ContractListView(LoginRequiredMixin, View):
             return redirect('contract:submission')
             
         contract_employees = Employee.objects.filter(
-            type_of_appointment='Contract'
+            appointment_type__name='Contract'
         ).select_related('department')
 
         employees_data = []
@@ -703,6 +754,27 @@ class ContractReviewView(LoginRequiredMixin, UpdateView):
         except json.JSONDecodeError:
             context['attendance_events'] = []
 
+        # Parse JSON data for research sections
+        try:
+            context['consultancy_work'] = json.loads(contract.consultancy_work) if contract.consultancy_work else []
+        except json.JSONDecodeError:
+            context['consultancy_work'] = []
+
+        try:
+            context['research_history'] = json.loads(contract.last_research) if contract.last_research else []
+        except json.JSONDecodeError:
+            context['research_history'] = []
+
+        try:
+            context['ongoing_research'] = json.loads(contract.ongoing_research) if contract.ongoing_research else []
+        except json.JSONDecodeError:
+            context['ongoing_research'] = []
+
+        try:
+            context['conference_papers'] = json.loads(contract.conference_papers) if contract.conference_papers else []
+        except json.JSONDecodeError:
+            context['conference_papers'] = []
+
         return context
     
     def get_form(self, form_class=None):
@@ -766,7 +838,7 @@ def send_notification(request):
     try:
         # Get all contract employees with enabled contract renewal status
         contract_employees = Employee.objects.filter(
-            type_of_appointment='Contract',
+            appointment_type__name='Contract',
             contractrenewalstatus__is_enabled=True
         ).select_related('department')
         
@@ -878,6 +950,8 @@ def mark_notification_read(request, notification_id):
         return JsonResponse({'status': 'success'})
     except ContractNotification.DoesNotExist:
         return JsonResponse({'error': 'Notification not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
 
 class ViewAllSubmissionsView(LoginRequiredMixin, View):
     template_name = 'contract/all_submissions.html'
@@ -1051,11 +1125,6 @@ def fetch_publications(request, scopus_id):
 
 def review_contract(request, contract_id):
     contract = get_object_or_404(Contract, id=contract_id)
-    
-    # Debugging line to check the contract data
-    print("Reviewing Contract ID:", contract_id)
-    print("Contract Data:", contract)  # Debugging line
-
     # Parse teaching modules data
     teaching_modules = []
     if contract.teaching_modules_text:
@@ -1079,12 +1148,49 @@ def review_contract(request, contract_id):
             external_committees = json.loads(contract.external_committees_text)
         except json.JSONDecodeError:
             external_committees = []
+            
+            
+    consultancy_work = []
+    if contract.consultancy_work:
+        try:
+            consultancy_work = json.loads(contract.consultancy_work)
+        except json.JSONDecodeError:
+            consultancy_work = []
+    
+    
+    # Parse research history data
+    research_history = []
+    if contract.last_research:
+        try:
+            research_history = json.loads(contract.last_research)
+        except json.JSONDecodeError:
+            research_history = []
+    
+    # Parse ongoing research data
+    ongoing_research = []
+    if contract.ongoing_research:
+        try:
+            ongoing_research = json.loads(contract.ongoing_research)
+        except json.JSONDecodeError:
+            ongoing_research = []
+    
+    # Parse conference papers data
+    conference_papers = []
+    if contract.conference_papers:
+        try:
+            conference_papers = json.loads(contract.conference_papers)
+        except json.JSONDecodeError:
+            conference_papers = []
     
     context = {
         'contract': contract,
         'teaching_modules': teaching_modules,
         'university_committees': university_committees,
         'external_committees': external_committees,
+        'consultancy_work': consultancy_work,
+        'research_history': research_history,
+        'ongoing_research': ongoing_research,
+        'conference_papers': conference_papers,
         # ... rest of your context data ...
     }
     
@@ -1104,7 +1210,6 @@ def download_document(request, contract_id, doc_type):
 @login_required
 @require_POST
 def submit_contract(request):
-    # Assuming you have a form to handle the contract submission
     form = ContractForm(request.POST)
     if form.is_valid():
         contract = form.save(commit=False)

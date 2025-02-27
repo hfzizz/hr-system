@@ -16,7 +16,8 @@ def contract_status(request):
             else:
                 # For non-HR users, check their individual contract status
                 employee = Employee.objects.get(user=request.user)
-                if employee.type_of_appointment == 'Contract':  # Only show for contract employees
+                # Check if employee has contract appointment type
+                if hasattr(employee, 'appointment_type') and employee.appointment_type and employee.appointment_type.name == 'Contract':
                     contract_status = ContractRenewalStatus.objects.filter(
                         employee=employee
                     ).first()

@@ -16,10 +16,16 @@ class ContractRenewalForm(forms.ModelForm):
         required=False,
         widget=forms.DateInput(attrs={'type': 'date'})
     )
+    contract_type = forms.ChoiceField(
+        choices=Contract.CONTRACT_TYPE_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        required=True
+    )
 
     class Meta:
         model = Contract
         fields = [
+            'contract_type',
             'employee',
             'present_post',
             'salary_scale_division',
@@ -72,6 +78,9 @@ class ContractRenewalForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        self.fields['contract_type'].choices = Contract.CONTRACT_TYPE_CHOICES
+        self.fields['contract_type'].required = True
         for field in self.fields:
             self.fields[field].widget.attrs.update({
                 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm'

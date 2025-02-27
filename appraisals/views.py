@@ -27,9 +27,6 @@ logger = logging.getLogger(__name__)
 HR_GROUP_NAME = 'HR'
 APPRAISER_GROUP_NAME = 'Appraiser'
 
-# ============================================================================
-# Appraisal Period Management Views
-# ============================================================================
 
 class AppraisalPeriodListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     """

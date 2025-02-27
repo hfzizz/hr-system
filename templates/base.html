@@ -65,8 +65,9 @@
                         </div>
 
                         <!-- Profile Dropdown (Separate from notification) -->
-                        <div class="relative">
-                            <button class="flex items-center text-gray-600 hover:text-gray-900 focus:outline-none" 
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open"
+                                    class="flex items-center text-gray-600 hover:text-gray-900 focus:outline-none" 
                                     id="user-menu-button" 
                                     aria-expanded="false" 
                                     aria-haspopup="true">
@@ -82,7 +83,8 @@
                             </button>
 
                             <!-- Dropdown Menu -->
-                            <div x-show="open" 
+                            <div x-cloak
+                                 x-show="open" 
                                  @click.away="open = false"
                                  x-transition:enter="transition ease-out duration-100"
                                  x-transition:enter-start="transform opacity-0 scale-95"

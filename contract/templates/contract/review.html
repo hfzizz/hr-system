@@ -54,7 +54,9 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Type of contract applied</label>
-                        <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ contract.get_contract_type_display }}</div>
+                        <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">
+                            {{ contract.get_contract_type_display }}
+                        </div>
                     </div>
 
                     <div>
@@ -119,28 +121,155 @@
             <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Research, Consultancy and Publications</h2>
                 <div class="space-y-6">
+                    <!-- Consultancy Work Table -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Consultancy Work</label>
-                        <div class="mt-1 bg-gray-50 rounded p-4 border border-gray-200">
-                            <p class="text-sm text-gray-900 whitespace-pre-line">{{ contract.consultancy_work }}</p>
+                        <div class="mt-4">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title/Project</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company/Institute</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        {% if consultancy_work %}
+                                            {% for work in consultancy_work %}
+                                                <tr>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ work.title }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ work.company }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ work.startDate }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ work.endDate }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                                                    No consultancy work records provided
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Research History Table -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Last Research Undertaken</label>
-                        <div class="mt-1 bg-gray-50 rounded p-4 border border-gray-200">
-                            <p class="text-sm text-gray-900 whitespace-pre-line">{{ contract.last_research }}</p>
+                        <label class="block text-sm font-medium text-gray-700">Research History</label>
+                        <div class="mt-4">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title/Project</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Funding Agency</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        {% if research_history %}
+                                            {% for research in research_history %}
+                                                <tr>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.title }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.startDate }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.endDate }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.fundingAgency }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                                                    No research history records provided
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Ongoing Research Table -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Ongoing Research</label>
-                        <div class="mt-1 bg-gray-50 rounded p-4 border border-gray-200">
-                            <p class="text-sm text-gray-900 whitespace-pre-line">{{ contract.ongoing_research }}</p>
+                        <div class="mt-4">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title/Project</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Funding Agency</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        {% if ongoing_research %}
+                                            {% for research in ongoing_research %}
+                                                <tr>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.title }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.startDate }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.endDate }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.fundingAgency }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                                                    No ongoing research records provided
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Conference Papers Table -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Publications</label>
-                        <div class="mt-1 bg-gray-50 rounded p-4 border border-gray-200">
-                            <p class="text-sm text-gray-900 whitespace-pre-line">{{ contract.publications }}</p>
+                        <label class="block text-sm font-medium text-gray-700">Conference Papers</label>
+                        <div class="mt-4">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Volume</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pages</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DOI</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        {% if conference_papers %}
+                                            {% for paper in conference_papers %}
+                                                <tr>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ paper.author }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ paper.year }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ paper.title }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ paper.volume }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ paper.pages }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ paper.doi }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                                                    No conference papers provided
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -615,6 +744,8 @@ async function forwardToSMT(contractId) {
     <pre class="text-xs mt-2">
         University Committees: {{ university_committees|json_script:"university_committees_data" }}
         External Committees: {{ external_committees|json_script:"external_committees_data" }}
+        
+        
     </pre>
 </div>
 {% endif %}

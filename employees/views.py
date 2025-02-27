@@ -297,7 +297,7 @@ class EmployeeListView(LoginRequiredMixin, ListView):
         return context
 
     def get_queryset(self):
-        return Employee.objects.select_related('department', 'appointment__type_of_appointment').all()
+        return Employee.objects.select_related('department', 'appointment_type').all()
     
     def employee_list(request):
         employee_columns = [
@@ -630,5 +630,4 @@ class SettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     def handle_no_permission(self):
         messages.error(self.request, "You don't have permission to access settings.")
         return redirect('dashboard')
-
 

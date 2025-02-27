@@ -19,7 +19,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         Your Contract Renewal Form
                     </label>
-                    <p class="text-sm text-gray-700">Welcome, {{ user.get_full_name }}</p>
+                    <p class="text-sm text-gray-700">Welcome, {{ user.employee.get_full_name }}</p>
                     <input type="hidden" name="employee" value="{{ user.employee.id }}">
                     <p class="mt-2 text-sm text-gray-500">Your appraisal data has been automatically loaded</p>
                 </div>
@@ -34,7 +34,8 @@
                                 <label class="text-sm font-medium text-gray-700">First Name</label>
                                 <input type="text" 
                                        name="first_name" 
-                                       class="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-800 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm cursor-not-allowed" 
+                                       value="{{ user.employee.first_name }}"
+                                       class="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-800 shadow-sm cursor-not-allowed opacity-80" 
                                        readonly>
                             </div>
                             
@@ -42,36 +43,44 @@
                                 <label class="text-sm font-medium text-gray-700">Last Name</label>
                                 <input type="text" 
                                        name="last_name" 
-                                       class="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-800 shadow-sm focus:border-indigo-500cursor-not-allowed opacity-80" 
+                                       value="{{ user.employee.last_name }}"
+                                       class="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-800 shadow-sm cursor-not-allowed opacity-80" 
                                        readonly>
                             </div>
+
                             <div class="flex flex-col space-y-1">
                                 <label class="text-sm font-medium text-gray-700">IC Number</label>
                                 <input type="text" 
                                        name="ic_no" 
+                                       value="{{ user.employee.ic_no }}"
                                        class="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-800 shadow-sm cursor-not-allowed opacity-80" 
                                        readonly>
                             </div>
+
                             <div class="flex flex-col space-y-1">
                                 <label class="text-sm font-medium text-gray-700">IC Colour</label>
                                 <input type="text" 
                                        name="ic_colour_display" 
+                                       value="{{ user.employee.get_ic_colour_display }}"
                                        class="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-800 shadow-sm cursor-not-allowed opacity-80" 
                                        readonly>
-                                <input type="hidden" name="ic_colour">
+                                <input type="hidden" name="ic_colour" value="{{ user.employee.ic_colour }}">
                             </div>
-                            
+
                             <div class="flex flex-col space-y-1">
                                 <label class="text-sm font-medium text-gray-700">Phone Number</label>
                                 <input type="text" 
                                        name="phone_number" 
+                                       value="{{ user.employee.phone_number }}"
                                        class="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-800 shadow-sm cursor-not-allowed opacity-80" 
                                        readonly>
                             </div>
+
                             <div class="flex flex-col space-y-1">
                                 <label class="text-sm font-medium text-gray-700">Department</label>
                                 <input type="text" 
                                        name="department_display" 
+                                       value="{{ user.employee.department.name }}"
                                        class="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-800 shadow-sm cursor-not-allowed opacity-80" 
                                        readonly>
                                 <input type="hidden" name="department" class="department-id">
@@ -81,18 +90,24 @@
                                 <label class="text-sm font-medium text-gray-700">Number of Past Contracts</label>
                                 <input type="text" 
                                        name="contract_count" 
+                                       value="{{ contract_count }}"
                                        class="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-800 shadow-sm cursor-not-allowed opacity-80" 
                                        readonly>
                             </div>
                             <div class="flex flex-col space-y-1">
                                 <label class="text-sm font-medium text-gray-700">Type of Contract Applied *</label>
                                 <select name="contract_type" 
-                                        class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-800 shadow-sm">
+                                        id="contract_type"
+                                        class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-800 shadow-sm"
+                                        required>
                                     <option value="">Select contract type</option>
-                                    <option value="RENEWAL_3">Renewal of contract (3 years)</option>
-                                    <option value="EXTENSION_1">Extension of current contract (1 year)</option>
-                                    <option value="LOCAL_RENEWAL">New/Renewal of contract for local staff</option>
-                                    <option value="OTHER">Other</option>
+                                    {% for value, label in contract_type_choices %}
+                                        <option value="{{ value }}"
+                                                {% if form.contract_type.value == value %}selected{% endif %}
+                                                {% if contract_type == value %}selected{% endif %}>
+                                            {{ label }}
+                                        </option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             
@@ -101,7 +116,7 @@
                                 <label class="text-sm font-medium text-gray-700">Present Post</label>
                                 <input type="text" 
                                        name="present_post" 
-                                       value="{{ form.present_post.value|default:'' }}"
+                                       value="{{ user.employee.post }}"
                                        class="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-800 shadow-sm cursor-not-allowed opacity-80" 
                                        readonly>
                             </div>
@@ -110,7 +125,7 @@
                                 <label class="text-sm font-medium text-gray-700">Salary Scale/Division</label>
                                 <input type="text" 
                                        name="salary_scale_division" 
-                                       value="{{ form.salary_scale_division.value|default:'' }}"
+                                       value="{{ user.employee.salary }}"
                                        class="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-800 shadow-sm cursor-not-allowed opacity-80" 
                                        readonly>
                             </div>
@@ -193,29 +208,125 @@
                     <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                         <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Research, Consultancy and Publications</h2>
                         <div class="space-y-6">
-                            <div class="flex flex-col space-y-1">
-                                <label class="text-sm font-medium text-gray-700">Consultancy Work</label>
-                                <textarea name="consultancy_work" 
-                                          rows="4"
-                                          class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-800 shadow-sm">{{ form.consultancy_work.value|default:'' }}</textarea>
+                            <!-- Consultancy Work Table -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Consultancy Work</label>
+                                <div class="mt-4">
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-gray-200" id="consultancyWorkTable">
+                                            <thead class="bg-gray-50">
+                                                <tr>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title/Project</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company/Institute</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="bg-white divide-y divide-gray-200">
+                                                <!-- Rows will be populated here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="mt-4">
+                                        <button type="button" id="addConsultancyBtn" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                            Add Consultancy
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="consultancy_work" id="consultancy_work">
+                                </div>
                             </div>
 
-                            <div class="flex flex-col space-y-1">
-                                <label class="text-sm font-medium text-gray-700">Research History</label>
-                                <p class="text-sm text-gray-500">Include completed research projects</p>
-                                <textarea name="last_research" 
-                                          rows="4"
-                                          class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-800 shadow-sm">{{ form.last_research.value|default:'' }}</textarea>
+                            <!-- Research History Table -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Research History</label>
+                                <div class="mt-4">
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-gray-200" id="researchHistoryTable">
+                                            <thead class="bg-gray-50">
+                                                <tr>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title/Project</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Funding Agency</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="bg-white divide-y divide-gray-200">
+                                                <!-- Rows will be populated here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="mt-4">
+                                        <button type="button" id="addResearchHistoryBtn" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                            Add Research History
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="last_research" id="last_research">
+                                </div>
                             </div>
 
-                            <div class="flex flex-col space-y-1">
-                                <label class="text-sm font-medium text-gray-700">Ongoing Research</label>
-                                <p class="text-sm text-gray-500">List current research projects and their status</p>
-                                <textarea name="ongoing_research" 
-                                          rows="4"
-                                          class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-800 shadow-sm">{{ form.ongoing_research.value|default:'' }}</textarea>
+                            <!-- Ongoing Research Table -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Ongoing Research</label>
+                                <div class="mt-4">
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-gray-200" id="ongoingResearchTable">
+                                            <thead class="bg-gray-50">
+                                                <tr>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title/Project</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Funding Agency</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="bg-white divide-y divide-gray-200">
+                                                <!-- Rows will be populated here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="mt-4">
+                                        <button type="button" id="addOngoingResearchBtn" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                            Add Ongoing Research
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="ongoing_research" id="ongoing_research">
+                                </div>
                             </div>
 
+                            <!-- Conference Papers Table -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Conference Papers</label>
+                                <div class="mt-4">
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-gray-200" id="conferencePapersTable">
+                                            <thead class="bg-gray-50">
+                                                <tr>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Volume</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pages</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DOI</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="bg-white divide-y divide-gray-200">
+                                                <!-- Rows will be populated here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="mt-4">
+                                        <button type="button" id="addConferencePaperBtn" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                            Add Conference Paper
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="conference_papers" id="conference_papers">
+                                </div>
+                            </div>
+
+                            <!-- Publications Section -->
                             <div class="space-y-4">
                                 <div class="flex flex-col space-y-1">
                                     <label class="text-sm font-medium text-gray-700">Publications</label>
@@ -747,9 +858,9 @@ document.addEventListener('DOMContentLoaded', function() {
             { name: 'title', placeholder: 'Module Title' },
             { name: 'level', placeholder: 'Level' },
             { name: 'language', placeholder: 'Language Medium' },
-            { name: 'students', placeholder: 'Number of Students', type: 'number' },
-            { name: 'percentage', placeholder: 'Percentage', type: 'number' },
-            { name: 'hours', placeholder: 'Hours Weekly', type: 'number' }
+            { name: 'students', placeholder: 'Number of Students', type: 'text' },
+            { name: 'percentage', placeholder: 'Percentage', type: 'text' },
+            { name: 'hours', placeholder: 'Hours Weekly', type: 'text' }
         ];
 
         fields.forEach(field => {
@@ -1023,33 +1134,70 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch(`/contract/fetch-publications/${scopusId}/`);
             const data = await response.json();
             
-            if (data.success) {
+            if (data.success && Array.isArray(data.publications) && data.publications.length > 0) {
                 // Clear existing publications list
                 publicationsList.innerHTML = '';
                 
                 // Create formatted publications list
                 data.publications.forEach(pub => {
+                    if (!pub || !pub.formatted_citation) return; // Skip invalid entries
+                    
                     const pubDiv = document.createElement('div');
-                    pubDiv.className = 'p-3 bg-gray-50 rounded-md';
+                    pubDiv.className = 'p-3 bg-gray-50 rounded-md mb-2';
                     pubDiv.innerHTML = `
                         <p class="text-gray-700">${pub.formatted_citation}</p>
                         <div class="mt-1 text-sm text-gray-500">
-                            Citations: ${pub.citation_count} | Year: ${pub.year}
+                            Citations: ${pub.citation_count || 0} | Year: ${pub.year || 'N/A'}
                         </div>
                     `;
                     publicationsList.appendChild(pubDiv);
                 });
 
                 // Update the textarea with formatted citations
-                publicationsTextarea.value = data.publications
+                const formattedPublications = data.publications
+                    .filter(pub => pub && pub.formatted_citation) // Remove null/invalid entries
                     .map(pub => pub.formatted_citation)
                     .join('\n\n');
+                
+                if (formattedPublications) {
+                    publicationsTextarea.value = formattedPublications;
+                } else {
+                    publicationsTextarea.value = ''; // Set empty string if no valid publications
+                    throw new Error('No valid publications found');
+                }
             } else {
-                throw new Error(data.message || 'Failed to fetch publications');
+                publicationsTextarea.value = ''; // Clear textarea if no publications found
+                throw new Error(data.message || 'No publications found');
             }
         } catch (error) {
             console.error('Error fetching publications:', error);
+            // Don't clear existing publications on error
+            if (!publicationsTextarea.value) {
+                publicationsTextarea.value = '';
+            }
             alert('Error fetching publications. Please try again or enter manually.');
+        }
+    }
+
+    // Initialize publications if they exist
+    const existingPublications = document.getElementById('publications').value;
+    if (existingPublications) {
+        try {
+            const publications = JSON.parse(existingPublications);
+            if (Array.isArray(publications) && publications.length > 0) {
+                const formattedPublications = publications
+                    .filter(pub => pub && typeof pub === 'string')
+                    .join('\n\n');
+                document.getElementById('publications').value = formattedPublications;
+            }
+        } catch (e) {
+            console.error('Error parsing existing publications:', e);
+            // Keep the original value if it's not JSON
+            if (existingPublications !== 'null' && existingPublications !== 'undefined') {
+                document.getElementById('publications').value = existingPublications;
+            } else {
+                document.getElementById('publications').value = '';
+            }
         }
     }
 
@@ -1414,6 +1562,194 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error parsing external committees:', e);
         }
     }
+
+    // Research Section Table Handlers
+    const consultancyTable = document.getElementById('consultancyWorkTable');
+    const addConsultancyBtn = document.getElementById('addConsultancyBtn');
+    const consultancyInput = document.getElementById('consultancy_work');
+
+    function addConsultancyRow() {
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" name="consultancy_title[]" placeholder="Enter Title/Project" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" name="consultancy_company[]" placeholder="Enter Company/Institute" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="date" name="consultancy_start_date[]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="date" name="consultancy_end_date[]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateConsultancyData();">Delete</button>
+            </td>
+        `;
+        consultancyTable.querySelector('tbody').appendChild(newRow);
+    }
+
+    function updateConsultancyData() {
+        const rows = consultancyTable.querySelectorAll('tbody tr');
+        const data = Array.from(rows).map(row => {
+            const inputs = row.querySelectorAll('input');
+            return {
+                title: inputs[0].value,
+                company: inputs[1].value,
+                startDate: inputs[2].value,
+                endDate: inputs[3].value
+            };
+        });
+        consultancyInput.value = JSON.stringify(data);
+    }
+
+    addConsultancyBtn.addEventListener('click', addConsultancyRow);
+    consultancyTable.addEventListener('change', updateConsultancyData);
+
+    // Research History Table
+    const researchHistoryTable = document.getElementById('researchHistoryTable');
+    const addResearchHistoryBtn = document.getElementById('addResearchHistoryBtn');
+    const researchHistoryInput = document.getElementById('last_research');
+
+    function addResearchHistoryRow() {
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" placeholder="Enter Title/Project" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" placeholder="Enter Funding Agency" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateResearchHistoryData();">Delete</button>
+            </td>
+        `;
+        researchHistoryTable.querySelector('tbody').appendChild(newRow);
+    }
+
+    function updateResearchHistoryData() {
+        const rows = researchHistoryTable.querySelectorAll('tbody tr');
+        const data = Array.from(rows).map(row => {
+            const inputs = row.querySelectorAll('input');
+            return {
+                title: inputs[0].value,
+                startDate: inputs[1].value,
+                endDate: inputs[2].value,
+                fundingAgency: inputs[3].value
+            };
+        });
+        researchHistoryInput.value = JSON.stringify(data);
+    }
+
+    addResearchHistoryBtn.addEventListener('click', addResearchHistoryRow);
+    researchHistoryTable.addEventListener('change', updateResearchHistoryData);
+
+    // Ongoing Research Table
+    const ongoingResearchTable = document.getElementById('ongoingResearchTable');
+    const addOngoingResearchBtn = document.getElementById('addOngoingResearchBtn');
+    const ongoingResearchInput = document.getElementById('ongoing_research');
+
+    function addOngoingResearchRow() {
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" placeholder="Enter Title/Project" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" placeholder="Enter Funding Agency" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateOngoingResearchData();">Delete</button>
+            </td>
+        `;
+        ongoingResearchTable.querySelector('tbody').appendChild(newRow);
+    }
+
+    function updateOngoingResearchData() {
+        const rows = ongoingResearchTable.querySelectorAll('tbody tr');
+        const data = Array.from(rows).map(row => {
+            const inputs = row.querySelectorAll('input');
+            return {
+                title: inputs[0].value,
+                startDate: inputs[1].value,
+                endDate: inputs[2].value,
+                fundingAgency: inputs[3].value
+            };
+        });
+        ongoingResearchInput.value = JSON.stringify(data);
+    }
+
+    addOngoingResearchBtn.addEventListener('click', addOngoingResearchRow);
+    ongoingResearchTable.addEventListener('change', updateOngoingResearchData);
+
+    // Conference Papers Table
+    const conferencePapersTable = document.getElementById('conferencePapersTable');
+    const addConferencePaperBtn = document.getElementById('addConferencePaperBtn');
+    const conferencePapersInput = document.getElementById('conference_papers');
+
+    function addConferencePaperRow() {
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" placeholder="Enter Author" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" 
+                       placeholder="Enter Year" 
+                       pattern="\\d{4}"
+                       maxlength="4"
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" placeholder="Enter Title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" placeholder="Enter Volume" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" placeholder="Enter Pages" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" placeholder="Enter DOI" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateConferencePapersData();">Delete</button>
+            </td>
+        `;
+        conferencePapersTable.querySelector('tbody').appendChild(newRow);
+    }
+
+    function updateConferencePapersData() {
+        const rows = conferencePapersTable.querySelectorAll('tbody tr');
+        const data = Array.from(rows).map(row => {
+            const inputs = row.querySelectorAll('input');
+            return {
+                author: inputs[0].value,
+                year: inputs[1].value,
+                title: inputs[2].value,
+                volume: inputs[3].value,
+                pages: inputs[4].value,
+                doi: inputs[5].value
+            };
+        });
+        conferencePapersInput.value = JSON.stringify(data);
+    }
+
+    addConferencePaperBtn.addEventListener('click', addConferencePaperRow);
+    conferencePapersTable.addEventListener('change', updateConferencePapersData);
 });
 </script>
 
