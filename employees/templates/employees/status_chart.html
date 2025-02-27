@@ -1,44 +1,16 @@
 {% load chart_filters %}
 
 <!-- Status Donut Chart -->
-<div class="max-w-sm w-full bg-white rounded-lg shadow-sm p-4 md:p-6">
-    <!-- Header -->
-    <div class="flex justify-between mb-3">
-        <div class="flex justify-center items-center">
-            <h5 class="text-xl font-bold leading-none text-gray-900 pe-1">Employee Status Distribution</h5>
-            <!-- Info Tooltip -->
-            <div data-popover id="chart-info" role="tooltip" class="absolute z-10 invisible inline-block text-sm text-gray-500 transition-opacity duration-300 bg-white border border-gray-200 rounded-lg shadow-xs opacity-0 w-72">
-                <div class="p-3 space-y-2">
-                    <h3 class="font-semibold text-gray-900">Employee Status Overview</h3>
-                    <p>Shows the current distribution of employee statuses across the organization.</p>
-                </div>
-                <div data-popper-arrow></div>
-            </div>
+<div class="bg-white rounded-lg shadow p-4 md:p-6">
+    <div class="flex justify-between mb-4">
+        <div>
+            <h5 class="text-xl font-bold text-gray-900 pb-2">Employee Status</h5>
+            <p class="text-base font-normal text-gray-500">Distribution of employee statuses</p>
         </div>
     </div>
-
-    <!-- Status Toggles -->
-    <div class="flex" id="status-toggles">
-        <div class="flex items-center me-4">
-            <input id="active" type="checkbox" value="active" checked class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-green-500">
-            <label for="active" class="ms-2 text-sm font-medium text-gray-900">Active</label>
-        </div>
-        <div class="flex items-center me-4">
-            <input id="on_leave" type="checkbox" value="on_leave" checked class="w-4 h-4 text-yellow-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-yellow-500">
-            <label for="on_leave" class="ms-2 text-sm font-medium text-gray-900">On Leave</label>
-        </div>
-        <div class="flex items-center me-4">
-            <input id="inactive" type="checkbox" value="inactive" checked class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-red-500">
-            <label for="inactive" class="ms-2 text-sm font-medium text-gray-900">Inactive</label>
-        </div>
-    </div>
-
-    <!-- Replace the SVG chart with a div for ApexCharts -->
-    <div class="relative py-6" style="height: 300px;">
+    <div class="py-6" style="height: 400px;">
         <div id="status-donut-chart"></div>
     </div>
-
-   
 </div>
 
 <!-- Add this before closing body tag -->
@@ -53,7 +25,7 @@ const getChartOptions = () => {
         ],
         colors: ['#4ade80', '#fbbf24', '#f87171'],
         chart: {
-            height: 280,
+            height: 360,    
             width: "100%",
             type: "donut",
         },
@@ -70,7 +42,7 @@ const getChartOptions = () => {
                             },
                         }
                     },
-                    size: "80%",
+                    size: "65%",
                 }
             }
         },

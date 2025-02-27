@@ -48,6 +48,7 @@ import os
 from django.conf import settings
 import json
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db import models
 
 # Formset Configurations
 QualificationFormSet = inlineformset_factory(
@@ -327,6 +328,7 @@ class EmployeeListView(LoginRequiredMixin, ListView):
         return render(request, 'employees/employee_list.html', context)
 
 class DashboardView(LoginRequiredMixin, TemplateView):
+    # resume
     """
     Main dashboard displaying system analytics and recent activities.
     
@@ -358,11 +360,35 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context['total_employees'] = Employee.objects.count()
         context['total_departments'] = Department.objects.count()
         
-        # Get departments with employee counts, ordered by count
-        context['department_data'] = Department.objects.annotate(
+        # Get departments with employee counts
+        department_data = Department.objects.annotate(
             employee_count=Count('employees')
-        ).order_by('-employee_count')
+        ).order_by('name')
         
+        # Get positions (posts) with employee counts
+        positions = Employee.objects.values('post').annotate(
+            employee_count=Count('id'),
+            name=models.F('post')  # Alias 'post' as 'name' to match template
+        ).exclude(
+            post__isnull=True
+        ).exclude(
+            post__exact=''
+        ).order_by('post')
+
+        # Get appointment types with employee counts
+        appointments = AppointmentType.objects.annotate(
+            employee_count=Count('employees')
+        ).order_by('name')
+        
+        context.update({
+            'department_data': department_data,
+            'department_count': Department.objects.count(),
+            'positions': positions,
+            'position_count': positions.count(),
+            'appointments': appointments,
+            'appointment_count': AppointmentType.objects.count(),
+        })
+
         # Appraisal analytics
         active_period = AppraisalPeriod.objects.filter(is_active=True).first()
         if active_period:
@@ -749,64 +775,5 @@ class ResumeParserView(LoginRequiredMixin, View):
                 'message': str(e)
             }, status=400)
 
-def dashboard(request):
-    # Get department counts
-    department_data = Employee.objects.values(
-        'department__name'
-    ).annotate(
-        employee_count=Count('id')
-    ).order_by('-employee_count')
-    
-    # Format department data
-    formatted_department_data = []
-    for dept in department_data:
-        formatted_department_data.append({
-            'name': dept['department__name'],
-            'employee_count': dept['employee_count']
-        })
-
-    # Get status counts
-    all_statuses = dict(Employee.Status.choices)
-    
-    # Get current counts
-    status_counts = Employee.objects.values('employee_status').annotate(
-        count=Count('id')
-    )
-    
-    # Create a dictionary of counts
-    count_dict = {item['employee_status']: item['count'] for item in status_counts}
-    
-    # Format status data
-    formatted_status_data = []
-    for status_code, status_name in all_statuses.items():
-        formatted_status_data.append({
-            'status': status_code,
-            'name': status_name,
-            'count': count_dict.get(status_code, 0)
-        })
-    
-    # Get position counts with debug prints
-    position_counts = Employee.objects.values('position').annotate(
-        employee_count=Count('id')
-    ).order_by('-employee_count')
-    
-    print("DEBUG - Raw Position Counts:", position_counts)
-    print("DEBUG - Position Counts Query:", position_counts.query)
-    
-    # Format position data
-    formatted_position_data = []
-    for pos in position_counts:
-        formatted_position_data.append({
-            'name': dict(Employee._meta.get_field('position').choices).get(pos['position'], pos['position']),
-            'employee_count': pos['employee_count']
-        })
-    
-    context = {
-        'department_data': formatted_department_data,
-        'status_data': formatted_status_data,
-        'position_data': formatted_position_data,
-        'total_employees': Employee.objects.count()
-    }
-    return render(request, 'employees/dashboard.html', context)
 
 

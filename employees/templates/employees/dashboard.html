@@ -51,15 +51,16 @@
             </div>
         </div>
 
-        <!-- Charts Grid Container -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- First row of charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             {% include "employees/department_chart.html" %}
             {% include "employees/status_chart.html" %}
         </div>
 
-        <!-- Position Chart -->
-        <div class="mt-6">
-            {% include 'employees/position_chart.html' %}
+        <!-- Second row of charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {% include "employees/position_chart.html" %}
+            {% include "employees/appointment_chart.html" %}
         </div>
 
         <!-- Recent Activity -->
