@@ -1,0 +1,110 @@
+{% load chart_filters %}
+
+<!-- Status Donut Chart -->
+<div class="max-w-sm w-full bg-white rounded-lg shadow-sm p-4 md:p-6">
+    <!-- Header -->
+    <div class="flex justify-between mb-3">
+        <div class="flex justify-center items-center">
+            <h5 class="text-xl font-bold leading-none text-gray-900 pe-1">Employee Status Distribution</h5>
+            <!-- Info Tooltip -->
+            <div data-popover id="chart-info" role="tooltip" class="absolute z-10 invisible inline-block text-sm text-gray-500 transition-opacity duration-300 bg-white border border-gray-200 rounded-lg shadow-xs opacity-0 w-72">
+                <div class="p-3 space-y-2">
+                    <h3 class="font-semibold text-gray-900">Employee Status Overview</h3>
+                    <p>Shows the current distribution of employee statuses across the organization.</p>
+                </div>
+                <div data-popper-arrow></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Toggles -->
+    <div class="flex" id="status-toggles">
+        <div class="flex items-center me-4">
+            <input id="active" type="checkbox" value="active" checked class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-green-500">
+            <label for="active" class="ms-2 text-sm font-medium text-gray-900">Active</label>
+        </div>
+        <div class="flex items-center me-4">
+            <input id="on_leave" type="checkbox" value="on_leave" checked class="w-4 h-4 text-yellow-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-yellow-500">
+            <label for="on_leave" class="ms-2 text-sm font-medium text-gray-900">On Leave</label>
+        </div>
+        <div class="flex items-center me-4">
+            <input id="inactive" type="checkbox" value="inactive" checked class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-red-500">
+            <label for="inactive" class="ms-2 text-sm font-medium text-gray-900">Inactive</label>
+        </div>
+    </div>
+
+    <!-- Replace the SVG chart with a div for ApexCharts -->
+    <div class="relative py-6" style="height: 300px;">
+        <div id="status-donut-chart"></div>
+    </div>
+
+   
+</div>
+
+<!-- Add this before closing body tag -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+const getChartOptions = () => {
+    return {
+        series: [
+            {% for item in status_data %}
+                {{ item.count }}{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        colors: ['#4ade80', '#fbbf24', '#f87171'],
+        chart: {
+            height: 280,
+            width: "100%",
+            type: "donut",
+        },
+        plotOptions: {
+            pie: {
+                donut: {
+                    labels: {
+                        show: true,
+                        total: {
+                            show: true,
+                            label: 'Total',
+                            formatter: function (w) {
+                                return '{{ total_employees }}'
+                            },
+                        }
+                    },
+                    size: "80%",
+                }
+            }
+        },
+        labels: ['Active', 'On Leave', 'Inactive'],
+        legend: {
+            position: "bottom",
+            fontFamily: "Inter, sans-serif",
+        }
+    }
+}
+
+if (document.getElementById("status-donut-chart") && typeof ApexCharts !== 'undefined') {
+    const chart = new ApexCharts(document.getElementById("status-donut-chart"), getChartOptions());
+    chart.render();
+
+    // Handle status toggles
+    const checkboxes = document.querySelectorAll('#status-toggles input[type="checkbox"]');
+    
+    function handleCheckboxChange(event, chart) {
+        const checkedStatuses = Array.from(checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+            
+        const newSeries = [
+            {% for item in status_data %}
+                checkedStatuses.includes('{{ item.status }}') ? {{ item.count }} : 0{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+        
+        chart.updateSeries(newSeries);
+    }
+
+    checkboxes.forEach((checkbox) => {
+        checkbox.addEventListener('change', (event) => handleCheckboxChange(event, chart));
+    });
+}
+</script> 

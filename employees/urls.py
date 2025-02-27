@@ -13,4 +13,5 @@ urlpatterns = [
     path('department/<int:pk>/edit/', views.DepartmentUpdateView.as_view(), name='department_edit'),
     path('department/<int:pk>/delete/', views.DepartmentDeleteView.as_view(), name='department_delete'),
     path('profile/', views.ProfileView.as_view(), name='profile'),
+    path('parse-resume/', views.ResumeParserView.as_view(), name='parse_resume'),
 ]

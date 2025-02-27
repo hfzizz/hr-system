@@ -1,0 +1,40 @@
+<!-- Department Chart using Tailwind CSS - Simple Vertical Bars with Accurate Scale -->
+<div class="bg-white rounded-lg shadow p-6">
+    <h3 class="text-lg font-medium leading-6 text-gray-900 mb-16">Employee Distribution by Department</h3>
+    
+    {% with max_count=department_data.0.employee_count %}
+    <div class="flex items-end justify-around h-64 space-x-6 mt-12">
+        {% for dept in department_data %}
+        <div class="flex flex-col items-center group relative">
+            <!-- Bar Container -->
+            <div class="relative">
+                <!-- Value on top -->
+                <div class="absolute -top-6 w-full text-center text-sm font-medium text-gray-700">
+                    {{ dept.employee_count }}
+                </div>
+                
+                <!-- Tooltip -->
+                <div class="invisible group-hover:visible absolute -top-12 left-1/2 transform -translate-x-1/2 
+                            bg-gray-800 text-white px-2 py-1 rounded text-sm whitespace-nowrap z-10">
+                    {{ dept.name }}: {{ dept.employee_count }}
+                </div>
+                
+                <!-- Bar -->
+                <div class="w-12 bg-blue-500 rounded-t transition-all duration-500 hover:bg-blue-600"
+                     style="height: {% widthratio dept.employee_count max_count 256 %}px">
+                </div>
+            </div>
+            
+            <!-- Department Name -->
+            <div class="text-xs font-medium text-gray-500 mt-2">
+                {{ dept.name }}
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center text-sm text-gray-500 py-4">
+            No departments found
+        </div>
+        {% endfor %}
+    </div>
+    {% endwith %}
+</div>
