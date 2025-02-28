@@ -5,7 +5,7 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.db.models import Q
 from django.contrib.auth.models import Group
-from .models import Appraisal, AppraisalPeriod, AcademicQualification
+from .models import Appraisal, AppraisalPeriod, Module, Membership
 from employees.models import Employee, Department
 from django.http import JsonResponse
 from django.shortcuts import redirect, get_object_or_404, render
@@ -16,10 +16,11 @@ import logging
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 import json
-from .forms import AppraisalForm, AcademicQualificationFormSet
+from .forms import AppraisalForm, AcademicQualificationFormSet, SectionAForm
 from django.forms import inlineformset_factory
 from django.core.exceptions import PermissionDenied
 from django.template.context_processors import request
+from formtools.wizard.views import SessionWizardView
 
 logger = logging.getLogger(__name__)
 
@@ -241,6 +242,54 @@ class AppraisalListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
         return context
 
+class AppraisalWizard(SessionWizardView):
+    form_list = [
+        ('section_a', SectionAForm),
+    ]
+
+    def get_form_kwargs(self, step=None):
+        kwargs = super().get_form_kwargs(step)
+        
+        if step == 'section_a':
+            # Get the appraisal instance
+            appraisal_id = self.kwargs.get('appraisal_id')
+            if appraisal_id:
+                kwargs['instance'] = Appraisal.objects.get(id=appraisal_id)
+        
+        return kwargs
+
+    def get_form(self, step=None, data=None, files=None):
+        form_class = self.form_list[step or self.steps.current]
+        
+        # Handle formsets
+        if step in ['modules', 'qualifications', 'memberships']:
+            FormSet = inlineformset_factory(
+                Appraisal,
+                {
+                    'modules': Module,
+                    'qualifications': AcademicQualification,
+                    'memberships': Membership
+                }[step],
+                form=form_class,
+                extra=1,
+                can_delete=True
+            )
+            
+            return FormSet(
+                data=data,
+                files=files,
+                instance=self.get_appraisal_instance(),
+                prefix=step
+            )
+            
+        return super().get_form(step, data, files)
+
+    def get_appraisal_instance(self):
+        appraisal_id = self.kwargs.get('appraisal_id')
+        if appraisal_id:
+            return Appraisal.objects.get(id=appraisal_id)
+        return None
+    
 class AppraisalDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
     """
     Displays detailed information about a specific appraisal.

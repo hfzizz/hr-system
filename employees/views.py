@@ -18,7 +18,7 @@ from django.urls import reverse_lazy
 from django.views.generic import TemplateView, ListView, CreateView, DetailView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from .models import Employee, Department, Qualification, Document, AppointmentType
+from .models import Employee, Department, Qualification, Document
 from .forms import EmployeeForm, EmployeeProfileForm, QualificationForm, QualificationFormSet
 from django.views.generic.edit import CreateView
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -289,8 +289,7 @@ class EmployeeListView(LoginRequiredMixin, ListView):
         # Filter options - only include if they exist in your database
         context['departments'] = Department.objects.all()
         context['posts'] = Employee.objects.values_list('post', flat=True).distinct()
-        if hasattr(Employee, 'appointment_type'):
-            context['appointment_types'] = AppointmentType.objects.all()
+        context['appointment_types'] = Employee.objects.values_list('appointment__type_of_appointment', flat=True).distinct()
         context['ic_colours'] = dict(Employee.ICColour.choices)
         context['statuses'] = dict(Employee.Status.choices)
 
@@ -605,7 +604,7 @@ class EmployeeDetailView(LoginRequiredMixin, DetailView):
         return super().get_queryset().prefetch_related('documents')
 
 class SettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
-    """
+    """ 
     System configuration interface for HR administrators.
     
     Provides access to:

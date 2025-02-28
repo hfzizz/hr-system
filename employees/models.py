@@ -33,6 +33,12 @@ class Employee(models.Model):
         ACTIVE = 'active', _('Active')
         ON_LEAVE = 'on_leave', _('On Leave')
         INACTIVE = 'inactive', _('Inactive')
+        
+    class AppointmentType(models.TextChoices):
+        PERMANENT = 'Permanent', _('Permanent')
+        CONTRACT = 'Contract', _('Contract')
+        MONTH_TO_MONTH = 'Month-to-Month', _('Month-to-Month')
+        DAILY_RATED = 'Daily-Rated', _('Daily-Rated')
 
     employee_id = models.CharField(max_length=10, unique=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -90,24 +96,25 @@ class Employee(models.Model):
         null=True,
         blank=True
     )
-    qualifications = models.ManyToManyField(
-        'Qualification', 
-        blank=True,
-        related_name='employees'
-    )
     post = models.CharField(
         max_length=100,
         help_text=_('Employee position/job title'),
         blank=True,
         null=True
     )
-    appointment_type = models.ForeignKey(
-        'AppointmentType',
-        on_delete=models.SET_NULL,
+    appointment_type = models.CharField(
+        max_length=50,
+        choices=AppointmentType.choices,
         null=True,
         blank=True,
-        related_name='employees',
         help_text=_('Type of employment appointment')
+    )
+     # Scholar-related fields
+    scholar_id = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        help_text=_("Google Scholar ID")
     )
 
     created_at = models.DateTimeField(default=timezone.now)
@@ -157,28 +164,6 @@ class Employee(models.Model):
 
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
-
-class AppointmentType(models.Model):
-    APPOINTMENT_CHOICES = [
-        ('Permanent', 'Permanent'),
-        ('Contract', 'Contract'),
-        ('Month-to-Month', 'Month-to-Month'),
-        ('Daily-Rated', 'Daily-Rated')
-    ]
-
-    name = models.CharField(
-        max_length=50,
-        unique=True,
-        choices=APPOINTMENT_CHOICES
-    )
-    description = models.TextField(blank=True)
-    is_active = models.BooleanField(default=True)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        ordering = ['name']
 
 class Qualification(models.Model):
     employee = models.ForeignKey(

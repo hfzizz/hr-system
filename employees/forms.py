@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Employee, Qualification, AppointmentType
+from .models import Employee, Qualification
 from appraisals.models import Appointment
 from django.db import models
 from django.forms import modelformset_factory, BaseModelFormSet
@@ -16,15 +16,12 @@ class EmployeeForm(forms.ModelForm):
     )
     password = forms.CharField(
         widget=forms.PasswordInput,
-        required=False
+        required=True
     )
     email = forms.EmailField(required=True)
-    appointment_type = forms.ModelChoiceField(
-        queryset=AppointmentType.objects.filter(is_active=True),
-        empty_label="Select Type of Appointment",
-        widget=forms.Select(attrs={
-            'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
-        })
+    appointment_type = forms.ChoiceField(
+        choices=Employee.AppointmentType.choices,
+        required=True
     )
 
     class Meta:
@@ -49,7 +46,6 @@ class EmployeeForm(forms.ModelForm):
             'profile_picture',
             'ic_no',
             'ic_colour',
-            'qualifications'
         ]
         widgets = {
             'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
@@ -136,7 +132,6 @@ class EmployeeProfileForm(forms.ModelForm):
             'profile_picture',
             'ic_no',
             'ic_colour',
-            'qualifications'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -162,57 +157,6 @@ class EmployeeProfileForm(forms.ModelForm):
             employee.save()
         
         return employee
-
-class AppointmentForm(forms.ModelForm):
-    type_of_appointment = forms.ModelChoiceField(
-        queryset=AppointmentType.objects.filter(is_active=True),
-        widget=forms.Select(attrs={
-            'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
-        }),
-        empty_label=None
-    )
-
-    class Meta:
-        model = Appointment
-        fields = [
-            'type_of_appointment',
-            'first_appointment_govt',
-            'first_appointment_ubd',
-            'faculty_programme',
-            'from_date',
-            'to_date'
-        ]
-        widgets = {
-            'first_appointment_govt': forms.DateInput(
-                attrs={
-                    'type': 'date',
-                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
-                }
-            ),
-            'first_appointment_ubd': forms.DateInput(
-                attrs={
-                    'type': 'date',
-                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
-                }
-            ),
-            'faculty_programme': forms.TextInput(
-                attrs={
-                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
-                }
-            ),
-            'from_date': forms.DateInput(
-                attrs={
-                    'type': 'date',
-                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
-                }
-            ),
-            'to_date': forms.DateInput(
-                attrs={
-                    'type': 'date',
-                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
-                }
-            )
-        }
 
 class QualificationForm(forms.ModelForm):
     class Meta:
