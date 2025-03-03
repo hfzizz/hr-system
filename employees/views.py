@@ -12,14 +12,16 @@ Classes:
     - Profile Management Views
     - System Configuration Views
 """
-
-from django.contrib.auth.views import LoginView, LogoutView
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
+from django.db.models.base import Model as Model
+from django.db.models.query import QuerySet
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, ListView, CreateView, DetailView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from .models import Employee, Department, Qualification, Document
-from .forms import EmployeeForm, EmployeeProfileForm, QualificationForm, QualificationFormSet
+from .forms import EmployeeProfileForm, ProfileForm, QualificationForm, QualificationFormSet
 from django.views.generic.edit import CreateView
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import redirect
@@ -178,7 +180,7 @@ class CustomLogoutView(LogoutView):
         messages.success(request, 'You have been successfully logged out.')
         return super().dispatch(request, *args, **kwargs)
 
-class EmployeeListView(LoginRequiredMixin, ListView):
+class EmployeeListView(LoginRequiredMixin, HRRequiredMixin, ListView):
     """
     Display a comprehensive list of employees with advanced filtering and sorting.
     
@@ -289,14 +291,15 @@ class EmployeeListView(LoginRequiredMixin, ListView):
         # Filter options - only include if they exist in your database
         context['departments'] = Department.objects.all()
         context['posts'] = Employee.objects.values_list('post', flat=True).distinct()
-        context['appointment_types'] = Employee.objects.values_list('appointment__type_of_appointment', flat=True).distinct()
+        context['appointment_types'] = Employee.objects.values_list('appointment_type', flat=True).distinct()
         context['ic_colours'] = dict(Employee.ICColour.choices)
         context['statuses'] = dict(Employee.Status.choices)
 
         return context
 
     def get_queryset(self):
-        return Employee.objects.select_related('department', 'appointment__type_of_appointment').all()
+        # Update this line too
+        return Employee.objects.select_related('department').all()
     
     def employee_list(request):
         employee_columns = [
@@ -387,12 +390,86 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         context['user'] = self.request.user
         return context
 
-class EmployeeCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+class ProfileDetailView(LoginRequiredMixin, DetailView):
     model = Employee
-    form_class = EmployeeForm
+    template_name = 'employees/profile.html'
+    context_object_name = 'employee'
+
+    def get_object(self):
+        return self.request.user.employee
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['fields'] = [
+            ("Username", self.object.user.username),
+            ("Full name", f"{self.object.first_name} {self.object.last_name}"),
+            ("Email address", self.object.email),
+            ("Phone number", self.object.phone_number),
+            ("IC Number", self.object.ic_no),
+            ("IC Colour", self.object.get_ic_colour_display()),
+            ("Type of Appointment", self.object.appointment_type),
+            ("Department", self.object.department),
+            ("Position", self.object.post),
+            ("Roles", "roles"),  # Special handling in template
+            ("Address", self.object.address),
+            ("Hire date", self.object.hire_date),
+        ]
+        return context
+
+
+class ProfileUpdateView(LoginRequiredMixin, UpdateView):
+    model = Employee
+    form_class = ProfileForm
+    template_name = 'employees/profile_edit.html'
+
+    def get_success_url(self):
+        return reverse_lazy('employees:profile', kwargs={'pk': self.request.user.pk}) 
+    
+    def get_object(self):
+        """Return the employee instance for the logged-in user."""
+        try:
+            return self.request.user.employee
+        except Employee.DoesNotExist:
+            raise Http404("Employee profile not found.")
+
+    def get_context_data(self, **kwargs):
+        """Ensure 'employee' is included in the context."""
+        context = super().get_context_data(**kwargs)
+        context['employee'] = self.get_object()  # Pass employee object to the template
+        return context
+
+    def form_valid(self, form):
+        """Handle form submission when valid."""
+        if form.is_valid():
+            response = super().form_valid(form)
+            messages.success(self.request, 'Profile updated successfully!')
+            return response
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
+
+class CustomPasswordChangeView(PasswordChangeView):
+    template_name = 'employees/change_password.html'
+    success_url = reverse_lazy('employees:profile')
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Your password was successfully updated!')
+        return super().form_valid(form)
+
+
+class EmployeeDetailView(LoginRequiredMixin, HRRequiredMixin, DetailView):
+    model = Employee
+    template_name = 'employees/employee_detail.html'
+    context_object_name = 'employee'
+
+    def get_queryset(self):
+        # Prefetch the documents to optimize queries
+        return super().get_queryset().prefetch_related('documents')
+
+class EmployeeCreateView(LoginRequiredMixin, HRRequiredMixin, CreateView):
+    model = Employee
+    form_class = EmployeeProfileForm
     template_name = 'employees/employee_create.html'
     success_url = reverse_lazy('employees:employee_list')
-    permission_required = 'employees.add_employee'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -469,7 +546,7 @@ class EmployeeCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView
 
 class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Employee
-    form_class = EmployeeForm
+    form_class = EmployeeProfileForm
     template_name = 'employees/employee_edit.html'
     permission_required = 'employees.change_employee'
     success_message = "Employee updated successfully"
@@ -561,47 +638,7 @@ class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMes
             messages.error(self.request, "Please correct the errors in the qualifications section.")
         return super().form_invalid(form)
 
-class EmployeeProfileView(LoginRequiredMixin, DetailView):
-    model = Employee
-    template_name = 'employees/profile.html'
-    context_object_name = 'employee'
 
-    def get_object(self, queryset=None):
-        return self.request.user.employee
-
-class EmployeeProfileEditView(LoginRequiredMixin, UpdateView):
-    model = Employee
-    form_class = EmployeeForm
-    template_name = 'employees/profile_edit.html'
-    success_url = reverse_lazy('employees:profile')
-
-    def get_object(self):
-        return self.request.user.employee
-
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        
-        # Update the username
-        if 'username' in form.cleaned_data:
-            new_username = form.cleaned_data['username']
-            user = self.object.user
-            if user.username != new_username:
-                user.username = new_username
-                user.save()
-                messages.success(self.request, 'Profile updated successfully. Your username has been changed.')
-            else:
-                messages.success(self.request, 'Profile updated successfully.')
-                
-        return response
-
-class EmployeeDetailView(LoginRequiredMixin, DetailView):
-    model = Employee
-    template_name = 'employees/employee_detail.html'
-    context_object_name = 'employee'
-
-    def get_queryset(self):
-        # Prefetch the documents to optimize queries
-        return super().get_queryset().prefetch_related('documents')
 
 class SettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     """ 

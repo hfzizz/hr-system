@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import inlineformset_factory
-from .models import Appraisal, Appointment
-from employees.models import Employee, Qualification
+from .models import Appraisal, Module
+from employees.models import Employee
 
 class HRAppraisalForm(forms.ModelForm):
     class Meta:
@@ -25,40 +25,90 @@ class HRAppraisalForm(forms.ModelForm):
 class SectionAForm(forms.ModelForm):
     """ Personal Details Form """
     # Fields from Employee model
-    ic_no = forms.CharField(disabled=True)
-    ic_colour = forms.CharField(disabled=True)
-    date_of_birth = forms.DateField(disabled=True)
+    ic_no = forms.CharField(disabled=True, required=False)
+    ic_colour = forms.CharField(disabled=True, required=False)
+    date_of_birth = forms.DateField(disabled=True, required=False)
+    present_post = forms.CharField(disabled=True, required=False)
+    
+    # Override employee and appraiser to display names
+    employee = forms.ModelChoiceField(
+        queryset=Employee.objects.all(),
+        widget=forms.HiddenInput(),
+        disabled=True
+    )
+    appraiser = forms.ModelChoiceField(
+        queryset=Employee.objects.all(),
+        widget=forms.HiddenInput(),
+        disabled=True
+    )
 
-    # Fields from Appointment model (related to Employee)
-    first_post_appointment_govt = forms.CharField(disabled=True)
-    faculty_programme_govt = forms.CharField(disabled=True)
-    date_of_from_first_appointment_govt = forms.DateField(disabled=True)
-    date_of_to_first_appointment_govt = forms.DateField(disabled=True)
-    first_post_appointment_ubd = forms.CharField(disabled=True)
-    faculty_programme_ubd = forms.CharField(disabled=True)
-    date_of_from_first_appointment_ubd = forms.DateField(disabled=True)
-    date_of_to_first_appointment_ubd = forms.DateField(disabled=True)
+    # Add these fields directly to the form
+    first_post_govt = forms.CharField(max_length=255, required=False, label="First Post (Government)")
+    faculty_programme_govt = forms.CharField(max_length=255, required=False, label="Faculty/Programme (Government)")
+    date_from_govt = forms.DateField(required=False, label="From Date (Government)")
+    date_to_govt = forms.DateField(required=False, label="To Date (Government)")
+    
+    first_post_ubd = forms.CharField(max_length=255, required=False, label="First Post (UBD)")
+    faculty_programme_ubd = forms.CharField(max_length=255, required=False, label="Faculty/Programme (UBD)")
+    date_from_ubd = forms.DateField(required=False, label="From Date (UBD)")
+    date_to_ubd = forms.DateField(required=False, label="To Date (UBD)")
 
     class Meta:
         model = Appraisal
         fields = [
-            'employee',
-            'appraiser',
-            'ic_no',
-            'ic_colour',
-            'date_of_birth',
-            'review_period_start',
-            'review_period_end',
-            'present_post',
-            'salary_scale_division',
-            'incremental_date_of_present_post',
-            'date_of_last_appraisal',
+            'employee', 'appraiser',
+            'ic_no', 'ic_colour', 'date_of_birth',
+            'first_post_govt', 'faculty_programme_govt', 'date_from_govt', 'date_to_govt',
+            'first_post_ubd', 'faculty_programme_ubd', 'date_from_ubd', 'date_to_ubd',
+            'present_post', 'salary_scale_division',
+            'incremental_date_of_present_post', 'date_of_last_appraisal',
+            'current_enrollment_details',
+            'higher_degree_students_supervised',
+            'last_research',
+            'ongoing_research'
         ]
+        widgets = {
+            'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
+            'incremental_date_of_present_post': forms.DateInput(attrs={'type': 'date'}),
+            'date_of_last_appraisal': forms.DateInput(attrs={'type': 'date'}),
+            'current_enrollment_details': forms.Textarea(attrs={'rows': 4}),
+            'last_research': forms.Textarea(attrs={'rows': 4}),
+        }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Add any field customization here if needed
+        
+        # Get the actual employee and appraiser instances
+        if self.instance and self.instance.employee:
+            employee = self.instance.employee
+            # Set initial values from Employee model
+            self.initial.update({
+                'employee': employee,
+                'ic_no': employee.ic_no,
+                'ic_colour': employee.ic_colour,
+                'date_of_birth': employee.date_of_birth,
+                'present_post': employee.post,  # Assuming position field exists in Employee model
+            })
+            
+            # Set the fields as initial data
+            self.fields['employee'].initial = employee
+            self.fields['ic_no'].initial = employee.ic_no
+            self.fields['ic_colour'].initial = employee.ic_colour
+            self.fields['date_of_birth'].initial = employee.date_of_birth
+            self.fields['present_post'].initial = employee.post
+        
+        if self.instance and self.instance.appraiser:
+            self.initial['appraiser'] = self.instance.appraiser
+            self.fields['appraiser'].initial = self.instance.appraiser
 
+        self.qualification_formset = None
+        self.appointment_formset = None
+
+        # Make employee and appraiser readonly
+        self.fields['employee'].widget.attrs['readonly'] = True
+        self.fields['appraiser'].widget.attrs['readonly'] = True
+        
+     
 class SectionBForm(forms.ModelForm):
     """ General Traits Form """
     class Meta:
@@ -66,73 +116,35 @@ class SectionBForm(forms.ModelForm):
         fields = [
         ]
 
-        
-        
-class AppraisalForm(forms.ModelForm):
+
+class ModuleForm(forms.ModelForm):
     class Meta:
-        model = Appraisal
+        model = Module
         fields = [
-            # 'employee',
-            # 'appraiser',
-            # 'review_period_start',
-            # 'review_period_end',
-            # 'post_at_time_of_review',
-            # 'salary_scale_division',
-            # 'incremental_date',
-            # 'date_of_last_appraisal',
-            # 'academic_qualifications_text',
-            # 'current_enrollment',
-            # 'modules_taught',
-            # 'higher_degree_students_supervised',
-            # 'last_research',
-            # 'ongoing_research',
-            # 'publications',
-            # 'attendance',
-            # 'conference_papers',
-            # 'consultancy_work',
-            # 'administrative_posts',
-            # 'memberships',
-            # 'participation_within_university',
-            # 'participation_outside_university',
-            # 'objectives_next_year',
-            # 'appraiser_comments',
+            'code',
+            'title',
+            'level',
+            'languageMedium',
+            'no_of_students',
+            'percentage_jointly_taught',
+            'hrs_weekly'
         ]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Add any field customization here if needed
-        for field in self.fields:
-            self.fields[field].widget.attrs.update({'class': 'form-control'})
-
-class AcademicQualificationForm(forms.ModelForm):
-    class Meta:
-        model = Qualification
-        fields = ['degree_diploma', 'university_college', 'from_date', 'to_date']
-        widgets = {
-            'from_date': forms.DateInput(attrs={'type': 'date'}),
-            'to_date': forms.DateInput(attrs={'type': 'date'}),
-        }
-
-# Create inline formset for AcademicQualification
-AcademicQualificationFormSet = inlineformset_factory(
+ModuleFormSet = inlineformset_factory(
     parent_model=Employee,
-    model= Qualification,
-    form=AcademicQualificationForm,
+    model=Module,
+    form=ModuleForm,
     extra=1,
     can_delete=True,
-    fields=['degree_diploma', 'university_college', 'from_date', 'to_date']
+    fields=[
+        'code',
+        'title',
+        'level',
+        'languageMedium',
+        'no_of_students',
+        'percentage_jointly_taught',
+        'hrs_weekly'
+    ]
 )
 
-class AppointmentForm(forms.ModelForm):
-    class Meta:
-        model = Appointment
-        fields = [
-            'first_post_appointment_govt',
-            'first_post_appointment_ubd',
-            'faculty_programme_govt',
-            'faculty_programme_ubd',
-            'date_of_from_first_appointment_govt',
-            'date_of_to_first_appointment_govt',
-            'date_of_from_first_appointment_ubd',
-            'date_of_to_first_appointment_ubd'
-        ]
+
