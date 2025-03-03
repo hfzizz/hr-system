@@ -20,7 +20,9 @@ urlpatterns = [
     
     # Appraisal Forms
     path('forms/', views.AppraisalListView.as_view(), name='form_list'),
-    path('forms/create/', views.AppraisalCreateView.as_view(), name='form_create'),
+    # path('forms/create/', views.AppraisalCreateForm.as_view(), name='form_create'),
     path('forms/<int:pk>/', views.AppraisalDetailView.as_view(), name='form_detail'),
+    path('forms/<str:appraisal_id>/fill/', views.AppraiseeUpdateView.as_view(), name='appraisal_fill'),
+    path('forms/<int:appraisal_id>/review/', views.AppraiserWizard.as_view(), name='appraisal_review'),
     path('forms/<int:pk>/review/', views.AppraisalReviewView.as_view(), name='form_review'),
 ]
