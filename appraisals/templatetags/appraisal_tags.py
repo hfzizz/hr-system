@@ -12,3 +12,9 @@ def is_appraisal_period():
         # start_date__lte=today,
         # end_date__gte=today
     ).exists() 
+
+@register.filter(name='addclass')
+def addclass(field, css_class):
+    if hasattr(field, 'as_widget'):
+        return field.as_widget(attrs={'class': css_class})
+    return field

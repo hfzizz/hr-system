@@ -12,5 +12,7 @@ urlpatterns = [
     path('department/create/', views.DepartmentCreateView.as_view(), name='department_create'),
     path('department/<int:pk>/edit/', views.DepartmentUpdateView.as_view(), name='department_edit'),
     path('department/<int:pk>/delete/', views.DepartmentDeleteView.as_view(), name='department_delete'),
-    path('profile/', views.ProfileView.as_view(), name='profile'),
+    path('profile/<int:pk>/', views.ProfileDetailView.as_view(), name='profile'),
+    path('profile/<int:pk>/edit/', views.ProfileUpdateView.as_view(), name='profile_edit'),
+    path('change-password/', views.CustomPasswordChangeView.as_view(), name='change_password'),
 ]

@@ -30,7 +30,7 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('', views.DashboardView.as_view(), name='dashboard'),
     path('employees/', include('employees.urls')),
-    path('appraisals/', include('appraisals.urls')),
+    path('appraisals/', include('appraisals.urls', namespace='appraisals')),
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('settings/', views.SettingsView.as_view(), name='settings'),
     path('roles/', include('roles.urls')),

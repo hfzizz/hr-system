@@ -3,114 +3,83 @@
 {% block title %}Profile - HR System{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
     <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-900">Profile</h1>
-        <a href="{% url 'employees:profile_edit' %}" 
-           class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">My Profile</h1>
+        </div>
+        <a href="{% url 'employees:profile_edit' request.user.employee.pk %}" 
+           class="inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 transition duration-150 ease-in-out">
+            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
             Edit Profile
         </a>
     </div>
 
-    <div class="bg-white shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <!-- Profile Header -->
-            <div class="flex items-center space-x-6 mb-6">
-                <div class="flex-shrink-0">
+    <div class="bg-white shadow-sm rounded-xl overflow-hidden">
+        <!-- Profile Header -->
+        <div class="px-6 py-8 bg-gradient-to-r from-indigo-50 via-white to-white border-b border-gray-200">
+            <div class="flex items-center space-x-6">
+                <div class="relative group">
                     {% if employee.profile_picture %}
-                        <img class="h-24 w-24 rounded-full object-cover" src="{{ employee.profile_picture.url }}" alt="Profile photo">
+                        <img class="h-28 w-28 rounded-full object-cover ring-4 ring-white shadow-md transition duration-300 ease-in-out transform group-hover:scale-105" 
+                             src="{{ employee.profile_picture.url }}" 
+                             alt="{{ employee.get_full_name }} profile photo">
                     {% else %}
-                        <div class="h-24 w-24 rounded-full bg-indigo-100 flex items-center justify-center">
-                            <span class="text-2xl text-indigo-700 font-medium">{{ employee.user.username|first|upper }}</span>
+                        <div class="h-28 w-28 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center ring-4 ring-white shadow-md">
+                            <span class="text-3xl text-indigo-700 font-semibold">{{ employee.user.username|first|upper }}</span>
                         </div>
                     {% endif %}
                 </div>
                 <div>
-                    <h3 class="text-lg font-medium leading-6 text-gray-900">{{ employee.first_name }} {{ employee.last_name }}</h3>
-                    <p class="text-sm text-gray-500">{{ employee.email }}</p>
-                    <p class="text-sm text-gray-500 mt-1">Employee ID: {{ employee.employee_id }}</p>
+                    <h3 class="text-2xl font-bold text-gray-900">{{ employee.first_name }} {{ employee.last_name }}</h3>
+                    <div class="mt-2 space-y-1">
+                        <p class="text-gray-600 flex items-center">
+                            <svg class="h-4 w-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                            </svg>
+                            {{ employee.email }}
+                        </p>
+                        <p class="text-gray-600 flex items-center">
+                            <svg class="h-4 w-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                            </svg>
+                            ID: {{ employee.employee_id }}
+                        </p>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Profile Information -->
-            <div class="border-t border-gray-200 pt-6">
-                <dl class="divide-y divide-gray-200">
-                    <!-- Username (New) -->
-                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
-                        <dt class="text-sm font-medium text-gray-500">Username</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                            {{ employee.user.username }}
-                        </dd>
-                    </div>
-
-                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
-                        <dt class="text-sm font-medium text-gray-500">Full name</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                            {{ employee.first_name }} {{ employee.last_name }}
-                        </dd>
-                    </div>
-
-                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
-                        <dt class="text-sm font-medium text-gray-500">Email address</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ employee.email }}</dd>
-                    </div>
-
-                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
-                        <dt class="text-sm font-medium text-gray-500">Phone number</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ employee.phone_number }}</dd>
-                    </div>
-
-                    <!-- IC Number -->
-                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
-                        <dt class="text-sm font-medium text-gray-500">IC Number</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ employee.ic_no }}</dd>
-                    </div>
-
-                    <!-- IC Colour -->
-                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
-                        <dt class="text-sm font-medium text-gray-500">IC Colour</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ employee.ic_colour }}</dd>
-                    </div>
-
-                    <!-- Type of Appointment -->
-                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
-                        <dt class="text-sm font-medium text-gray-500">Type of Appointment</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ employee.type_of_appointment }}</dd>
-                    </div>
-
-                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
-                        <dt class="text-sm font-medium text-gray-500">Department</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ employee.department }}</dd>
-                    </div>
-
-                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
-                        <dt class="text-sm font-medium text-gray-500">Position</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ employee.position }}</dd>
-                    </div>
-
-                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
-                        <dt class="text-sm font-medium text-gray-500">Roles</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+        <!-- Profile Information -->
+        <div class="px-6 py-6">
+            <dl class="divide-y divide-gray-200">
+                {% for field, value in fields %}
+                <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 hover:bg-gray-50 transition duration-150 ease-in-out rounded-lg px-3">
+                    <dt class="text-sm font-medium text-gray-500 flex items-center">
+                        {% if field == "Username" %}
+                            <svg class="h-4 w-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        {% endif %}
+                        {{ field }}
+                    </dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 flex items-center">
+                        {% if field == "Roles" %}
                             {% for role in employee.roles.all %}
-                                <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 mr-2">
+                                <span class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10 mr-2">
                                     {{ role.name }}
                                 </span>
                             {% endfor %}
-                        </dd>
-                    </div>
-
-                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
-                        <dt class="text-sm font-medium text-gray-500">Address</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ employee.address }}</dd>
-                    </div>
-
-                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4">
-                        <dt class="text-sm font-medium text-gray-500">Hire date</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ employee.hire_date }}</dd>
-                    </div>
-                </dl>
-            </div>
+                        {% else %}
+                            {{ value|default:"Not provided" }}
+                        {% endif %}
+                    </dd>
+                </div>
+                {% endfor %}
+            </dl>
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

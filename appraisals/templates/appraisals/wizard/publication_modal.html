@@ -1,0 +1,300 @@
+{# appraisals/templates/appraisals/wizard/publication_modal.html #}
+<div id="publicationModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <!-- Modal panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full sm:p-6">
+            <div class="absolute top-0 right-0 pt-4 pr-4">
+                <button type="button" class="close-modal bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none">
+                    <span class="sr-only">Close</span>
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form id="publicationForm" method="post" class="space-y-6">
+                {% csrf_token %}
+                <input type="hidden" name="employee" value="{{ request.user.employee.id }}">
+                <input type="hidden" name="appraisal_id" value="{{ appraisal.id }}">
+
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Add New Publication</h3>
+                    </div>
+
+                    <!-- Publication Type -->
+                    <div>
+                        <label for="publication_type" class="block text-sm font-medium text-gray-700">Publication Type*</label>
+                        <select name="publication_type" id="publication_type" required
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="">Select type</option>
+                            <option value="JOURNAL">Journal Article</option>
+                            <option value="CONFERENCE">Conference Paper</option>
+                            <option value="BOOK">Book</option>
+                            <option value="BOOK_CHAPTER">Book Chapter</option>
+                            <option value="TECHNICAL_REPORT">Technical Report</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                        <div class="text-xs text-red-500 hidden" id="publication_type-error"></div>
+                    </div>
+
+                    <!-- Title -->
+                    <div>
+                        <label for="title" class="block text-sm font-medium text-gray-700">Title*</label>
+                        <input type="text" name="title" id="title" required
+                               class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                        <div class="text-xs text-red-500 hidden" id="title-error"></div>
+                    </div>
+
+                    <!-- Authors -->
+                    <div>
+                        <label for="authors" class="block text-sm font-medium text-gray-700">Authors*</label>
+                        <textarea name="authors" id="authors" rows="3" required
+                                  class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                  placeholder="Enter authors separated by commas"></textarea>
+                        <div class="text-xs text-red-500 hidden" id="authors-error"></div>
+                    </div>
+
+                    <!-- Year and Month -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="year" class="block text-sm font-medium text-gray-700">Year*</label>
+                            <input type="number" name="year" id="year" required
+                                   class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            <div class="text-xs text-red-500 hidden" id="year-error"></div>
+                        </div>
+                        <div>
+                            <label for="month" class="block text-sm font-medium text-gray-700">Month</label>
+                            <input type="text" name="month" id="month"
+                                   class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Fields -->
+                    <!-- Journal Fields -->
+                    <div id="journal-fields" class="hidden space-y-4">
+                        <div>
+                            <label for="journal_name" class="block text-sm font-medium text-gray-700">Journal Name*</label>
+                            <input type="text" name="journal_name" id="journal_name"
+                                   class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            <div class="text-xs text-red-500 hidden" id="journal_name-error"></div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label for="volume" class="block text-sm font-medium text-gray-700">Volume</label>
+                                <input type="text" name="volume" id="volume"
+                                       class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="issue" class="block text-sm font-medium text-gray-700">Issue</label>
+                                <input type="text" name="issue" id="issue"
+                                       class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="pages" class="block text-sm font-medium text-gray-700">Pages</label>
+                                <input type="text" name="pages" id="pages"
+                                       class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Conference Fields -->
+                    <div id="conference-fields" class="hidden space-y-4">
+                        <div>
+                            <label for="conference_name" class="block text-sm font-medium text-gray-700">Conference Name*</label>
+                            <input type="text" name="conference_name" id="conference_name"
+                                   class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            <div class="text-xs text-red-500 hidden" id="conference_name-error"></div>
+                        </div>
+                        <div>
+                            <label for="location" class="block text-sm font-medium text-gray-700">Location</label>
+                            <input type="text" name="location" id="location"
+                                   class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                        </div>
+                    </div>
+
+                    <!-- Book Fields -->
+                    <div id="book-fields" class="hidden space-y-4">
+                        <div>
+                            <label for="publisher" class="block text-sm font-medium text-gray-700">Publisher*</label>
+                            <input type="text" name="publisher" id="publisher"
+                                   class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            <div class="text-xs text-red-500 hidden" id="publisher-error"></div>
+                        </div>
+                        <div>
+                            <label for="isbn" class="block text-sm font-medium text-gray-700">ISBN</label>
+                            <input type="text" name="isbn" id="isbn"
+                                   class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                        </div>
+                    </div>
+
+                    <!-- Common Optional Fields -->
+                    <div class="space-y-4">
+                        <div>
+                            <label for="doi" class="block text-sm font-medium text-gray-700">DOI</label>
+                            <input type="text" name="doi" id="doi"
+                                   class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                        </div>
+                        <div>
+                            <label for="url" class="block text-sm font-medium text-gray-700">URL</label>
+                            <input type="url" name="url" id="url"
+                                   class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5 sm:mt-6">
+                    <button type="submit" id="savePublication"
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">
+                        Save Publication
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const publicationType = document.getElementById('publication_type');
+    const journalFields = document.getElementById('journal-fields');
+    const conferenceFields = document.getElementById('conference-fields');
+    const bookFields = document.getElementById('book-fields');
+
+    // Function to handle required fields
+    function handleRequiredFields(type) {
+        // Reset all required fields first
+        ['journal_name', 'conference_name', 'publisher'].forEach(field => {
+            const element = document.getElementById(field);
+            if (element) {
+                element.required = false;
+            }
+        });
+
+        // Set required fields based on type
+        switch(type) {
+            case 'JOURNAL':
+                document.getElementById('journal_name').required = true;
+                break;
+            case 'CONFERENCE':
+                document.getElementById('conference_name').required = true;
+                break;
+            case 'BOOK':
+            case 'BOOK_CHAPTER':
+                document.getElementById('publisher').required = true;
+                break;
+        }
+    }
+
+    // Function to show/hide fields based on publication type
+    publicationType.addEventListener('change', function() {
+        // Hide all field groups first
+        journalFields.classList.add('hidden');
+        conferenceFields.classList.add('hidden');
+        bookFields.classList.add('hidden');
+
+        // Show relevant fields based on selection
+        switch(this.value) {
+            case 'JOURNAL':
+                journalFields.classList.remove('hidden');
+                break;
+            case 'CONFERENCE':
+                conferenceFields.classList.remove('hidden');
+                break;
+            case 'BOOK':
+            case 'BOOK_CHAPTER':
+                bookFields.classList.remove('hidden');
+                break;
+        }
+
+        handleRequiredFields(this.value);
+    });
+
+    // Add close button functionality
+    document.querySelectorAll('.close-modal').forEach(button => {
+        button.addEventListener('click', function() {
+            const modal = document.getElementById('publicationModal');
+            modal.classList.add('hidden');
+            // Reset form when closing
+            document.getElementById('publicationForm').reset();
+            // Hide all special fields
+            document.getElementById('journal-fields').classList.add('hidden');
+            document.getElementById('conference-fields').classList.add('hidden');
+            document.getElementById('book-fields').classList.add('hidden');
+            // Clear all error messages
+            document.querySelectorAll('.text-red-500').forEach(el => el.classList.add('hidden'));
+        });
+    });
+
+    // Optional: Close modal when clicking outside
+    document.getElementById('publicationModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            const closeButton = document.querySelector('.close-modal');
+            closeButton.click();
+        }
+    });
+
+
+   // Handle form submission
+    $('#publicationForm').on('submit', function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: '/appraisals/publication/add',  // Your publication submission URL
+            method: 'POST',
+            data: $(this).serialize(),
+            success: function(response) {
+                if (response.status === 'success') {
+                    // Create new publication card
+                    const publicationCard = `
+                        <div class="bg-white p-4 rounded-lg shadow" id="publication-${response.id}">
+                            <h3 class="font-semibold text-lg">${response.title}</h3>
+                            <p class="text-gray-600">${response.authors}</p>
+                            <p class="text-gray-500">
+                                ${response.venue} (${response.year})
+                            </p>
+                            ${response.doi ? `<p class="text-sm text-blue-600"><a href="https://doi.org/${response.doi}" target="_blank">DOI: ${response.doi}</a></p>` : ''}
+                            ${response.url ? `<p class="text-sm text-blue-600"><a href="${response.url}" target="_blank">View Publication</a></p>` : ''}
+                        </div>
+                    `;
+
+                    // Check if "No publications" message exists and remove it
+                    const noPublicationsMsg = $('#publicationsList').find('.no-publications-message');
+                    if (noPublicationsMsg.length) {
+                        noPublicationsMsg.remove();
+                    }
+
+                    // Add the new publication card to the list
+                    $('#publicationsList').prepend(publicationCard);
+
+                    // Clear the form
+                    $('#publicationForm')[0].reset();
+
+                    // Close the modal
+                    $('#publicationModal').modal('hide');
+
+                    // Show success message
+                    toastr.success('Publication added successfully');
+                }
+            },
+            error: function(xhr) {
+                // Handle errors
+                const errors = xhr.responseJSON?.errors || {'__all__': ['An error occurred']};
+                // Display errors to user
+                Object.keys(errors).forEach(key => {
+                    if (key === '__all__') {
+                        toastr.error(errors[key][0]);
+                    } else {
+                        const input = $(`#id_${key}`);
+                        input.addClass('is-invalid');
+                        input.after(`<div class="invalid-feedback">${errors[key][0]}</div>`);
+                    }
+                });
+            }
+        });
+    });
+
+});
+</script>
