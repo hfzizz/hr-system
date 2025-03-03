@@ -1,11 +1,10 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Employee, Qualification, AppointmentType
-from appraisals.models import Appointment
+from .models import Employee, Qualification
 from django.db import models
-from django.forms import modelformset_factory, BaseModelFormSet
+from django.forms import modelformset_factory, BaseModelFormSet, inlineformset_factory
 
-class EmployeeForm(forms.ModelForm):
+class EmployeeProfileForm(forms.ModelForm):
     employee_id = forms.CharField(
         disabled=True,
         required=False,
@@ -16,15 +15,12 @@ class EmployeeForm(forms.ModelForm):
     )
     password = forms.CharField(
         widget=forms.PasswordInput,
-        required=False
+        required=True
     )
     email = forms.EmailField(required=True)
-    appointment_type = forms.ModelChoiceField(
-        queryset=AppointmentType.objects.filter(is_active=True),
-        empty_label="Select Type of Appointment",
-        widget=forms.Select(attrs={
-            'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
-        })
+    appointment_type = forms.ChoiceField(
+        choices=Employee.AppointmentType.choices,
+        required=True
     )
 
     class Meta:
@@ -49,7 +45,6 @@ class EmployeeForm(forms.ModelForm):
             'profile_picture',
             'ic_no',
             'ic_colour',
-            'qualifications'
         ]
         widgets = {
             'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
@@ -120,7 +115,7 @@ class EmployeeForm(forms.ModelForm):
             print("Form errors:", self.errors)  # Debug print
         return valid
 
-class EmployeeProfileForm(forms.ModelForm):
+class ProfileForm(forms.ModelForm):
     # Add User model fields as form fields
     username = forms.CharField(max_length=150)
     email = forms.EmailField()
@@ -130,13 +125,18 @@ class EmployeeProfileForm(forms.ModelForm):
     class Meta:
         model = Employee
         fields = [
+            'username',
+            'email',
+            'first_name',
+            'last_name',
             'phone_number',
-            'post',
-            'address',
-            'profile_picture',
+            'date_of_birth',
             'ic_no',
             'ic_colour',
-            'qualifications'
+            'gender',
+            'address',
+            'profile_picture',
+            
         ]
 
     def __init__(self, *args, **kwargs):
@@ -154,6 +154,7 @@ class EmployeeProfileForm(forms.ModelForm):
         user = employee.user
         user.username = self.cleaned_data['username']
         user.email = self.cleaned_data['email']
+        user.password = self.cleaned_data['password']
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
         
@@ -162,57 +163,6 @@ class EmployeeProfileForm(forms.ModelForm):
             employee.save()
         
         return employee
-
-class AppointmentForm(forms.ModelForm):
-    type_of_appointment = forms.ModelChoiceField(
-        queryset=AppointmentType.objects.filter(is_active=True),
-        widget=forms.Select(attrs={
-            'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
-        }),
-        empty_label=None
-    )
-
-    class Meta:
-        model = Appointment
-        fields = [
-            'type_of_appointment',
-            'first_appointment_govt',
-            'first_appointment_ubd',
-            'faculty_programme',
-            'from_date',
-            'to_date'
-        ]
-        widgets = {
-            'first_appointment_govt': forms.DateInput(
-                attrs={
-                    'type': 'date',
-                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
-                }
-            ),
-            'first_appointment_ubd': forms.DateInput(
-                attrs={
-                    'type': 'date',
-                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
-                }
-            ),
-            'faculty_programme': forms.TextInput(
-                attrs={
-                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
-                }
-            ),
-            'from_date': forms.DateInput(
-                attrs={
-                    'type': 'date',
-                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
-                }
-            ),
-            'to_date': forms.DateInput(
-                attrs={
-                    'type': 'date',
-                    'class': 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
-                }
-            )
-        }
 
 class QualificationForm(forms.ModelForm):
     class Meta:
@@ -269,12 +219,10 @@ class BaseQualificationFormSet(BaseModelFormSet):
                     if form.cleaned_data['from_date'] > form.cleaned_data['to_date']:
                         raise forms.ValidationError('Start date cannot be after end date.')
 
-# Use modelformset_factory for the QualificationFormSet
-QualificationFormSet = modelformset_factory(
+QualificationFormSet = inlineformset_factory(
+    Employee,
     Qualification,
-    form=QualificationForm,
-    formset=BaseQualificationFormSet,
+    fields=['degree_diploma', 'university_college', 'from_date', 'to_date'],
     extra=1,
     can_delete=True
 )
-

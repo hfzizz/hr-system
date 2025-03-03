@@ -33,6 +33,12 @@ class Employee(models.Model):
         ACTIVE = 'active', _('Active')
         ON_LEAVE = 'on_leave', _('On Leave')
         INACTIVE = 'inactive', _('Inactive')
+        
+    class AppointmentType(models.TextChoices):
+        PERMANENT = 'Permanent', _('Permanent')
+        CONTRACT = 'Contract', _('Contract')
+        MONTH_TO_MONTH = 'Month-to-Month', _('Month-to-Month')
+        DAILY_RATED = 'Daily-Rated', _('Daily-Rated')
 
     employee_id = models.CharField(max_length=10, unique=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -41,16 +47,14 @@ class Employee(models.Model):
     email = models.EmailField(unique=True)
     phone_number = models.CharField(
         max_length=15,
-        help_text=_('Contact phone number')
     )
     gender = models.CharField(
         max_length=1,
         choices=Gender.choices,
         blank=True,
         null=True,
-        help_text=_('Employee gender')
     )
-    date_of_birth = models.DateField(help_text=_('Date of birth'))
+    date_of_birth = models.DateField()
     hire_date = models.DateField(help_text=_('Date of hiring'))
     department = models.ForeignKey(
         Department, 
@@ -90,24 +94,25 @@ class Employee(models.Model):
         null=True,
         blank=True
     )
-    qualifications = models.ManyToManyField(
-        'Qualification', 
-        blank=True,
-        related_name='employees'
-    )
     post = models.CharField(
         max_length=100,
         help_text=_('Employee position/job title'),
         blank=True,
         null=True
     )
-    appointment_type = models.ForeignKey(
-        'AppointmentType',
-        on_delete=models.SET_NULL,
+    appointment_type = models.CharField(
+        max_length=50,
+        choices=AppointmentType.choices,
         null=True,
         blank=True,
-        related_name='employees',
         help_text=_('Type of employment appointment')
+    )
+     # Scholar-related fields
+    scholar_id = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        help_text=_("Google Scholar ID")
     )
 
     created_at = models.DateTimeField(default=timezone.now)
@@ -157,28 +162,10 @@ class Employee(models.Model):
 
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
-
-class AppointmentType(models.Model):
-    APPOINTMENT_CHOICES = [
-        ('Permanent', 'Permanent'),
-        ('Contract', 'Contract'),
-        ('Month-to-Month', 'Month-to-Month'),
-        ('Daily-Rated', 'Daily-Rated')
-    ]
-
-    name = models.CharField(
-        max_length=50,
-        unique=True,
-        choices=APPOINTMENT_CHOICES
-    )
-    description = models.TextField(blank=True)
-    is_active = models.BooleanField(default=True)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        ordering = ['name']
+    
+    def get_qualifications(self):
+        """Get all qualifications for this employee"""
+        return Qualification.objects.filter(employee=self)
 
 class Qualification(models.Model):
     employee = models.ForeignKey(
@@ -198,6 +185,57 @@ class Qualification(models.Model):
 
     class Meta:
         ordering = ['-from_date']
+
+class Publication(models.Model):
+    # Link to Employee
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="publications")
+
+    # Core Publication Details
+    title = models.CharField(max_length=500)
+    publication_type = models.CharField(
+        max_length=50, 
+        choices=[
+            ("journal", "Journal Article"), 
+            ("conference", "Conference Paper"), 
+            ("book", "Book"), 
+            ("book_chapter", "Book Chapter"), 
+            ("thesis", "Thesis"), 
+            ("report", "Report"), 
+            ("other", "Other"),
+        ]
+    )
+    authors = models.TextField()  # Store as "Author 1, Author 2, Author 3"
+    year = models.IntegerField()
+    journal_name = models.CharField(max_length=255, blank=True, null=True)  # For journals
+    volume = models.CharField(max_length=50, blank=True, null=True)
+    issue = models.CharField(max_length=50, blank=True, null=True)
+    pages = models.CharField(max_length=50, blank=True, null=True)
+    publisher = models.CharField(max_length=255, blank=True, null=True)
+
+    # Source & Unique Identifiers
+    source_type = models.CharField(
+        max_length=20, 
+        choices=[
+            ("manual", "Manual Entry"), 
+            ("scopus", "Scopus"), 
+            ("orcid", "ORCID"), 
+            ("researcherid", "Researcher ID"), 
+            ("googlescholar", "Google Scholar")
+        ]
+    )
+    source_id = models.CharField(max_length=100, blank=True, null=True)  # Stores Scopus ID, ORCID Work ID, etc.
+    
+    # DOI & URLs
+    doi = models.CharField(max_length=100, blank=True, null=True, unique=True)  # Some sources don't have DOIs
+    url = models.URLField(blank=True, null=True)  # Link to publication
+
+    # Fetched vs. Manual
+    is_fetched = models.BooleanField(default=False)  # True if pulled from API, False if manually entered
+    date_added = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} ({self.year})"
+
 
 def validate_file_size(value):
     filesize = value.size
