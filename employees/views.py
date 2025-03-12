@@ -20,8 +20,8 @@ from django.urls import reverse_lazy
 from django.views.generic import TemplateView, ListView, CreateView, DetailView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from .models import Employee, Department, Qualification, Document
-from .forms import EmployeeProfileForm, ProfileForm, QualificationForm, QualificationFormSet
+from .models import Employee, Department, Qualification, Document, Publication
+from .forms import EmployeeProfileForm, ProfileForm, QualificationForm, QualificationFormSet, PublicationFormSet, PublicationForm
 from django.views.generic.edit import CreateView
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import redirect
@@ -39,6 +39,12 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Count, Q
 from appraisals.models import Appraisal, AppraisalPeriod
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.http import HttpResponse
+from django.views.decorators.http import require_http_methods
+from django.template.response import TemplateResponse
+from django.contrib.auth.decorators import login_required
+from django.template import TemplateDoesNotExist
+
 
 # Formset Configurations
 QualificationFormSet = inlineformset_factory(
@@ -455,16 +461,6 @@ class CustomPasswordChangeView(PasswordChangeView):
         messages.success(self.request, 'Your password was successfully updated!')
         return super().form_valid(form)
 
-
-class EmployeeDetailView(LoginRequiredMixin, HRRequiredMixin, DetailView):
-    model = Employee
-    template_name = 'employees/employee_detail.html'
-    context_object_name = 'employee'
-
-    def get_queryset(self):
-        # Prefetch the documents to optimize queries
-        return super().get_queryset().prefetch_related('documents')
-
 class EmployeeCreateView(LoginRequiredMixin, HRRequiredMixin, CreateView):
     model = Employee
     form_class = EmployeeProfileForm
@@ -544,6 +540,15 @@ class EmployeeCreateView(LoginRequiredMixin, HRRequiredMixin, CreateView):
         messages.error(self.request, "You don't have permission to add employees.")
         return redirect('employees:employee_list')
 
+class EmployeeDetailView(LoginRequiredMixin, HRRequiredMixin, DetailView):
+    model = Employee
+    template_name = 'employees/employee_detail.html'
+    context_object_name = 'employee'
+
+    def get_queryset(self):
+        # Prefetch the documents to optimize queries
+        return super().get_queryset().prefetch_related('documents')
+
 class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Employee
     form_class = EmployeeProfileForm
@@ -578,6 +583,11 @@ class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMes
                 instance=self.object,
                 prefix='document_set'
             )
+            context['publication_formset'] = PublicationFormSet(
+                self.request.POST,
+                instance=self.object,
+                prefix='publication_set'
+            )
         else:
             context['qualification_formset'] = QualificationFormSet(
                 instance=self.object,
@@ -587,14 +597,19 @@ class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMes
                 instance=self.object,
                 prefix='document_set'
             )
+            context['publication_formset'] = PublicationFormSet(
+                instance=self.object,
+                prefix='publication_set'
+            )
         return context
 
     def form_valid(self, form):
         context = self.get_context_data()
         qualification_formset = context['qualification_formset']
         document_formset = context['document_formset']
+        publication_formset = context['publication_formset']
         
-        if qualification_formset.is_valid() and document_formset.is_valid():
+        if qualification_formset.is_valid() and document_formset.is_valid() and publication_formset.is_valid():
             self.object = form.save()
             
             # Save qualifications
@@ -622,6 +637,20 @@ class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMes
             for document in document_instances:
                 document.employee = self.object
                 document.save()
+
+            # Save publications
+            publication_formset.instance = self.object
+            publication_instances = publication_formset.save(commit=False)
+
+             # Delete marked qualifications
+            for obj in publication_formset.deleted_objects:
+                obj.delete()
+            
+            # Save new/updated qualifications
+            for publication in publication_instances:
+                publication.employee = self.object
+                publication.save()
+            
             
             return super().form_valid(form)
         else:
@@ -629,14 +658,129 @@ class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMes
                 messages.error(self.request, "Please correct the errors in the qualifications section.")
             if not document_formset.is_valid():
                 messages.error(self.request, "Please correct the errors in the documents section.")
+            if not publication_formset.is_valid():
+                    messages.error(self.request, "Please correct the errors in the publications section.")
             return self.form_invalid(form)
 
     def form_invalid(self, form):
-        context = self.get_context_data()
-        qualification_formset = context['qualification_formset']
-        if not qualification_formset.is_valid():
-            messages.error(self.request, "Please correct the errors in the qualifications section.")
+        messages.error(self.request, "There was an error updating the employee.")
         return super().form_invalid(form)
+    
+@login_required
+@require_http_methods(["GET"])
+def load_publication_form(request):
+    source_type = request.GET.get('source_type')
+    context = {
+        'source_type': source_type,
+        'form': PublicationForm()
+    }
+    return TemplateResponse(
+        request,
+        'employees/partials/_publication_fields.html',  # Updated path
+        context
+    )
+@login_required
+@require_http_methods(["GET"])
+def add_publication_form(request):
+    """Add a new publication form dynamically"""
+    total_forms = request.GET.get('total_forms', '0')
+    index = int(total_forms)
+    
+    form = PublicationForm(prefix=f'publication_set-{index}')
+    
+    context = {
+        'form': form,
+        'index': index
+    }
+    
+    return TemplateResponse(
+        request,
+        'employees/partials/_publication_form.html',
+        context
+    )
+
+@login_required
+@require_http_methods(["GET"])
+def load_type_fields_publication(request):
+    # Get publication_type from request - check multiple possible parameter names
+    publication_type = None
+    
+    # First check direct parameter
+    if request.GET.get('publication_type'):
+        publication_type = request.GET.get('publication_type')
+    
+    # If not found, check for formset style parameters
+    if not publication_type or publication_type == 'undefined':
+        for key in request.GET:
+            if key.endswith('-pub_type'):
+                publication_type = request.GET.get(key)
+                break
+    
+    index = request.GET.get('index', '0')
+    
+    print(f"load_type_fields_publication - publication_type={publication_type}, index={index}")
+    print(f"All request params: {dict(request.GET.items())}")
+    
+    context = {
+        'pub_type': publication_type,
+        'form': PublicationForm(),
+        'index': index
+    }
+    
+    # Add debug information
+    context['debug'] = {
+        'request_params': dict(request.GET.items()),
+        'publication_type_param': publication_type
+    }
+    
+    return TemplateResponse(
+        request,
+        'employees/partials/_type_specific_fields.html',
+        context
+    )
+
+@login_required
+@require_http_methods(["DELETE"])
+def delete_publication(request, pk):
+    """
+    Delete a publication entry.
+    Called via HTMX when delete button is clicked.
+    """
+    try:
+        publication = Publication.objects.get(pk=pk)
+        publication.delete()
+        return HttpResponse(status=204)
+    except Publication.DoesNotExist:
+        return HttpResponse(status=404)
+
+@login_required
+@require_http_methods(["GET"])
+def fetch_publication_metadata(request):
+    """
+    Fetch publication metadata from external sources.
+    Called via HTMX when source ID field loses focus.
+    """
+    source_type = request.GET.get('source_type')
+    source_id = request.GET.get('source_id')
+    
+    # Add your logic to fetch metadata based on source type
+    # This is just a placeholder example
+    metadata = {
+        'title': 'Sample Publication',
+        'authors': 'Author 1, Author 2',
+        'year': '2023',
+        'journal': 'Sample Journal'
+    }
+    
+    context = {
+        'metadata': metadata,
+        'source_type': source_type
+    }
+    return TemplateResponse(
+        request,
+        'employee/partials/_publication_preview.html',
+        context
+    )
 
 
 

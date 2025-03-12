@@ -15,4 +15,9 @@ urlpatterns = [
     path('profile/<int:pk>/', views.ProfileDetailView.as_view(), name='profile'),
     path('profile/<int:pk>/edit/', views.ProfileUpdateView.as_view(), name='profile_edit'),
     path('change-password/', views.CustomPasswordChangeView.as_view(), name='change_password'),
+    path('publications/load-form/', views.load_publication_form, name='load_publication_form'),
+    path('publications/add-form/', views.add_publication_form, name='add_publication_form'),
+    path('publications/<int:pk>/delete/', views.delete_publication, name='delete_publication'),
+    path('publications/fetch-metadata/', views.fetch_publication_metadata, name='fetch_publication_metadata'),
+    path('publications/load-type-fields/', views.load_type_fields_publication, name='load_type_fields_publication'),
 ]
