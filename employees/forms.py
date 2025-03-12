@@ -226,3 +226,10 @@ QualificationFormSet = inlineformset_factory(
     extra=1,
     can_delete=True
 )
+
+class PublicationForm(forms.ModelForm):
+    class Meta:
+        model = Publication
+        fields = ['source_type', 'source_id', 'publication_type', 'title', 'authors', 'year', 'journal_name', 'volume', 'issue', 'pages', 'publisher', 'doi', 'url']
+
+PublicationFormSet = formset_factory(PublicationForm, extra=0, can_delete=True)
