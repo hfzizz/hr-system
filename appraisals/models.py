@@ -87,6 +87,7 @@ class Appraisal(models.Model):
     higher_degree_students_supervised = models.TextField(blank=True, null=True)
     last_research = models.TextField(blank=True, null=True)
     ongoing_research = models.TextField(blank=True, null=True)
+    publications = models.TextField(blank=True, null=True) # temporary
     attendance = models.TextField(blank=True, null=True)
     conference_papers = models.TextField(blank=True, null=True)
     consultancy_work = models.TextField(blank=True, null=True)

@@ -52,6 +52,12 @@ class SectionAForm(forms.ModelForm):
     faculty_programme_ubd = forms.CharField(max_length=255, required=False, label="Faculty/Programme (UBD)")
     date_from_ubd = forms.DateField(required=False, label="From Date (UBD)")
     date_to_ubd = forms.DateField(required=False, label="To Date (UBD)")
+    publications = forms.CharField(
+        label="Publications",
+        widget=forms.Textarea,
+        required=False,
+        help_text="List your publications in a standard format"
+    )
 
     class Meta:
         model = Appraisal
@@ -65,7 +71,16 @@ class SectionAForm(forms.ModelForm):
             'current_enrollment_details',
             'higher_degree_students_supervised',
             'last_research',
-            'ongoing_research'
+            'ongoing_research',
+            'publications',
+            'attendance',
+            'conference_papers',
+            'consultancy_work',
+            'administrative_posts',
+            'participation_other_activities_university',
+            'participation_other_activities_outside',
+            'objectives_next_year',
+            'appraiser_comments',
         ]
         widgets = {
             'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
@@ -73,6 +88,7 @@ class SectionAForm(forms.ModelForm):
             'date_of_last_appraisal': forms.DateInput(attrs={'type': 'date'}),
             'current_enrollment_details': forms.Textarea(attrs={'rows': 4}),
             'last_research': forms.Textarea(attrs={'rows': 4}),
+            'publications': forms.Textarea(attrs={'help_text': 'List your publications in a standard format'}),
         }
     
     def __init__(self, *args, **kwargs):
