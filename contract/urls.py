@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ContractSubmissionView, get_employee_data, ContractListView, ContractDeleteView, ContractReviewView, ThankYouView, ViewSubmissionsView, enable_contract, send_notification, NotificationsView, delete_notification, forward_to_smt, mark_notification_read, ViewAllSubmissionsView, EmployeeContractView, ContractRedirectView, ContractDetailView, delete_all_notifications, fetch_publications, download_document
+from .views import ContractSubmissionView, get_employee_data, ContractListView, ContractDeleteView, ContractReviewView, ThankYouView, ViewSubmissionsView, enable_contract, send_notification, NotificationsView, delete_notification, forward_to_smt, mark_notification_read, ViewAllSubmissionsView, EmployeeContractView, ContractRedirectView, ContractDetailView, delete_all_notifications, fetch_publications, download_document, send_back_to_employee, get_hr_comments, EditSubmissionView
 from . import views
 
 app_name = 'contract'
@@ -25,4 +25,7 @@ urlpatterns = [
     path('delete-all-notifications/', delete_all_notifications, name='delete_all_notifications'),
     path('fetch-publications/<str:scopus_id>/', fetch_publications, name='fetch_publications'),
     path('download-document/<int:contract_id>/<str:doc_type>/', download_document, name='download_document'),
+    path('send-back/<int:contract_id>/', send_back_to_employee, name='send_back_to_employee'),
+    path('get-hr-comments/<int:contract_id>/', get_hr_comments, name='get_hr_comments'),
+    path('edit-submission/<int:pk>/', EditSubmissionView.as_view(), name='edit_submission'),
 ]

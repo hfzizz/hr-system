@@ -1228,3 +1228,62 @@ def submit_contract(request):
     else:
         messages.error(request, "There was an error submitting the contract.")
         return render(request, 'contract/submission.html', {'form': form})
+
+@login_required
+@require_POST
+def send_back_to_employee(request, contract_id):
+    try:
+        contract = Contract.objects.get(pk=contract_id)
+        data = json.loads(request.body)
+        comments = data.get('comments')
+        
+        if not comments:
+            return JsonResponse({'error': 'Comments are required'}, status=400)
+            
+        # Update contract status
+        contract.status = 'sent_back'
+        contract.save()
+        
+        # Create notification for employee
+        ContractNotification.objects.create(
+            employee=contract.employee,
+            contract=contract,
+            message=f"Your contract renewal form has been returned for revision. HR Comments: {comments}",
+            metadata={'hr_comments': comments}
+        )
+        
+        return JsonResponse({'status': 'success'})
+    except Contract.DoesNotExist:
+        return JsonResponse({'error': 'Contract not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@login_required
+def get_hr_comments(request, contract_id):
+    try:
+        contract = Contract.objects.get(pk=contract_id)
+        notification = ContractNotification.objects.filter(
+            contract=contract,
+            employee=request.user.employee
+        ).latest('created_at')
+        
+        return JsonResponse({
+            'comments': notification.metadata.get('hr_comments', 'No comments available')
+        })
+    except (Contract.DoesNotExist, ContractNotification.DoesNotExist):
+        return JsonResponse({'error': 'Comments not found'}, status=404)
+
+class EditSubmissionView(LoginRequiredMixin, UpdateView):
+    model = Contract
+    template_name = 'contract/submission.html'
+    form_class = ContractRenewalForm
+    
+    def get_queryset(self):
+        return Contract.objects.filter(
+            employee=self.request.user.employee,
+            status='sent_back'
+        )
+    
+    def form_valid(self, form):
+        form.instance.status = 'pending'
+        return super().form_valid(form)

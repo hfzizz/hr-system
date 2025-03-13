@@ -127,7 +127,17 @@
                             {{ contract.submission_date|date:"Y-m-d" }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <a href="{% url 'contract:contract_detail' pk=contract.pk %}" class="text-indigo-600 hover:text-indigo-900">Review Form</a>
+                            {% if contract.status == 'sent_back' %}
+                                <div class="flex space-x-2">
+                                    <a href="{% url 'contract:edit_submission' pk=contract.pk %}" 
+                                       class="text-yellow-600 hover:text-yellow-900">Edit Submission</a>
+                                    <a href="#" onclick="viewHRComments({{ contract.pk }})"
+                                       class="text-blue-600 hover:text-blue-900">View HR Comments</a>
+                                </div>
+                            {% else %}
+                                <a href="{% url 'contract:contract_detail' pk=contract.pk %}" 
+                                   class="text-indigo-600 hover:text-indigo-900">Review Form</a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% empty %}
@@ -166,6 +176,23 @@
             });
         });
     });
+
+    async function viewHRComments(contractId) {
+        try {
+            const response = await fetch(`/contract/get-hr-comments/${contractId}/`);
+            const data = await response.json();
+            
+            document.getElementById('hrCommentsContent').textContent = data.comments;
+            document.getElementById('hrCommentsModal').classList.remove('hidden');
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error fetching HR comments');
+        }
+    }
+
+    function closeHRComments() {
+        document.getElementById('hrCommentsModal').classList.add('hidden');
+    }
 </script>
 
 <style>
@@ -175,4 +202,20 @@
         color: #4f46e5;
     }
 </style>
+
+<!-- Add HR Comments Modal -->
+<div id="hrCommentsModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden">
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="bg-white rounded-lg p-8 max-w-lg w-full mx-4">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">HR Comments</h3>
+            <div id="hrCommentsContent" class="mb-4 p-4 bg-gray-50 rounded-lg"></div>
+            <div class="flex justify-end">
+                <button type="button" onclick="closeHRComments()"
+                    class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

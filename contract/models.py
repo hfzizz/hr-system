@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 class Contract(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
+        ('sent_back', 'Sent Back to Employee'),
         ('smt_review', 'Currently under SMT Review'),
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),

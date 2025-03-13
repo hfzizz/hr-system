@@ -138,7 +138,7 @@
                                     <tbody class="bg-white divide-y divide-gray-200">
                                         {% if consultancy_work %}
                                             {% for work in consultancy_work %}
-                                                <tr>
+                                                <tr>if i 
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ work.title }}</td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ work.company }}</td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ work.startDate }}</td>
@@ -654,11 +654,41 @@
             <div class="flex justify-end space-x-4 mt-8">
                 {% if contract.status == 'pending' %}
                     <button type="button"
+                            onclick="openSendBackModal()"
+                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                        Send Back to Employee
+                    </button>
+                    <button type="button"
                             onclick="forwardToSMT({{ contract.id }})"
                             class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         Forward to SMT
                     </button>
                 {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Send Back Modal -->
+<div id="sendBackModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden">
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="bg-white rounded-lg p-8 max-w-lg w-full mx-4">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Send Back Contract</h3>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Comments for Employee</label>
+                <textarea id="sendBackComments" rows="4" 
+                    class="shadow-sm block w-full focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border border-gray-300 rounded-md"
+                    placeholder="Enter your comments here..."></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeSendBackModal()"
+                    class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="button" onclick="sendBackToEmployee({{ contract.id }})"
+                    class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700">
+                    Confirm Send Back
+                </button>
             </div>
         </div>
     </div>
@@ -733,6 +763,43 @@ async function forwardToSMT(contractId) {
     } catch (error) {
         console.error('Error:', error);
         alert('Error forwarding contract to SMT');
+    }
+}
+
+function openSendBackModal() {
+    document.getElementById('sendBackModal').classList.remove('hidden');
+}
+
+function closeSendBackModal() {
+    document.getElementById('sendBackModal').classList.add('hidden');
+}
+
+async function sendBackToEmployee(contractId) {
+    const comments = document.getElementById('sendBackComments').value;
+    if (!comments.trim()) {
+        alert('Please provide comments for the employee.');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/contract/send-back/${contractId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            body: JSON.stringify({ comments: comments }),
+        });
+
+        if (response.ok) {
+            window.location.href = "{% url 'contract:view_submissions' employee_id=contract.employee.id %}";
+        } else {
+            const data = await response.json();
+            alert(data.error || 'Failed to send back contract');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error sending back contract');
     }
 }
 </script>
