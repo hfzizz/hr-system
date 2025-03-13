@@ -186,7 +186,7 @@ class AppraisalListView(LoginRequiredMixin, ListView):
             ).order_by('-date_created')
 
             context['all_columns'] = [
-                {'id': 'appraisal_id', 'label': 'Appraisal ID', 'value': 'appraisal_id'},
+                {'id': 'appraisal_id', 'label': 'Appraisal ID', 'value': 'appraisal_id', 'clickable': True, 'url_name': 'appraisals:form_detail'},
                 {
                     'id': 'employee', 
                     'label': 'Employee', 
@@ -223,6 +223,19 @@ class AppraisalListView(LoginRequiredMixin, ListView):
                     'template': 'appraisals/includes/hr_actions.html'
                 }
             ]
+            
+            # Table configuration (separate from columns)
+            context['all_config'] = {
+                'actions': True,
+                'action_url_name': 'appraisals:form_detail',
+                'enable_sorting': True,
+                'default_sort': '-date_created',
+                'filters': ['department', 'status'],
+                'search': True,
+                'row_link': True,  # Add this line to enable clickable rows
+                'row_url_name': 'appraisals:form_detail',  # URL name to navigate to
+                'row_pk_field': 'appraisal_id'  # Field to use as the PK in the URL
+            }
 
             # Add debug print statements
             print("Debug: Department Access")

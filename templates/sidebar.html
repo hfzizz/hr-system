@@ -174,29 +174,6 @@
           </a>
         </li>
       </ul>
-    </nav>
-
-<!-- Add at the bottom of the sidebar.html file, before </aside> -->
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const dropdown = document.getElementById('appraisals-dropdown');
-    
-    // Check if it should be open
-    if (localStorage.getItem('appraisalsDropdownOpen') === 'true') {
-      dropdown.setAttribute('open', '');
-    }
-    
-    // Save state when toggled
-    dropdown.addEventListener('toggle', function() {
-      localStorage.setItem('appraisalsDropdownOpen', dropdown.open);
-    });
-    
-    // Open if current page is under appraisals
-    if (window.location.href.includes('appraisals')) {
-      dropdown.setAttribute('open', '');
-    }
-  });
-</script>
- 
+    </nav> 
 </aside>
 

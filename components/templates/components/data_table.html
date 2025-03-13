@@ -17,7 +17,11 @@
         </thead>
         <tbody class="divide-y divide-gray-200">
             {% for item in items %}
-            <tr>
+            <tr {% if table_config.row_link %}
+                class="cursor-pointer hover:bg-gray-50"
+                data-href="{% url table_config.row_url_name item|getattr_filter:table_config.row_pk_field %}"
+                onclick="if (!event.target.closest('a, button') && !event.target.closest('td[data-column=\'actions\']')) window.location.href=this.dataset.href;"
+                {% endif %}>
                 {% for column in columns %}
                 <td data-column="{{ column.id }}" 
                     class="whitespace-nowrap px-3 py-4 text-sm {% if column.clickable %}font-medium text-gray-900{% else %}text-gray-500{% endif %}">
@@ -54,3 +58,5 @@
 <!-- Required CSS and JS -->
 <link rel="stylesheet" href="{% static 'components/css/data_table.css' %}">
 <script src="{% static 'components/js/data_table.js' %}"></script>
+
+
