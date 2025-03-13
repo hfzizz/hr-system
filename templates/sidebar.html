@@ -87,7 +87,8 @@
         <!-- Appraisals -->
 {#        {% if perms.appraisals.view_appraisal %}#}   
           <li>
-            <details class="group [&_summary::-webkit-details-marker]:hidden">
+            <details class="group [&_summary::-webkit-details-marker]:hidden"
+            {% if 'appraisals' in request.path %}open{% endif %}>
               <summary
                 class="flex cursor-point items-center gap-3 rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-700"
               > 
@@ -174,4 +175,28 @@
         </li>
       </ul>
     </nav>
+
+<!-- Add at the bottom of the sidebar.html file, before </aside> -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const dropdown = document.getElementById('appraisals-dropdown');
+    
+    // Check if it should be open
+    if (localStorage.getItem('appraisalsDropdownOpen') === 'true') {
+      dropdown.setAttribute('open', '');
+    }
+    
+    // Save state when toggled
+    dropdown.addEventListener('toggle', function() {
+      localStorage.setItem('appraisalsDropdownOpen', dropdown.open);
+    });
+    
+    // Open if current page is under appraisals
+    if (window.location.href.includes('appraisals')) {
+      dropdown.setAttribute('open', '');
+    }
+  });
+</script>
+ 
 </aside>
+

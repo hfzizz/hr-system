@@ -1,0 +1,114 @@
+<div class="publication-form p-4 border border-gray-200 rounded-lg" id="publication-form-{{ index }}">
+    <!-- Hidden form inputs to maintain form data -->
+    <input type="hidden" name="publication_set-{{ index }}-id" value="{{ form.instance.id|default:'' }}">
+    <input type="hidden" name="publication_set-{{ index }}-DELETE" id="delete-{{ index }}" value="off">
+    
+    {% if form.instance.id %}
+        <!-- For existing database entries, show citation view by default -->
+        <div class="citation-view" id="citation-view-{{ index }}">
+            <!-- Hidden form inputs to store data -->
+            <input type="hidden" name="publication_set-{{ index }}-title" id="hidden-title-{{ index }}" value="{{ form.instance.title }}">
+            <input type="hidden" name="publication_set-{{ index }}-author" id="hidden-author-{{ index }}" value="{{ form.instance.author }}">
+            <input type="hidden" name="publication_set-{{ index }}-year" id="hidden-year-{{ index }}" value="{{ form.instance.year }}">
+            <input type="hidden" name="publication_set-{{ index }}-pub_type" id="hidden-pub_type-{{ index }}" value="{{ form.instance.pub_type }}">
+            <input type="hidden" name="publication_set-{{ index }}-additional_fields" id="hidden-additional-fields-{{ index }}" value="{{ form.instance.additional_fields|safe }}">
+            
+            <!-- Display citation -->
+            <div class="p-3 bg-white rounded-lg">
+                <p id="citation-text-{{ index }}" class="text-sm text-gray-800">
+                    {% if form.instance.pub_type == 'book' %}
+                        {{ form.instance.author }} ({{ form.instance.year }}). <i>{{ form.instance.title }}</i>. {{ form.instance.additional_fields.publisher|default:'' }}.
+                    {% elif form.instance.pub_type == 'article' %}
+                        {{ form.instance.author }} ({{ form.instance.year }}). {{ form.instance.title }}. <i>{{ form.instance.additional_fields.journal|default:'' }}</i>, {{ form.instance.additional_fields.volume|default:'' }}({{ form.instance.additional_fields.number|default:'' }}), {{ form.instance.additional_fields.pages|default:'' }}.
+                    {% elif form.instance.pub_type == 'inproceedings' %}
+                        {{ form.instance.author }} ({{ form.instance.year }}). {{ form.instance.title }}. In <i>{{ form.instance.additional_fields.booktitle|default:'' }}</i> (pp. {{ form.instance.additional_fields.pages|default:'' }}). {{ form.instance.additional_fields.publisher|default:'' }}.
+                    {% elif form.instance.pub_type == 'phdthesis' %}
+                        {{ form.instance.author }} ({{ form.instance.year }}). <i>{{ form.instance.title }}</i> [Doctoral dissertation, {{ form.instance.additional_fields.school|default:'' }}].
+                    {% else %}
+                        {{ form.instance.author }} ({{ form.instance.year }}). {{ form.instance.title }}.
+                    {% endif %}
+                </p>
+            </div>
+            
+            <!-- Actions for citation mode -->
+            <div class="flex justify-end mt-3">
+                <button type="button"
+                        onclick="editPublication(this, {{ index }})"
+                        class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                    Edit
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden form fields section -->
+        <div class="form-fields space-y-4 hidden" id="form-fields-{{ index }}">
+    {% else %}
+        <!-- For new entries, show form view by default -->
+        <div class="citation-view hidden" id="citation-view-{{ index }}">
+            <!-- Hidden form inputs to store data -->
+            <input type="hidden" name="publication_set-{{ index }}-title" id="hidden-title-{{ index }}">
+            <input type="hidden" name="publication_set-{{ index }}-author" id="hidden-author-{{ index }}">
+            <input type="hidden" name="publication_set-{{ index }}-year" id="hidden-year-{{ index }}">
+            <input type="hidden" name="publication_set-{{ index }}-pub_type" id="hidden-pub_type-{{ index }}">
+            <input type="hidden" name="publication_set-{{ index }}-additional_fields" id="hidden-additional-fields-{{ index }}">
+            
+            <!-- Display citation -->
+            <div class="p-3 bg-white rounded-lg">
+                <p id="citation-text-{{ index }}" class="text-sm text-gray-800"></p>
+            </div>
+            
+            <!-- Actions for citation mode -->
+            <div class="flex justify-end mt-3">
+                <button type="button"
+                        onclick="editPublication(this, {{ index }})"
+                        class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                    Edit
+                </button>
+            </div>
+        </div>
+
+        <!-- Form fields for new entries -->
+        <div class="form-fields space-y-4" id="form-fields-{{ index }}">
+    {% endif %}
+
+        <!-- Form fields content -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Publication Type</label>
+            <select name="publication_set-{{ index }}-pub_type" 
+                    hx-get="{% url 'employees:load_type_fields_publication' %}"
+                    hx-target="#type-fields-{{ index }}"
+                    hx-swap="innerHTML"
+                    hx-params="*"
+                    hx-trigger="change"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <option value="">Select Type</option>
+                {% for type_value, type_label in form.fields.pub_type.choices %}
+                    <option value="{{ type_value }}" {% if form.instance.pub_type == type_value %}selected{% endif %}>
+                        {{ type_label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Dynamic Type-specific Fields -->
+        <div id="type-fields-{{ index }}">
+            {% if form.instance.pub_type %}
+                <!-- Populate type-specific fields here based on pub_type -->
+                {% include "employees/partials/_type_specific_fields.html" with pub_type=form.instance.pub_type form=form index=index %}
+            {% endif %}
+        </div>
+
+        <!-- Actions for form mode -->
+        <div class="flex justify-between space-x-3">
+            <button type="button"
+                    onclick="finalizeCitation(this, {{ index }})"
+                    class="inline-flex items-center rounded-md bg-green-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
+                Generate Citation
+            </button>
+            <button type="button"
+                    onclick="removePublication(this)"
+                    class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500">
+                Remove
+            </button>
+        </div>
+    </div>
+</div>

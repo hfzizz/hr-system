@@ -1,8 +1,9 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Employee, Qualification
+from .models import Employee, Qualification, Publication
 from django.db import models
-from django.forms import modelformset_factory, BaseModelFormSet, inlineformset_factory
+from django.forms import  formset_factory, BaseModelFormSet, inlineformset_factory
+from django.urls import reverse_lazy
 
 class EmployeeProfileForm(forms.ModelForm):
     employee_id = forms.CharField(
@@ -225,4 +226,48 @@ QualificationFormSet = inlineformset_factory(
     fields=['degree_diploma', 'university_college', 'from_date', 'to_date'],
     extra=1,
     can_delete=True
+)
+
+# Define field mapping for each publication type
+PUB_TYPE_FIELDS = {
+    "book": ["publisher"],
+    "article": ["journal", "volume", "number", "pages"],
+    "booklet": ["howpublished", "month"],
+    "inbook": ["booktitle", "publisher", "address", "page"],
+    "incollection": ["editor", "booktitle", "publisher", "address", "pages"],
+    "inproceedings": ["booktitle", "series", "pages", "publisher", "address"],
+    "manual": ["organization", "address"],
+    "mastersthesis": ["school", "address", "month"],
+    "misc": ["howpublished", "note"],
+    "phdthesis": ["school", "address", "month"],
+    "proceedings": ["editor", "series", "volume", "publisher", "address"],
+    "techreport": ["institution", "address", "number", "month"],
+    "unpublished": [],
+}
+
+class PublicationForm(forms.ModelForm):
+    class Meta:
+        model = Publication
+        fields = ['title', 'author', 'year', 'pub_type', 'additional_fields']
+        widgets = {
+            'additional_fields': forms.HiddenInput()
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['pub_type'].widget.attrs.update({
+            'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm',
+            'hx-get': reverse_lazy('employee:load_type_fields_publication'),
+            'hx-target': 'next div',
+            'hx-trigger': 'change'
+        })
+
+# In your views.py or forms.py where the FormSet is defined
+PublicationFormSet = inlineformset_factory(
+    Employee,
+    Publication,
+    form=PublicationForm,
+    extra=1,
+    can_delete=True,
+    fields=['title', 'author', 'year', 'pub_type', 'additional_fields']
 )

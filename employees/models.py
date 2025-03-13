@@ -187,55 +187,44 @@ class Qualification(models.Model):
         ordering = ['-from_date']
 
 class Publication(models.Model):
-    # Link to Employee
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="publications")
+    PUBLICATION_TYPES = [
+        ("book", "Book"),
+        ("article", "Journal Article"),
+        ("booklet", "Booklet"),
+        ("inbook", "In Book"),
+        ("incollection", "In Collection"),
+        ("inproceedings", "Conference Paper"),
+        ("manual", "Manual"),
+        ("mastersthesis", "Master's Thesis"),
+        ("misc", "Miscellaneous"),
+        ("phdthesis", "PhD Thesis"),
+        ("proceedings", "Conference Proceedings"),
+        ("techreport", "Technical Report"),
+        ("unpublished", "Unpublished Work"),
+    ]
 
-    # Core Publication Details
+    employee = models.ForeignKey(
+        'Employee',
+        on_delete=models.CASCADE,
+        related_name='publications'
+    )
+    pub_type = models.CharField(max_length=20, choices=PUBLICATION_TYPES)
     title = models.CharField(max_length=500)
-    publication_type = models.CharField(
-        max_length=50, 
-        choices=[
-            ("journal", "Journal Article"), 
-            ("conference", "Conference Paper"), 
-            ("book", "Book"), 
-            ("book_chapter", "Book Chapter"), 
-            ("thesis", "Thesis"), 
-            ("report", "Report"), 
-            ("other", "Other"),
-        ]
-    )
-    authors = models.TextField()  # Store as "Author 1, Author 2, Author 3"
-    year = models.IntegerField()
-    journal_name = models.CharField(max_length=255, blank=True, null=True)  # For journals
-    volume = models.CharField(max_length=50, blank=True, null=True)
-    issue = models.CharField(max_length=50, blank=True, null=True)
-    pages = models.CharField(max_length=50, blank=True, null=True)
-    publisher = models.CharField(max_length=255, blank=True, null=True)
-
-    # Source & Unique Identifiers
-    source_type = models.CharField(
-        max_length=20, 
-        choices=[
-            ("manual", "Manual Entry"), 
-            ("scopus", "Scopus"), 
-            ("orcid", "ORCID"), 
-            ("researcherid", "Researcher ID"), 
-            ("googlescholar", "Google Scholar")
-        ]
-    )
-    source_id = models.CharField(max_length=100, blank=True, null=True)  # Stores Scopus ID, ORCID Work ID, etc.
+    author = models.CharField(max_length=500, blank=True, null=True)
+    year = models.PositiveIntegerField(blank=True, null=True)
     
-    # DOI & URLs
-    doi = models.CharField(max_length=100, blank=True, null=True, unique=True)  # Some sources don't have DOIs
-    url = models.URLField(blank=True, null=True)  # Link to publication
+    # JSON field to store dynamic attributes
+    additional_fields = models.JSONField(default=dict, blank=True, null=True)
 
-    # Fetched vs. Manual
-    is_fetched = models.BooleanField(default=False)  # True if pulled from API, False if manually entered
-    date_added = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+    
+    class Meta:
+        ordering = ['-year', 'title']
 
     def __str__(self):
-        return f"{self.title} ({self.year})"
-
+        return f"{self.title} ({self.pub_type})"
+    
 
 def validate_file_size(value):
     filesize = value.size
