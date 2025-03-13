@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .text-content {
+        white-space: pre-wrap;
+        padding: 0.75rem;
+        background-color: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.375rem;
+        min-height: 4rem;
+        margin-top: 0.5rem;
+    }
+</style>
+
+<div class="container mx-auto px-4 py-8">
+    <!-- Back Button -->
+    <div class="mb-4">
+        <a href="{% url 'contract:employee_contracts' %}" 
+           class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            Back to Contracts
+        </a>
+    </div>
+
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">Contract Renewal Details</h1>
+        <p class="mt-2 text-sm text-gray-700">Below are the details of your submitted contract renewal.</p>
+    </div>
+
+    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        <!-- Personal Details Section -->
+        <div class="bg-gray-50 p-4 rounded-lg mb-8">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Personal Details</h3>
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">First Name</label>
+                    <div class="text-content text-sm text-gray-900">{{ first_name }}</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Last Name</label>
+                    <div class="text-content text-sm text-gray-900">{{ last_name }}</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">IC Number</label>
+                    <div class="text-content text-sm text-gray-900">{{ ic_no }}</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">IC Colour</label>
+                    <div class="text-content text-sm text-gray-900">{{ ic_colour_display }}</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Phone Number</label>
+                    <div class="text-content text-sm text-gray-900">{{ phone_number }}</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Department</label>
+                    <div class="text-content text-sm text-gray-900">{{ department_name }}</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Present Post</label>
+                    <div class="text-content text-sm text-gray-900">{{ contract.present_post }}</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Salary Scale/Division</label>
+                    <div class="text-content text-sm text-gray-900">{{ contract.salary_scale_division }}</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Incremental Date</label>
+                    <div class="text-content text-sm text-gray-900">{{ contract.incremental_date }}</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Last Appraisal Date</label>
+                    <div class="text-content text-sm text-gray-900">{{ contract.date_of_last_appraisal }}</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Submission Date</label>
+                    <div class="text-content text-sm text-gray-900">{{ contract.submission_date }}</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Type of Contract Applied</label>
+                    <div class="text-content text-sm text-gray-900">{{ contract.get_contract_type_display }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Academic Information Section -->
+        <div class="bg-gray-50 p-4 rounded-lg mb-8">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Academic Information</h3>
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Academic Qualifications</label>
+                    <div class="mt-4">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Degree/Diploma
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            University/College
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            From
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            To
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for qual in academic_qualifications %}
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">{{ qual.degree_diploma }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">{{ qual.university_college }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">{{ qual.from_date }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">{{ qual.to_date }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Currently Enrolled in Higher/Professional Qualifications</label>
+                    <div class="text-content text-sm text-gray-900">{{ contract.current_enrollment }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Research Section -->
+        <div class="bg-gray-50 p-4 rounded-lg mb-8">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Research, Consultancy and Publications</h3>
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Consultancy Work</label>
+                    <div class="text-content text-sm text-gray-900">{{ contract.consultancy_work }}</div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Research History</label>
+                    <div class="text-content text-sm text-gray-900">{{ contract.last_research }}</div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Ongoing Research</label>
+                    <div class="text-content text-sm text-gray-900">{{ contract.ongoing_research }}</div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Publications</label>
+                    <div class="text-content text-sm text-gray-900">{{ contract.publications }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Higher Degree Students Section -->
+        <div class="bg-gray-50 p-4 rounded-lg mb-8">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Higher Degree Students</h3>
+            <div class="text-content text-sm text-gray-900">{{ contract.higher_degree_students_supervised }}</div>
+        </div>
+
+        <!-- Administrative Posts Section -->
+        <div class="bg-gray-50 p-4 rounded-lg mb-8">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Administrative Posts</h3>
+            <div class="text-content text-sm text-gray-900">{{ contract.administrative_posts }}</div>
+        </div>
+
+        <!-- Participation Section -->
+        <div class="bg-gray-50 p-4 rounded-lg mb-8">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Participation</h3>
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Within University</label>
+                    <div class="text-content text-sm text-gray-900">{{ contract.participation_within_university }}</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Outside University</label>
+                    <div class="text-content text-sm text-gray-900">{{ contract.participation_outside_university }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Future Plans Section -->
+        <div class="bg-gray-50 p-4 rounded-lg mb-8">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Future Plans</h3>
+            <div class="text-content text-sm text-gray-900">{{ contract.objectives_next_year }}</div>
+        </div>
+
+        <!-- Achievements Section -->
+        <div class="bg-gray-50 p-4 rounded-lg mb-8">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Achievements</h3>
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">What have you achieved in the last contract for Teaching / Research / Administrative Duties?</label>
+                    <div class="text-content text-sm text-gray-900">{{ contract.achievements_last_contract }}</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">What do you propose to undertake and achieve if your contract is renewed?</label>
+                    <div class="text-content text-sm text-gray-900">{{ contract.achievements_proposal }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Others Section -->
+        <div class="bg-gray-50 p-4 rounded-lg mb-8">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Others</h3>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Any other matters you wish to highlight?</label>
+                <div class="text-content text-sm text-gray-900">{{ contract.other_matters }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

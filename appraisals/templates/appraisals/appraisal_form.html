@@ -20,7 +20,7 @@
 
     <!-- Form -->
     <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
-        <form method="post" class="space-y-8 p-6" action="{% if form.instance.pk %}{% url 'appraisals:appraisal_edit' form.instance.pk %}{% else %}{% url 'appraisals:form_create' %}{% endif %}">
+        <form method="post" class="space-y-8 p-6" action="{% if form.instance.pk %}{% url 'appraisals:appraisal_edit' form.instance.pk %}{% else %}{% url 'appraisals:appraisal_create' %}{% endif %}">
             {% csrf_token %}
             
             <!-- Core Details -->
@@ -341,7 +341,7 @@
 
             <!-- Form Actions -->
             <div class="flex justify-end gap-x-3">
-                <a href="{% url 'appraisals:form_detail' form.instance.pk %}"
+                <a href="{% url 'appraisals:appraisal_detail' form.instance.pk %}"
                    class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Cancel
                 </a>

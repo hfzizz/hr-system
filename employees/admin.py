@@ -9,5 +9,5 @@ class DepartmentAdmin(admin.ModelAdmin):
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
     list_display = ['employee_id', 'first_name', 'last_name', 'department']
-    list_filter = ['department', 'employee_status']
+    list_filter = ['department', 'employee_status', 'appointment_type']
     search_fields = ['first_name', 'last_name', 'employee_id']
