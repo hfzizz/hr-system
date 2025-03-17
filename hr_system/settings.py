@@ -79,6 +79,7 @@ TEMPLATES = [
                 'appraisals.context_processors.appraisal_context_processor',
                 'contract.context_processors.contract_status',
                 'contract.context_processors.notifications',
+                'contract.context_processors.contract_context',
             ],
         },
     },

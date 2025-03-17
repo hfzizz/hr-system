@@ -5,10 +5,10 @@
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-bold text-gray-900">Review Contract Renewal</h1>
-            <a href="{% url 'contract:view_submissions' employee_id=contract.employee.id %}" 
+            <h1 class="text-2xl font-bold text-gray-900">Dean Review: Contract #{{ contract.contract_id }}</h1>
+            <a href="{% url 'contract:dean_department_contracts' %}" 
                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700">
-                Back to Submissions
+                Back to Department Contracts
             </a>
         </div>
 
@@ -138,7 +138,7 @@
                                     <tbody class="bg-white divide-y divide-gray-200">
                                         {% if consultancy_work %}
                                             {% for work in consultancy_work %}
-                                                <tr>if i 
+                                                <tr>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ work.title }}</td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ work.company }}</td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ work.startDate }}</td>
@@ -394,9 +394,6 @@
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ committee.from_date }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ committee.to_date }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ committee.details }}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <!-- Action buttons can go here -->
-                                            </td>
                                         </tr>
                                     {% endfor %}
                                 {% else %}
@@ -434,9 +431,6 @@
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ committee.from_date }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ committee.to_date }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ committee.details }}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <!-- Action buttons can go here -->
-                                            </td>
                                         </tr>
                                     {% endfor %}
                                 {% else %}
@@ -474,7 +468,7 @@
                                     {% for activity in participation_within %}
                                         <tr>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ activity.activity }}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ activity.role }}</td>
+                                                                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ activity.role }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ activity.date }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ activity.remarks }}</td>
                                         </tr>
@@ -650,105 +644,74 @@
                 </div>
             </div>
 
-            <!-- Dean's Comments Section -->
-            {% if contract.dean_reviews.exists %}
+            <!-- Dean's Review Form -->
             <div class="mt-6 bg-white rounded-lg shadow-md p-6">
                 <h2 class="text-xl font-semibold mb-4">Dean's Comments</h2>
                 
-                {% for review in contract.dean_reviews.all %}
-                <div class="mb-4 p-4 border rounded {% if not forloop.last %}border-b{% endif %}">
-                    <p class="font-semibold">{{ review.dean.get_full_name }} ({{ review.created_at|date:"F d, Y" }})</p>
-                    <p class="mt-2 whitespace-pre-line">{{ review.comments }}</p>
+                <form method="POST" action="{% url 'contract:submit_dean_review' contract.id %}" enctype="multipart/form-data">
+                    {% csrf_token %}
                     
-                    {% if review.document_name %}
-                    <div class="mt-2">
-                        <a href="{% url 'contract:download_dean_document' contract.id review.id %}" class="text-blue-600 hover:underline">
-                            Download Document: {{ review.document_name }}
-                        </a>
+                    <div class="mb-4">
+                        <label for="dean_comments" class="block text-sm font-medium text-gray-700 mb-1">Comments</label>
+                        <textarea id="dean_comments" name="dean_comments" rows="5" 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                  required>{{ dean_review.comments|default:'' }}</textarea>
                     </div>
-                    {% endif %}
-                </div>
-                {% endfor %}
+                    
+                    <div class="mb-4">
+                        <label for="dean_documents" class="block text-sm font-medium text-gray-700 mb-1">Supporting Documents (optional)</label>
+                        <input type="file" id="dean_documents" name="dean_documents" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        {% if dean_review.document_name %}
+                            <p class="mt-1 text-sm text-gray-500">Current document: {{ dean_review.document_name }}</p>
+                            <a href="{% url 'contract:download_dean_document' contract.id dean_review.id %}" class="text-blue-600 hover:underline">Download</a>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                            Submit Comments to HR
+                        </button>
+                    </div>
+                </form>
             </div>
-            {% endif %}
-
-            <!-- SMT Decision & Comments Section -->
-            {% if contract.smt_reviews.exists %}
-            <div class="mt-6 bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-semibold mb-4">SMT Decision & Comments</h2>
+            
+            <!-- Previous Reviews Section (if any) -->
+            {% if previous_dean_reviews %}
+            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                <div class="px-4 py-5 sm:px-6 bg-gray-50">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Previous Reviews</h3>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">History of reviews for this contract</p>
+                </div>
                 
-                {% for review in contract.smt_reviews.all %}
-                <div class="mb-4 p-4 border rounded {% if not forloop.last %}border-b{% endif %}">
-                    <div class="flex justify-between items-center">
-                        <p class="font-semibold">{{ review.smt_member.get_full_name }} ({{ review.created_at|date:"F d, Y" }})</p>
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            {% if review.decision == 'approved' %}bg-green-100 text-green-800
-                            {% elif review.decision == 'rejected' %}bg-red-100 text-red-800
-                            {% else %}bg-orange-100 text-orange-800{% endif %}">
-                            {{ review.get_decision_display }}
-                        </span>
+                <div class="divide-y divide-gray-200">
+                    {% for review in previous_dean_reviews %}
+                    <div class="px-4 py-5 sm:px-6">
+                        <div class="mb-2 flex justify-between">
+                            <h4 class="text-md font-medium text-gray-900">Review by {{ review.dean.get_full_name }}</h4>
+                            <span class="text-sm text-gray-500">{{ review.created_at|date:"F d, Y H:i" }}</span>
+                        </div>
+                        <div class="text-sm text-gray-600 mb-2">Recommendation: 
+                            <span class="font-medium 
+                                {% if review.recommendation == 'approve' %}text-green-600
+                                {% elif review.recommendation == 'reject' %}text-red-600
+                                {% else %}text-yellow-600{% endif %}">
+                                {{ review.get_recommendation_display }}
+                            </span>
+                        </p>
+                        <div class="text-sm text-gray-800 whitespace-pre-line">{{ review.comments }}</div>
+                        {% if review.document_name %}
+                        <div class="mt-2">
+                            <a href="{% url 'contract:download_dean_document' contract.id review.id %}" class="text-sm text-indigo-600 hover:text-indigo-900">
+                                Download attachment: {{ review.document_name }}
+                            </a>
+                        </div>
+                        {% endif %}
                     </div>
-                    <p class="mt-2 whitespace-pre-line">{{ review.comments }}</p>
-                    
-                    {% if review.document_name %}
-                    <div class="mt-2">
-                        <a href="{% url 'contract:download_smt_document_with_id' contract.id review.id %}" class="text-blue-600 hover:underline">
-                            Download Document: {{ review.document_name }}
-                        </a>
-                    </div>
-                    {% endif %}
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
             {% endif %}
-
-            <!-- Action Buttons -->
-            <div class="flex justify-end space-x-4 mt-8">
-                {% if user.groups.all.0.name == 'HR' and contract.status == 'pending' %}
-                    <button type="button"
-                            onclick="openSendBackModal()"
-                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
-                        Send Back to Employee
-                    </button>
-                    
-                    <button type="button"
-                            onclick="forwardToDean({{ contract.id }})"
-                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        Forward to Dean for Review
-                    </button>
-                    
-                    <button type="button"
-                            onclick="forwardToSMT({{ contract.id }})"
-                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                        Forward to SMT
-                    </button>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Send Back Modal -->
-<div id="sendBackModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden">
-    <div class="flex items-center justify-center min-h-screen">
-        <div class="bg-white rounded-lg p-8 max-w-lg w-full mx-4">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Send Back Contract</h3>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Comments for Employee</label>
-                <textarea id="sendBackComments" rows="4" 
-                    class="shadow-sm block w-full focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border border-gray-300 rounded-md"
-                    placeholder="Enter your comments here..."></textarea>
-            </div>
-            <div class="flex justify-end space-x-3">
-                <button type="button" onclick="closeSendBackModal()"
-                    class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                    Cancel
-                </button>
-                <button type="button" onclick="sendBackToEmployee({{ contract.id }})"
-                    class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700">
-                    Confirm Send Back
-                </button>
-            </div>
         </div>
     </div>
 </div>
@@ -799,106 +762,41 @@
 </style>
 
 <script>
-async function forwardToSMT(contractId) {
-    if (!confirm('Are you sure you want to forward this contract to SMT?')) {
-        return;
-    }
-
-    try {
-        const response = await fetch(`/contract/forward-to-smt/${contractId}/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-            },
-        });
-
-        if (response.ok) {
-            window.location.href = "{% url 'contract:view_submissions' employee_id=contract.employee.id %}";
-        } else {    
-            const data = await response.json();
-            alert(data.error || 'Failed to forward contract to SMT');
+    // File upload preview
+    const fileInput = document.getElementById('dean_documents');
+    fileInput.addEventListener('change', function(e) {
+        const fileName = e.target.files[0]?.name;
+        if (fileName) {
+            const filePreview = document.createElement('p');
+            filePreview.classList.add('text-sm', 'text-gray-600', 'mt-2');
+            filePreview.textContent = `Selected file: ${fileName}`;
+            
+            const existingPreview = fileInput.parentElement.parentElement.parentElement.querySelector('p.text-sm.text-gray-600.mt-2');
+            if (existingPreview) {
+                existingPreview.textContent = `Selected file: ${fileName}`;
+            } else {
+                fileInput.parentElement.parentElement.parentElement.appendChild(filePreview);
+            }
         }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error forwarding contract to SMT');
-    }
-}
-
-function openSendBackModal() {
-    document.getElementById('sendBackModal').classList.remove('hidden');
-}
-
-function closeSendBackModal() {
-    document.getElementById('sendBackModal').classList.add('hidden');
-}
-
-async function sendBackToEmployee(contractId) {
-    const comments = document.getElementById('sendBackComments').value;
-    if (!comments.trim()) {
-        alert('Please provide comments for the employee.');
-        return;
-    }
-
-    try {
-        const response = await fetch(`/contract/send-back/${contractId}/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-            },
-            body: JSON.stringify({ comments: comments }),
-        });
-
-        if (response.ok) {
-            window.location.href = "{% url 'contract:view_submissions' employee_id=contract.employee.id %}";
-        } else {
-            const data = await response.json();
-            alert(data.error || 'Failed to send back contract');
+    });
+    
+    // Form validation
+    const form = document.getElementById('deanReviewForm');
+    form.addEventListener('submit', function(e) {
+        const comments = document.getElementById('dean_comments').value.trim();
+        const recommendation = document.querySelector('input[name="recommendation"]:checked');
+        
+        if (!comments) {
+            e.preventDefault();
+            alert('Please provide comments for your review.');
+            return;
         }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error sending back contract');
-    }
-}
-
-async function forwardToDean(contractId) {
-    if (!confirm('Are you sure you want to forward this contract to the Dean for review?')) {
-        return;
-    }
-
-    try {
-        const response = await fetch(`/contract/forward-to-dean/${contractId}/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-            },
-        });
-
-        if (response.ok) {
-            alert('Contract has been forwarded to the Dean for review.');
-            window.location.reload();
-        } else {    
-            const data = await response.json();
-            alert(data.error || 'Failed to forward contract to Dean');
+        
+        if (!recommendation) {
+            e.preventDefault();
+            alert('Please select a recommendation.');
+            return;
         }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error forwarding contract to Dean');
-    }
-}
+    });
 </script>
-
-<!-- Debug Information Section -->
-{% if debug %}
-<div class="bg-gray-100 p-4 mt-4">
-    <h4 class="text-sm font-medium text-gray-700">Debug Information:</h4>
-    <pre class="text-xs mt-2">
-        University Committees: {{ university_committees|json_script:"university_committees_data" }}
-        External Committees: {{ external_committees|json_script:"external_committees_data" }}
-    </pre>
-</div>
-{% endif %}
-</div>
 {% endblock %}

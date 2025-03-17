@@ -4,11 +4,14 @@ from employees.models import Employee
 from appraisals.models import Module, Membership
 import os
 from django.core.exceptions import ValidationError
+from django.db.models import Max
+import uuid
 
 class Contract(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('sent_back', 'Sent Back to Employee'),
+        ('dean_review', 'Dean Review'),
         ('smt_review', 'Currently under SMT Review'),
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
@@ -20,6 +23,9 @@ class Contract(models.Model):
         ('LOCAL_RENEWAL', 'New/Renewal of contract for local staff'),
         ('OTHER', 'Other'),
     ]
+    
+    # Contract ID field - now using a sequential number format
+    contract_id = models.CharField(max_length=20, unique=True, null=True, blank=True)
     
     # Personal Details (from Employee model)
     first_name = models.CharField(max_length=100, null=True, blank=True)
@@ -100,6 +106,38 @@ class Contract(models.Model):
 
     def __str__(self):
         return f"Contract Renewal - {self.employee.get_full_name()} ({self.submission_date.date()})"
+    
+    def save(self, *args, **kwargs):
+        # Generate contract ID if it doesn't exist
+        if not self.contract_id:
+            # Get the year
+            year = timezone.now().year
+            
+            # Find the highest contract number for this year
+            prefix = f"CR-{year}-"
+            highest_contract = Contract.objects.filter(
+                contract_id__startswith=prefix
+            ).aggregate(
+                Max('contract_id')
+            )['contract_id__max']
+            
+            # Extract the number and increment
+            if highest_contract:
+                try:
+                    # Extract the number part (last 3 digits)
+                    last_number = int(highest_contract[-3:])
+                    new_number = last_number + 1
+                except (ValueError, IndexError):
+                    # If there's an error parsing, start with 1
+                    new_number = 1
+            else:
+                # If no existing contracts for this year, start with 1
+                new_number = 1
+            
+            # Format the new contract ID with leading zeros
+            self.contract_id = f"{prefix}{new_number:03d}"
+        
+        super().save(*args, **kwargs)
 
     def clean(self):
         if self.teaching_documents:
@@ -107,6 +145,12 @@ class Contract(models.Model):
             valid_extensions = ['.pdf', '.docx']
             if ext.lower() not in valid_extensions:
                 raise ValidationError('Only PDF and DOCX files are allowed.')
+
+    class Meta:
+        ordering = ['-submission_date']
+
+    def __str__(self):
+        return f"{self.contract_id} - {self.employee.get_full_name()} ({self.submission_date.date()})"
 
 class ContractRenewalStatus(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
@@ -140,3 +184,33 @@ class AdministrativePosition(models.Model):
 
     def __str__(self):
         return self.title
+
+# Update the DeanReview model
+class DeanReview(models.Model):
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='dean_reviews')
+    dean = models.ForeignKey('employees.Employee', on_delete=models.CASCADE, related_name='dean_reviews')
+    comments = models.TextField()
+    document = models.BinaryField(null=True, blank=True)
+    document_name = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Dean Review by {self.dean.get_full_name()} for {self.contract.contract_id}"
+
+class SMTReview(models.Model):
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='smt_reviews')
+    smt_member = models.ForeignKey('employees.Employee', on_delete=models.CASCADE, related_name='smt_reviews')
+    decision = models.CharField(max_length=20, choices=Contract.STATUS_CHOICES)
+    comments = models.TextField()
+    document = models.BinaryField(null=True, blank=True)
+    document_name = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"SMT Review by {self.smt_member.get_full_name()} for {self.contract.contract_id}"
