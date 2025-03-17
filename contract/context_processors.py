@@ -25,11 +25,20 @@ def contract_status(request):
                 # For non-HR/non-dean/non-SMT users, check their individual contract status
                 employee = Employee.objects.get(user=request.user)
                 # Check if employee has contract appointment type
-                if hasattr(employee, 'appointment_type') and employee.appointment_type and employee.appointment_type.name == 'Contract':
-                    contract_status = ContractRenewalStatus.objects.filter(
-                        employee=employee
-                    ).first()
-                    show_contract = contract_status.is_enabled if contract_status else False
+                if hasattr(employee, 'appointment_type'):
+                    # Handle both string and object type for appointment_type
+                    if isinstance(employee.appointment_type, str):
+                        # If appointment_type is a string, compare directly
+                        has_contract_type = employee.appointment_type == 'Contract'
+                    else:
+                        # If appointment_type is an object, access the name attribute
+                        has_contract_type = employee.appointment_type.name == 'Contract' if hasattr(employee.appointment_type, 'name') else False
+                    
+                    if has_contract_type:
+                        contract_status = ContractRenewalStatus.objects.filter(
+                            employee=employee
+                        ).first()
+                        show_contract = contract_status.is_enabled if contract_status else False
                 
         except Employee.DoesNotExist:
             show_contract = False
@@ -40,7 +49,6 @@ def contract_status(request):
         'is_dean': is_dean,
         'is_smt': is_smt
     }
-
 def notifications(request):
     unread_count = 0
     if request.user.is_authenticated and hasattr(request.user, 'employee'):
