@@ -5,7 +5,7 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.db.models import Q
 from django.contrib.auth.models import Group
-from .models import Appraisal, AppraisalPeriod, AcademicQualification
+from .models import Appraisal, AppraisalPeriod
 from employees.models import Employee, Department
 from django.http import JsonResponse
 from django.shortcuts import redirect, get_object_or_404, render
@@ -16,16 +16,27 @@ import logging
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 import json
-from .forms import AppraisalForm, AcademicQualificationFormSet
+from .forms import ModuleFormSet, SectionAForm, SectionBForm
+from employees.forms import QualificationFormSet
 from django.forms import inlineformset_factory
 from django.core.exceptions import PermissionDenied
 from django.template.context_processors import request
+from formtools.wizard.views import SessionWizardView
+from django.core.files.storage import FileSystemStorage
+from django.conf import settings
+import os
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 logger = logging.getLogger(__name__)
 
 # Constants
 HR_GROUP_NAME = 'HR'
 APPRAISER_GROUP_NAME = 'Appraiser'
+
+# ============================================================================
+# Appraisal Period Management Views
+# =============================================================================
 
 
 class AppraisalPeriodListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
@@ -83,7 +94,7 @@ def create_period(request):
 # Appraisal Management Views
 # ============================================================================
 
-class AppraisalListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+class AppraisalListView(LoginRequiredMixin, ListView):
     """
     Display all appraisals with filtering capabilities.
     Provides tabs for different statuses (pending, review, completed)
@@ -91,7 +102,6 @@ class AppraisalListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     model = Appraisal
     template_name = 'appraisals/appraisal_list.html'
     context_object_name = 'appraisals'
-    permission_required = 'appraisals.view_appraisal'
 
     def get_queryset(self):
         user = self.request.user
@@ -237,51 +247,187 @@ class AppraisalListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
             }
 
         return context
-
-class AppraisalDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+class AppraisalDetailView(LoginRequiredMixin, DetailView):
     """
-    Displays detailed information about a specific appraisal.
+    Display details of a single appraisal.
     """
     model = Appraisal
     template_name = 'appraisals/appraisal_detail.html'
     context_object_name = 'appraisal'
-    permission_required = 'appraisals.view_appraisal'
 
-class AppraisalUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
-    """
-    Handles updating existing appraisals including academic qualifications.
-    """
-    model = Appraisal
-    form_class = AppraisalForm
-    template_name = 'appraisals/appraisal_form.html'
-    success_url = reverse_lazy('appraisals:appraisal_list')
-    permission_required = 'appraisals.change_appraisal'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['academic_formset'] = AcademicQualificationFormSet(
-            self.request.POST if self.request.POST else None,
-            instance=self.object
-        )
+class BaseAppraisalWizard(SessionWizardView):
+    file_storage = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'temp'))
+    
+    def get_template_names(self):
+        return [self.templates[self.steps.current]]
+    
+    def get_context_data(self, form, **kwargs):
+        context = super().get_context_data(form=form, **kwargs)
+        context.update({
+            'can_save_draft': True,
+            'appraisal_id': self.kwargs.get('appraisal_id'),
+            'is_edit': self.kwargs.get('is_edit', False)
+        })
         return context
 
+    def process_step(self, form):
+        if self.request.POST.get('save_draft'):
+            self.save_draft(form)
+            return self.render_goto_step(self.steps.current)
+        return self.get_form_step_data(form)
+
+    def save_draft(self, form):
+        appraisal = form.save(commit=False)
+        appraisal.status = 'draft'
+        appraisal.save()
+
+class AppraiseeWizard(BaseAppraisalWizard, UpdateView):
+
+    form_list = [
+        ('section_a', SectionAForm),
+        # ... other sections ...
+    ]
+
+    templates = {
+        'section_a': 'appraisals/wizard/section_a.html',
+        # ... other sections ...
+    }
+    
+    def get_form_instance(self, step):
+        """Initialize form instance with existing appraisal data"""
+        if self.kwargs.get('appraisal_id'):
+            try:
+                return Appraisal.objects.get(
+                   appraisal_id=self.kwargs.get('appraisal_id')
+                )
+            except Appraisal.DoesNotExist:
+                pass
+        return None
+
+    def get_context_data(self, form, **kwargs):
+        context = super().get_context_data(form=form, **kwargs)
+        
+        if self.steps.current == 'section_a':
+            instance = self.get_form_instance(self.steps.current)
+            
+            if instance and instance.employee:
+                # Add qualification formset with proper prefix
+                if self.request.POST:
+                    context['qualification_formset'] = QualificationFormSet(
+                        self.request.POST,
+                        instance=instance.employee,
+                        prefix='qualification_set'
+                    )
+                else:
+                    context['qualification_formset'] = QualificationFormSet(
+                        instance=instance.employee,
+                        prefix='qualification_set'
+                    )
+        
+        return context
+            
+            
+        #     # For appointments formset
+        #     if self.request.POST:
+        #         context['appointment_formset'] = AppointmentFormSet(
+        #             self.request.POST, 
+        #             instance=instance
+        #         )
+        #     else:
+        #         context['appointment_formset'] = AppointmentFormSet(
+        #             instance=instance
+        #         )
+        
+        # return context
+    
     def form_valid(self, form):
         context = self.get_context_data()
-        academic_formset = context['academic_formset']
+        qualification_formset = context.get('qualification_formset')
         
-        if form.is_valid() and academic_formset.is_valid():
-            self.object = form.save(commit=False)
-            self.object.last_modified_by = self.request.user
-            self.object.last_modified_date = timezone.now()
-            self.object.save()
-            
-            academic_formset.instance = self.object
-            academic_formset.save()
-            
-            messages.success(self.request, 'Appraisal updated successfully.')
-            return super().form_valid(form)
-            
-        return self.render_to_response(self.get_context_data(form=form))
+        qualification_formset.instance = self.get_form_instance('section_a').employee
+        qualification_instances = qualification_formset.save(commit=False)
+
+        for obj in qualification_formset.deleted_objects:
+            obj.delete()
+        
+        for qualification in qualification_instances:
+            qualification.employee = self.get_form_instance('section_a').employee
+            qualification.save()
+        
+        return super().form_valid(form)
+    
+
+    def get_template_names(self):
+        """Override to ensure we're using the correct template"""
+        return [self.templates[self.steps.current]]
+
+    def process_step(self, form):
+        """Handle step processing"""
+        # Remove the save_draft check since we'll handle all saves the same way
+        return super().process_step(form)
+    
+    def post(self, *args, **kwargs):
+        form = self.get_form(data=self.request.POST, files=self.request.FILES)
+        
+        if form.is_valid():
+            instance = self.get_form_instance(self.steps.current)
+            if instance:
+                form.save()
+                
+                if self.steps.current == 'section_a':
+                    qualification_formset = QualificationFormSet(
+                        data=self.request.POST,
+                        instance=instance.employee,
+                        prefix='qualification_set'
+                    )
+                    
+                    if qualification_formset.is_valid():
+                        qualification_formset.save()
+                    else:
+                        context = self.get_context_data(form=form)
+                        context['qualification_formset'] = qualification_formset
+                        return self.render(form)
+                
+                # Handle draft save explicitly
+                if self.request.POST.get('save_draft') == 'true':
+                    messages.success(self.request, 'Form saved as draft successfully.')
+                    return HttpResponseRedirect(
+                        reverse('appraisals:form_detail', 
+                        kwargs={'pk': instance.appraisal_id})
+                    )
+                
+                # Handle normal submission
+                instance.status = 'pending'
+                instance.save()
+                messages.success(self.request, 'Form submitted successfully.')
+                return HttpResponseRedirect(
+                    reverse('appraisals:form_detail', 
+                    kwargs={'pk': instance.appraisal_id})
+                )
+        
+        # If form is invalid
+        return self.render(form)
+    
+class AppraiserWizard(BaseAppraisalWizard):
+    form_list = [
+        ('section_b', SectionBForm),  # General Traits
+        # ('section_c', SectionCForm),  # Local Staff Appraisal
+        # ('section_d', SectionDForm),  # Adverse Appraisal
+    ]
+    
+    templates = {
+        'section_b': 'appraisals/wizard/section_b.html',
+        # 'section_c': 'appraisals/wizard/section_c.html',
+        # 'section_d': 'appraisals/wizard/section_d.html',
+    }
+
+    def dispatch(self, request, *args, **kwargs):
+        appraisal = get_object_or_404(Appraisal, id=kwargs['appraisal_id'])
+        if appraisal.appraiser.user != request.user:
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+
 
 class AppraisalAssignView(LoginRequiredMixin, PermissionRequiredMixin, View):
     """
@@ -420,53 +566,6 @@ def toggle_period(request, pk):
             'status': 'error',
             'message': 'An error occurred while updating the period'
         }, status=500)
-
-class AppraisalEditView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
-    """
-    Handles the editing of appraisals and their associated academic qualifications.
-    Provides form handling for both the main appraisal form and academic qualification formset.
-    """
-    model = Appraisal
-    form_class = AppraisalForm
-    template_name = 'appraisals/appraisal_form.html'
-    permission_required = 'appraisals.change_appraisal'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.request.POST:
-            context['academic_formset'] = AcademicQualificationFormSet(
-                self.request.POST,
-                instance=self.object,
-                prefix='qualifications'
-            )
-        else:
-            context['academic_formset'] = AcademicQualificationFormSet(
-                instance=self.object,
-                prefix='qualifications'
-            )
-        return context
-
-    def form_valid(self, form):
-        context = self.get_context_data()
-        academic_formset = context['academic_formset']
-        
-        if academic_formset.is_valid():
-            self.object = form.save(commit=False)
-            self.object.last_modified_by = self.request.user
-            self.object.last_modified_date = timezone.now()
-            self.object.save()
-            
-            academic_formset.instance = self.object
-            academic_formset.save()
-            
-            messages.success(self.request, 'Appraisal updated successfully.')
-            return redirect('appraisals:appraisal_detail', pk=self.object.pk)
-        
-        return self.render_to_response(self.get_context_data(form=form))
-
-    def form_invalid(self, form):
-        messages.error(self.request, 'Please correct the errors below.')
-        return super().form_invalid(form)
 
 def get_appraisal_context(request):
     """
@@ -676,18 +775,6 @@ def role_update(request, employee_id):
             'error': str(e)
         }, status=400)
 
-class AppraisalCreateView(CreateView):
-    model = Appraisal
-    template_name = 'appraisals/appraisal_form.html'
-    fields = [
-        'employee',
-        'appraiser',
-        'review_period_start',
-        'review_period_end',
-        'status'
-    ]
-    success_url = reverse_lazy('appraisals:form_list')
-
 class AppraisalReviewView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = Appraisal
     template_name = 'appraisals/appraisal_form.html'
@@ -743,3 +830,83 @@ class AppraisalReviewView(LoginRequiredMixin, PermissionRequiredMixin, UpdateVie
         # Add any additional processing before saving
         form.instance.last_modified_by = self.request.user
         return super().form_valid(form)
+
+class AppraiseeUpdateView(LoginRequiredMixin, UpdateView):
+    model = Appraisal
+    form_class = SectionAForm
+    template_name = 'appraisals/wizard/section_a.html'
+    
+    def get_object(self):
+        return get_object_or_404(
+            Appraisal, 
+            appraisal_id=self.kwargs.get('appraisal_id')
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['can_save_draft'] = True
+        
+        if self.request.POST:
+            context['qualification_formset'] = QualificationFormSet(
+                self.request.POST, 
+                instance=self.object.employee,
+                prefix='qualification_set'
+            )
+            context['module_formset'] = ModuleFormSet(
+                self.request.POST, 
+                instance=self.object.employee,
+                prefix='module_set'
+            )
+        else:
+            context['qualification_formset'] = QualificationFormSet(
+                instance=self.object.employee,
+                prefix='qualification_set'
+            )
+            context['module_formset'] = ModuleFormSet(
+                instance=self.object.employee,
+                prefix='module_set'
+            )
+        
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        qualification_formset = context.get('qualification_formset')
+        module_formset = context.get('module_formset')
+        
+        if (qualification_formset.is_valid() and 
+            module_formset.is_valid()):
+            
+            # Save the main form
+            self.object = form.save(commit=False)
+            
+            # Handle draft save
+            if self.request.POST.get('save_draft') == 'true':
+                self.object.status = 'draft'
+            else:
+                self.object.status = 'pending'
+            
+            self.object.save()
+            
+            # Save formsets
+            qualification_formset.instance = self.object.employee
+            qualification_formset.save()
+            
+            module_formset.instance = self.object.employee
+            module_formset.save()
+            
+            # Add success message
+            msg = 'Form saved as draft successfully.' if self.request.POST.get('save_draft') == 'true' else 'Form submitted successfully.'
+            messages.success(self.request, msg)
+            
+            # Redirect to detail view
+            return HttpResponseRedirect(
+                reverse('appraisals:form_detail', 
+                kwargs={'pk': self.object.appraisal_id})
+            )
+        
+        return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)

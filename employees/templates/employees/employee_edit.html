@@ -324,6 +324,31 @@
                         </div>
                     </div>
 
+                    <!-- Publications Section -->
+                    <div class="space-y-6 sm:col-span-2">
+                        <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 w-full">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-lg font-medium leading-6 text-gray-900">Publications</h3>
+                                {{ publication_formset.management_form }}
+                                <button type="button" 
+                                        hx-get="{% url 'employees:add_publication_form' %}"
+                                        hx-target="#publications-list"
+                                        hx-swap="beforeend"
+                                        hx-vars="total_forms:document.querySelector('#id_publication_set-TOTAL_FORMS').value"
+                                        class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                                    Add Publication
+                                </button>
+                            </div>
+
+                            <div id="publications-list" class="space-y-4">
+                                {% for form in publication_formset %}
+                                    {% include "employees/partials/_publication_form.html" with form=form index=forloop.counter0 %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                
                     <!-- Document Upload Section -->
                     <div class="space-y-6 sm:col-span-2">
                         <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 w-full">
@@ -502,4 +527,4 @@
     </div>
 </div>
 
-{% endblock %} 
+{% endblock %}
