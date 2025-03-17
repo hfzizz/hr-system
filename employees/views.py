@@ -811,3 +811,4 @@ class SettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         messages.error(self.request, "You don't have permission to access settings.")
         return redirect('dashboard')
 
+
