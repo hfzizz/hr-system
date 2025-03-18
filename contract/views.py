@@ -598,7 +598,7 @@ class ContractListView(LoginRequiredMixin, View):
             return redirect('contract:submission')
             
         contract_employees = Employee.objects.filter(
-            appointment_type__name='Contract'
+            appointment_type='Contract'
         ).select_related('department')
 
         employees_data = []
