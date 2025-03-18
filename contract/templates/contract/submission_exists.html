@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto">
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+            <div class="px-6 py-8">
+                <div class="flex items-center justify-center mb-6">
+                    <svg class="h-12 w-12 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                
+                <h1 class="text-2xl font-bold text-center text-gray-900 mb-4">
+                    Contract Renewal Form Already Submitted
+                </h1>
+                
+                <div class="text-center mb-6">
+                    <p class="text-gray-600">
+                        You have already submitted a contract renewal form that is currently being processed.
+                    </p>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">Current Submission Status</h2>
+                    <div class="flex items-center justify-center">
+                        <span class="px-4 py-2 rounded-full text-sm font-semibold
+                            {% if submission.status == 'pending' %}
+                                bg-yellow-100 text-yellow-800
+                            {% elif submission.status == 'smt_review' %}
+                                bg-blue-100 text-blue-800
+                            {% elif submission.status == 'sent_back' %}
+                                bg-red-100 text-red-800
+                            {% endif %}">
+                            {% if submission.status == 'pending' %}
+                                Pending HR Review
+                            {% elif submission.status == 'smt_review' %}
+                                Currently Under SMT Review
+                            {% elif submission.status == 'sent_back' %}
+                                HR Sent Back to Employee
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="text-gray-600 text-sm text-center mb-6">
+                    <p>Submission Date: {{ submission.submission_date|date:"F d, Y" }}</p>
+                </div>
+
+                <div class="flex justify-center">
+                    <a href="{% url 'dashboard' %}" 
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                        Return to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

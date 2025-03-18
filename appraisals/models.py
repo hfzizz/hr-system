@@ -72,6 +72,13 @@ class Appraisal(models.Model):
         null=True,
         blank=True
     )
+    appraiser_secondary = models.ForeignKey(
+        Employee,
+        on_delete=models.SET_NULL,
+        related_name='secondary_appraisals',
+        null=True,
+        blank=True
+    )
     date_created = models.DateTimeField(default=timezone.now)
     appraisal_year = models.IntegerField(default=now().year)
     status = models.CharField(
@@ -146,6 +153,16 @@ class Appraisal(models.Model):
         if self.appraiser and self.employee and self.appraiser == self.employee:
             raise ValidationError({
                 'appraiser': 'Appraiser cannot be the same as the employee being appraised.'
+            })
+        
+        if self.appraiser_secondary and self.employee and self.appraiser_secondary == self.employee:
+            raise ValidationError({
+                'appraiser_secondary': 'Secondary appraiser cannot be the same as the employee being appraised.'
+            })
+        
+        if self.appraiser and self.appraiser_secondary and self.appraiser == self.appraiser_secondary:
+            raise ValidationError({
+                'appraiser_secondary': 'Secondary appraiser cannot be the same as the primary appraiser.'
             })
 
         super().clean()
