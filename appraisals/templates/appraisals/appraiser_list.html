@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% load static %}
-{% load table_tags %}
 
 {% block title %}Appraisals - HR System{% endblock %}
 
@@ -232,7 +231,7 @@
                                     {{ item.secondary_appraiser.get_full_name|default:"Not assigned" }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button onclick="openAssignModal('{{ item.id }}')" class="text-indigo-600 hover:text-indigo-900">Assign</button>
+                                    <button onclick="console.log('BUTTON CLICKED!'); openAssignModal('{{ item.employee_id }}', '{{ item.get_full_name }}')">Assign</button>
                                 </td>
                             </tr>
                             {% empty %}
@@ -252,24 +251,121 @@
 
         <div id="roles-tab" class="tab-content hidden mt-8">
             <!-- Table Controls -->
-            <div class="mb-4 sm:flex sm:items-center sm:justify-between">
-                <!-- Filters -->
-                <div class="sm:flex-1">
-                    {% render_table_filters departments=departments %}
+            <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <!-- Search Box -->
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        id="role-search-input"
+                        placeholder="Search employees..."
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    >
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
                 </div>
-                
-                <!-- Column Selector -->
-                <div class="mt-3 sm:mt-0 sm:ml-4">
-                    {% render_column_selector columns=role_columns %}
+
+                <!-- Department Filter -->
+                <div>
+                    <select id="role-department-filter" class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                        <option value="">All Departments</option>
+                        {% for department in departments %}
+                        <option value="{{ department.name }}">{{ department.name }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
-            
+
             <!-- Data table -->
-            {% render_data_table items=role_list columns=role_columns table_config=role_config empty_message="No employees found." %}
+            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200" id="roles-table">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    ID
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Employee
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Department
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Role
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for item in assign_employees %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ item.employee_id }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10">
+                                            {% if item.profile_picture %}
+                                                <img class="h-10 w-10 rounded-full" src="{{ item.profile_picture.url }}" alt="">
+                                            {% else %}
+                                                <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                                    <span class="text-gray-500 font-medium">{{ item.first_name|first }}{{ item.last_name|first }}</span>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">
+                                                {{ item.get_full_name }}
+                                            </div>
+                                            <div class="text-sm text-gray-500">
+                                                {{ item.email }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ item.department.name }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                        {% if item.roles.all %}
+                                            {{ item.roles.all|join:", " }}
+                                        {% else %}
+                                            No roles assigned
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <form method="post" action="{% url 'appraisals:role_update' item.employee_id %}" class="inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="add">
+                                        <button type="submit" class="text-green-600 hover:text-green-900 mr-2">Add Role</button>
+                                    </form>
+                                    <form method="post" action="{% url 'appraisals:role_update' item.employee_id %}" class="inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="remove">
+                                        <button type="submit" class="text-red-600 hover:text-red-900">Remove Role</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                                    No employees found
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
-        <!-- Assign Modal -->
-        {% include "appraisals/includes/assign_modal.html" %}
         {% else %}
         <!-- Forbidden View -->
         <div class="text-center py-16">
@@ -278,201 +374,6 @@
         </div>
         {% endif %}
 {% endblock %}
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('search-input');
-    const departmentFilter = document.getElementById('department-filter');
-    const tableRows = document.querySelectorAll('#appraisers-table tbody tr');
-    const selectAllCheckbox = document.getElementById('select-all');
-    const employeeCheckboxes = document.querySelectorAll('.employee-checkbox');
-    
-    // Filter functionality
-    function filterTable() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const departmentValue = departmentFilter.value.toLowerCase();
-
-        tableRows.forEach(row => {
-            if (row.children.length === 1) return; // Skip empty state row
-
-            const name = row.querySelector('[data-column="employee"]')?.textContent.trim().toLowerCase() || '';
-            const department = row.querySelector('[data-column="department"]')?.textContent.trim().toLowerCase() || '';
-
-            const matchesSearch = searchTerm === '' || name.includes(searchTerm);
-            const matchesDepartment = departmentValue === '' || department === departmentValue;
-
-            row.style.display = (matchesSearch && matchesDepartment) ? '' : 'none';
-        });
-    }
-
-    // Add event listeners for filtering
-    searchInput?.addEventListener('input', filterTable);
-    departmentFilter?.addEventListener('change', filterTable);
-
-    // Column visibility functionality
-    function loadColumnPreferences() {
-        const preferences = JSON.parse(localStorage.getItem('appraiserTableColumns') || '{}');
-        
-        document.querySelectorAll('.column-toggle').forEach(toggle => {
-            const column = toggle.dataset.column;
-            // If preference exists, use it; otherwise default to checked
-            const isVisible = preferences.hasOwnProperty(column) ? preferences[column] : true;
-            
-            // Set checkbox state
-            toggle.checked = isVisible;
-            
-            // Set initial visibility
-            document.querySelectorAll(`[data-column="${column}"]`).forEach(cell => {
-                if (!isVisible) {
-                    cell.classList.add('hidden');
-                }
-            });
-        });
-    }
-
-    function saveColumnPreferences() {
-        const preferences = {};
-        document.querySelectorAll('.column-toggle').forEach(toggle => {
-            preferences[toggle.dataset.column] = toggle.checked;
-        });
-        localStorage.setItem('appraiserTableColumns', JSON.stringify(preferences));
-    }
-
-    // Handle column toggle changes
-    document.querySelectorAll('.column-toggle').forEach(toggle => {
-        toggle.addEventListener('change', function() {
-            const column = this.dataset.column;
-            const isVisible = this.checked;
-            
-            document.querySelectorAll(`[data-column="${column}"]`).forEach(cell => {
-                if (isVisible) {
-                    cell.classList.remove('hidden');
-                } else {
-                    cell.classList.add('hidden');
-                }
-            });
-            
-            saveColumnPreferences();
-        });
-    });
-
-    // Select all functionality
-    if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', function() {
-            employeeCheckboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
-            });
-        });
-    }
-
-    // Initialize sort states for sortable columns
-    const sortStates = {
-        'id': { ascending: true },
-        'employee': { ascending: true },
-        'department': { ascending: true }
-    };
-
-    function sortTable(column) {
-        const tbody = document.querySelector('#appraisers-table tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr:not(:last-child)'));
-        
-        // Get current sort state for this column
-        const isAscending = sortStates[column].ascending;
-        
-        rows.sort((a, b) => {
-            let aValue = a.querySelector(`[data-column="${column}"]`)?.textContent.trim() || '';
-            let bValue = b.querySelector(`[data-column="${column}"]`)?.textContent.trim() || '';
-            
-            // Compare values based on sort direction
-            if (isAscending) {
-                return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-            } else {
-                return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-            }
-        });
-
-        // Clear and repopulate table
-        rows.forEach(row => tbody.appendChild(row));
-
-        // Update sort icons
-        document.querySelectorAll('[data-sort]').forEach(header => {
-            const icon = header.querySelector('.sort-icon');
-            if (header.dataset.sort === column) {
-                // Update icon for current column
-                icon.style.transform = isAscending ? 'rotate(0deg)' : 'rotate(180deg)';
-                icon.style.opacity = '1';
-            } else {
-                // Reset other columns
-                icon.style.transform = 'rotate(0deg)';
-                icon.style.opacity = '0.5';
-            }
-        });
-
-        // Toggle sort state for next click
-        sortStates[column].ascending = !isAscending;
-    }
-
-    // Add click listeners to all sortable columns
-    document.querySelectorAll('[data-sort]').forEach(header => {
-        header.addEventListener('click', () => {
-            const column = header.dataset.sort;
-            sortTable(column);
-        });
-    });
-
-    // Load saved column preferences on page load
-    loadColumnPreferences();
-    
-    // Initial sort by ID
-    if (document.querySelector('#sort-id')) {
-        sortTable('id');
-    }
-    
-    // Handle tab switching
-    const tabButtons = document.querySelectorAll('.tab-button');
-    const tabContents = document.querySelectorAll('.tab-content');
-
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const target = this.dataset.tab;
-            
-            // Update button styles
-            tabButtons.forEach(btn => {
-                btn.classList.remove('border-indigo-500', 'text-indigo-600');
-                btn.classList.add('border-transparent', 'text-gray-500');
-            });
-            this.classList.remove('border-transparent', 'text-gray-500');
-            this.classList.add('border-indigo-500', 'text-indigo-600');
-            
-            // Show/hide tab content
-            tabContents.forEach(content => {
-                content.classList.add('hidden');
-            });
-            document.getElementById(target).classList.remove('hidden');
-        });
-    });
-
-    // Set initial active tab
-    if (tabButtons.length > 0) {
-        tabButtons[0].click();
-    }
-});
-
-// Function to open the assign modal for a specific employee
-function openAssignModal(employeeId) {
-    // Get the modal element
-    const modal = document.getElementById('assignModal');
-    
-    // Set the selected employee ID in a hidden input
-    const employeeInput = document.getElementById('selected_employee_id');
-    if (employeeInput) {
-        employeeInput.value = employeeId;
-    }
-    
-    // Show the modal
-    modal.classList.remove('hidden');
-}
-</script>
 
 <style>
     .sort-icon {
