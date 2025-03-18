@@ -186,7 +186,7 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            {% for item in appraisers %}
+                            {% for item in assign_employees %}
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <input type="checkbox" 
@@ -231,7 +231,7 @@
                                     {{ item.secondary_appraiser.get_full_name|default:"Not assigned" }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button onclick="console.log('BUTTON CLICKED!'); openAssignModal('{{ item.employee_id }}', '{{ item.get_full_name }}')">Assign</button>
+                                    <button onclick="openAssignModal('{{ item.employee_id }}', '{{ item.get_full_name }}')">Assign</button>
                                 </td>
                             </tr>
                             {% empty %}

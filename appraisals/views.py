@@ -629,9 +629,15 @@ class AppraiserListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Add non-appraisers for the Assign Appraisers tab
+        # Get employees who have ongoing appraisals (not completed)
+        ongoing_appraisal_employee_ids = Appraisal.objects.exclude(
+            status='completed'
+        ).values_list('employee_id', flat=True).distinct()
+        
+        # Add non-appraisers for the Assign Appraisers tab (excluding those with ongoing appraisals)
         context['assign_employees'] = Employee.objects.exclude(
-            roles__name='Appraiser'
+            # Exclude employees who have ongoing appraisals
+            id__in=ongoing_appraisal_employee_ids
         ).select_related(
             'user',
             'department'
@@ -651,7 +657,8 @@ class AppraiserListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
             if appraisal.employee_id not in employee_appraiser_assignments:
                 employee_appraiser_assignments[appraisal.employee_id] = {
                     'primary': appraisal.appraiser,
-                    'secondary': appraisal.appraiser_secondary
+                    'secondary': appraisal.appraiser_secondary,
+                    'status': appraisal.status  # Add status to track whether it's completed
                 }
         
         context['employee_appraisers'] = employee_appraiser_assignments

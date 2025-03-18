@@ -16,7 +16,7 @@ urlpatterns = [
     path('appraisers/', views.AppraiserListView.as_view(), name='appraiser_list'),
     path('appraisers/assign/<int:employee_id>/', views.AppraisalAssignView.as_view(), name='appraiser_assign'),
     path('appraisers/roles/', views.AppraiserRoleView.as_view(), name='appraiser_roles'),
-    path('appraisers/role/<int:employee_id>/', views.role_update, name='role_update'),
+    path('appraisers/role/<str:employee_id>/', views.role_update, name='role_update'),
     
     # Appraisal Forms
     path('forms/', views.AppraisalListView.as_view(), name='form_list'),
