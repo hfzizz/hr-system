@@ -118,8 +118,6 @@ class AppraisalListView(LoginRequiredMixin, ListView):
                 Q(employee__user=user) |  # User's own appraisals
                 Q(appraiser__user=user)   # Appraisals where user is appraiser
             ).order_by('-date_created')
-        
-        
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -129,34 +127,10 @@ class AppraisalListView(LoginRequiredMixin, ListView):
         context['departments'] = Department.objects.all()
         
         # My Appraisals tab - show only appraisals where user is the employee
-        context['pending_appraisals'] = Appraisal.objects.filter(
+        context['my_appraisals'] = Appraisal.objects.filter(
             employee__user=user,
-            status='pending'
-        ).select_related('employee__user', 'appraiser__user')  # Add select_related
-        
-        # Debug print
-        print("Setting up pending columns...")
-        
-        context['pending_columns'] = [
-            {'id': 'review_period', 'label': 'Review Period', 'value': 'review_period_start'},
-            {'id': 'deadline', 'label': 'Deadline', 'value': 'review_period_end'},
-            {'id': 'appraiser', 'label': 'Appraiser', 'value': 'appraiser'},
-            {'id': 'status', 'label': 'Status', 'value': 'status'},
-            {
-                'id': 'actions',
-                'label': 'Actions',
-                'value': lambda x: {  # Pass a dictionary with required values
-                    'appraisal_id': x.appraisal_id,
-                    'status': x.status
-                },
-                'template': 'appraisals/includes/pending_actions.html'
-            }
-        ]
-        
-        # Debug the first record
-        first_appraisal = context['pending_appraisals'].first()
-        if first_appraisal:
-            print(f"First appraisal ID: {first_appraisal.appraisal_id}")
+            status='pending' or 'pending_response',
+        ).select_related('employee__user', 'appraiser__user', 'appraiser_secondary')  # Add select_related
         
         # Review tab - show appraisals where user is the appraiser
         context['review_appraisals'] = Appraisal.objects.filter(
@@ -170,11 +144,6 @@ class AppraisalListView(LoginRequiredMixin, ListView):
             status='completed'
         )
         
-        # Keep existing configurations
-        context['pending_config'] = {
-            'actions': True,
-            'action_url_name': 'appraisals:form_detail'
-        }
         # ... rest of the configurations remain the same
 
         # HR View - All Appraisals

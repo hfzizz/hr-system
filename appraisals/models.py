@@ -56,7 +56,12 @@ class Appraisal(models.Model):
     appraisal_id = models.AutoField(primary_key=True)
     STATUS_CHOICES = [
         ('pending', 'Pending'),
-        ('in_review', 'In Review'),
+        ('primary_review', 'Under Primary Appraiser Review'),
+        ('secondary_review', 'Under Secondary Appraiser Review'),
+        ('pending_response', 'Pending Response'),
+        ('disagreed', 'Disagreed'),
+        ('reassigned', 'Reassigned'),
+        ('ressigned_review', 'Under Reassigned Appraiser Review'),
         ('completed', 'Completed')
     ]
 
