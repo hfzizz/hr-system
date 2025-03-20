@@ -90,6 +90,25 @@ def create_period(request):
         logger.error(f"Error creating appraisal period: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
+@login_required
+def appraisal_delete(request):
+    if request.method == 'POST':
+        appraisal_id = request.POST.get('appraisal_id')
+        user = request.user
+        
+        # Only allow HR users or staff to delete appraisals
+        if user.is_staff or user.groups.filter(name=HR_GROUP_NAME).exists():
+            try:
+                appraisal = Appraisal.objects.get(appraisal_id=appraisal_id)
+                appraisal.delete()
+                messages.success(request, "Appraisal successfully deleted.")
+            except Appraisal.DoesNotExist:
+                messages.error(request, "Appraisal not found.")
+        else:
+            messages.error(request, "You don't have permission to delete appraisals.")
+            
+    return redirect('appraisals:form_list')
+
 # ============================================================================
 # Appraisal Management Views
 # ============================================================================
@@ -118,8 +137,6 @@ class AppraisalListView(LoginRequiredMixin, ListView):
                 Q(employee__user=user) |  # User's own appraisals
                 Q(appraiser__user=user)   # Appraisals where user is appraiser
             ).order_by('-date_created')
-        
-        
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -127,124 +144,31 @@ class AppraisalListView(LoginRequiredMixin, ListView):
         
         # Common data
         context['departments'] = Department.objects.all()
+        context['periods'] = AppraisalPeriod.objects.all().order_by('-start_date')
         
         # My Appraisals tab - show only appraisals where user is the employee
-        context['pending_appraisals'] = Appraisal.objects.filter(
+        context['my_appraisals'] = Appraisal.objects.filter(
             employee__user=user,
-            status='pending'
-        ).select_related('employee__user', 'appraiser__user')  # Add select_related
+            status='pending' or 'pending_response',
+        ).select_related('employee__user', 'appraiser__user', 'appraiser_secondary')  # Add select_related
         
-        # Debug print
-        print("Setting up pending columns...")
-        
-        context['pending_columns'] = [
-            {'id': 'review_period', 'label': 'Review Period', 'value': 'review_period_start'},
-            {'id': 'deadline', 'label': 'Deadline', 'value': 'review_period_end'},
-            {'id': 'appraiser', 'label': 'Appraiser', 'value': 'appraiser'},
-            {'id': 'status', 'label': 'Status', 'value': 'status'},
-            {
-                'id': 'actions',
-                'label': 'Actions',
-                'value': lambda x: {  # Pass a dictionary with required values
-                    'appraisal_id': x.appraisal_id,
-                    'status': x.status
-                },
-                'template': 'appraisals/includes/pending_actions.html'
-            }
-        ]
-        
-        # Debug the first record
-        first_appraisal = context['pending_appraisals'].first()
-        if first_appraisal:
-            print(f"First appraisal ID: {first_appraisal.appraisal_id}")
-        
-        # Review tab - show appraisals where user is the appraiser
+        # Review tab - show appraisals where user is the primary or secondary appraiser
         context['review_appraisals'] = Appraisal.objects.filter(
-            appraiser__user=user,
-            status='submitted'
+            Q(appraiser__user=user) | Q(appraiser_secondary__user=user),
+            status__in=['primary_review', 'secondary_review']
         )
         
         # Completed tab - show completed appraisals for the user
         context['completed_appraisals'] = Appraisal.objects.filter(
-            Q(employee__user=user) | Q(appraiser__user=user),
+            Q(employee__user=user) | Q(appraiser__user=user) | Q(appraiser_secondary__user=user),
             status='completed'
         )
-        
-        # Keep existing configurations
-        context['pending_config'] = {
-            'actions': True,
-            'action_url_name': 'appraisals:form_detail'
-        }
-        # ... rest of the configurations remain the same
 
-        # HR View - All Appraisals
-        if user.is_staff or user.groups.filter(name='HR').exists():
+        # Only add all_appraisals to the context if the user is HR or staff
+        if user.groups.filter(name=HR_GROUP_NAME).exists():
             context['all_appraisals'] = Appraisal.objects.all().select_related(
-                'employee__user',
-                'employee__department',
-                'appraiser__user'
+                'employee__user', 'appraiser__user', 'appraiser_secondary'
             ).order_by('-date_created')
-
-            context['all_columns'] = [
-                {'id': 'appraisal_id', 'label': 'Appraisal ID', 'value': 'appraisal_id'},
-                {
-                    'id': 'employee', 
-                    'label': 'Employee', 
-                    'value': 'employee'  # Works due to __str__
-                },
-                {
-                    'id': 'appraiser', 
-                    'label': 'Appraiser', 
-                    'value': 'appraiser'  # Works due to __str__
-                },
-                {
-                    'id': 'department', 
-                    'label': 'Department', 
-                    'value': lambda x: str(x.employee.department) if x.employee and x.employee.department else 'Not Assigned'
-                },
-                {
-                    'id': 'review_period', 
-                    'label': 'Review Period', 
-                    'value': 'get_review_period_display'  # Add this method to model
-                },
-                {'id': 'status', 'label': 'Status', 'value': 'status'},
-                {
-                    'id': 'date_created', 
-                    'label': 'Created On', 
-                    'value': 'get_date_created_display'  # Add this method to model
-                },
-                {
-                    'id': 'actions',
-                    'label': 'Actions',
-                    'value': lambda x: {
-                        'appraisal_id': x.appraisal_id,
-                        'status': x.status
-                    },
-                    'template': 'appraisals/includes/hr_actions.html'
-                }
-            ]
-
-            # Add debug print statements
-            print("Debug: Department Access")
-            first_appraisal = context['all_appraisals'].first()
-            if first_appraisal:
-                print(f"""
-                Direct access: {first_appraisal.employee.department}
-                Str method: {str(first_appraisal.employee.department)}
-                Name field: {first_appraisal.employee.department.name if first_appraisal.employee.department else 'None'}
-                Has employee: {bool(first_appraisal.employee)}
-                Has department: {bool(first_appraisal.employee.department if first_appraisal.employee else None)}
-                """)
-
-            # Table configuration similar to employee list
-            context['all_config'] = {
-                'actions': True,
-                'action_url_name': 'appraisals:form_detail',
-                'enable_sorting': True,
-                'default_sort': '-date_created',
-                'filters': ['department', 'status'],
-                'search': True
-            }
 
         return context
 class AppraisalDetailView(LoginRequiredMixin, DetailView):
@@ -597,101 +521,81 @@ class AppraisalDashboardView(LoginRequiredMixin, TemplateView):
 
 class AppraiserListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     """
-    Display and manage list of appraisers
+    Display and manage list of appraisers with traditional HTML table
     """
-    model = Employee  # Changed to Employee since we're listing employees
+    model = Employee
     template_name = 'appraisals/appraiser_list.html'
     permission_required = 'appraisals.view_appraisal'
-    context_object_name = 'employees'  # Changed to match the model
+    context_object_name = 'appraisers'  # Changed to match the template context variable
 
     def get_queryset(self):
-        # Get all employees except those who are already appraisers
-        return Employee.objects.exclude(
-            user__groups__name='Appraiser'
-        ).select_related(
-            'user', 
-            'department'
-        ).prefetch_related('roles')
+        """
+        Return employees who have the Appraiser role assigned
+        """
+        # Get employees who are appraisers
+        return Employee.objects.filter(
+            roles__name='Appraiser'
+        ).select_related('user', 'department')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Get appraisers with related data
-        context['appraisers'] = Employee.objects.filter(
-            user__groups__name='Appraiser'
-        ).select_related('user', 'department')
+        # Get employees who have ongoing appraisals (not completed)
+        ongoing_appraisal_employee_ids = Appraisal.objects.exclude(
+            status='completed'
+        ).values_list('employee_id', flat=True).distinct()
+        
+        # Add non-appraisers for the Assign Appraisers tab (excluding those with ongoing appraisals)
+        context['assign_employees'] = Employee.objects.exclude(
+            # Exclude employees who have ongoing appraisals
+            id__in=ongoing_appraisal_employee_ids
+        ).select_related(
+            'user',
+            'department'
+        )
         
         # Common data
         context['departments'] = Department.objects.all()
-        context['periods'] = AppraisalPeriod.objects.all()
+        context['periods'] = AppraisalPeriod.objects.all().order_by('-start_date')
         
-         # Assign Appraisers tab configuration - shows only employees WITHOUT appraiser role
-        context['assign_list'] = self.get_queryset()  # Get non-appraiser employees
-
-        # Assign Appraisers tab configuration - shows appraiser roled employees
-        context['assign_columns'] = [
-            {'id': 'employee_id', 'label': 'Employee ID', 'value': 'employee_id'},
-            {'id': 'name', 'label': 'Name', 'value': 'get_full_name'},
-            {'id': 'department', 'label': 'Department', 'value': 'department'},
-            {'id': 'post', 'label': 'Position', 'value': 'post'},
-            {'id': 'status', 'label': 'Status', 'value': 'employee_status'},
-            {
-                'id': 'actions',
-                'label': 'Actions',
-                'value': lambda x: {
-                    'employee_id': str(x.employee_id),
-                    'appraisers': context['appraisers'],
-                    'periods': context['periods']
-                },
-                'template': 'appraisals/includes/assign_actions.html'
-            }
-        ]
-
-        context['assign_config'] = {
-            'actions': True,
-            'action_url_name': 'appraisals:appraiser_assign',
-            'enable_sorting': True,
-            'filters': ['department'],
-            'search': True
-        }
+        # Current assignments data - employees with their assigned appraisers
+        employee_appraiser_assignments = {}
+        appraisals = Appraisal.objects.all().select_related(
+            'employee', 'appraiser', 'appraiser_secondary'
+        )
         
-        # Role management tab configuration - shows all employees except those with Appraiser role
-        context['role_list'] = Employee.objects.exclude(
-            user__groups__name='Appraiser'
-        ).select_related(
-            'user', 
-            'department'
-        ).prefetch_related('roles')
+        for appraisal in appraisals:
+            if appraisal.employee_id not in employee_appraiser_assignments:
+                employee_appraiser_assignments[appraisal.employee_id] = {
+                    'primary': appraisal.appraiser,
+                    'secondary': appraisal.appraiser_secondary,
+                    'status': appraisal.status  # Add status to track whether it's completed
+                }
         
-        # Debug print
-        print("Debug: Checking employee IDs")
+        context['employee_appraisers'] = employee_appraiser_assignments
         
-        context['role_columns'] = [
-            {'id': 'employee_id', 'label': 'Employee ID', 'value': 'employee_id'},
-            {'id': 'name', 'label': 'Name', 'value': 'get_full_name'},
-            {'id': 'department', 'label': 'Department', 'value': 'department'},
-            {'id': 'post', 'label': 'Position', 'value': 'post'},
-            {'id': 'status', 'label': 'Status', 'value': 'employee_status'},
-            {
-                'id': 'actions',
-                'label': 'Actions',
-                'value': lambda employee: {    # Changed parameter name for clarity
-                    'id': employee.id,         # Database ID
-                    'employee_code': employee.employee_id,  # Display code (EMP001)
-                    'name': employee.get_full_name(),       # Full name for display
-                    'is_appraiser': employee.roles.filter(name='Appraiser').exists()
-                },
-                'template': 'appraisals/includes/role_actions.html'
-            }
-        ]
-
-        # Debug first record's value
-        if context['role_list']:
-            first_emp = context['role_list'][0]
-            action_value = context['role_columns'][-1]['value'](first_emp)
-            print(f"Debug - First record value: {action_value}")
-
         return context
+    
+@login_required
+def get_appraisers_api(request):
+    """API endpoint to fetch appraisers for the modal"""
+    from employees.models import Employee  # Import here to avoid circular imports
+    
+    # Get all employees who can be appraisers
+    appraisers = Employee.objects.filter(roles__name='Appraiser').select_related('department')
+    
+    # Format the data for the frontend
+    appraisers_data = [
+        {
+            'id': str(appraiser.id), 
+            'name': appraiser.get_full_name(),
+            'position': appraiser.post,
+            'department': appraiser.department.name if appraiser.department else ''
+        }
+        for appraiser in appraisers
+    ]
+    
+    return JsonResponse({'appraisers': appraisers_data})
 
 class AppraiserRoleView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
     """

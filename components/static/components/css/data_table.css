@@ -47,3 +47,13 @@ th {
 .column-ghost {
     animation: ghostAppear 0.2s ease;
 } 
+
+/* Add to components/static/components/css/data_table.css */
+tr[data-href] {
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.row-hover {
+    background-color: rgba(79, 70, 229, 0.05);
+}

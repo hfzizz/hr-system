@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}SMT Review - Contract {{ contract.contract_id }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">SMT Review - Contract {{ contract.contract_id }}</h1>
+    
+    <!-- Navigation Tabs -->
+    <div class="border-b border-gray-200 mb-6">
+        <nav class="-mb-px flex space-x-8">
+            <a href="{% url 'contract:view_all_submissions' %}" 
+               class="{% if not request.GET.filter %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
+                Pending Reviews
+            </a>
+            <a href="{% url 'contract:view_all_submissions' %}?filter=approved" 
+               class="{% if request.GET.filter == 'approved' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
+                Approved Contracts
+            </a>
+            <a href="{% url 'contract:view_all_submissions' %}?filter=rejected" 
+               class="{% if request.GET.filter == 'rejected' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
+                Rejected Contracts
+            </a>
+        </nav>
+    </div>
+    
+    <!-- Basic Contract Information -->
+    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        <h2 class="text-xl font-semibold mb-4">Contract Information</h2>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <p class="text-sm text-gray-600">Employee Name</p>
+                <p class="font-medium">{{ first_name }} {{ last_name }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Department</p>
+                <p class="font-medium">{{ department }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">IC Number</p>
+                <p class="font-medium">{{ ic_no }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Contract Type</p>
+                <p class="font-medium">{{ contract.get_contract_type_display }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Submission Date</p>
+                <p class="font-medium">{{ contract.submission_date|date:"F d, Y" }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Status</p>
+                <p class="font-medium">{{ contract.get_status_display }}</p>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <a href="{% url 'contract:review' contract.id %}" 
+               class="text-blue-600 hover:underline">
+                View Full Contract Details
+            </a>
+        </div>
+    </div>
+    
+    <!-- Display Dean's comments -->
+    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        <h2 class="text-xl font-semibold mb-4">Dean's Comments</h2>
+        {% if dean_review %}
+            <div class="mb-4">
+                <p class="text-gray-700">{{ dean_review.comments }}</p>
+                <p class="text-sm text-gray-500 mt-2">
+                    Submitted by: {{ dean_review.dean.get_full_name }} on {{ dean_review.created_at|date:"F d, Y" }}
+                </p>
+                {% if dean_review.document_name %}
+                    <a href="{% url 'contract:download_dean_document' contract.id dean_review.id %}" 
+                       class="text-blue-500 hover:underline mt-2 inline-block">
+                        Download supporting document: {{ dean_review.document_name }}
+                    </a>
+                {% endif %}
+            </div>
+        {% else %}
+            <p class="text-gray-600">No dean review available for this contract.</p>
+        {% endif %}
+    </div>
+    
+    <!-- SMT Decision Form -->
+    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        <h2 class="text-xl font-semibold mb-4">SMT Decision</h2>
+        <form id="smt-decision-form" method="post" action="{% url 'contract:smt_decision' contract.id %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="decision">
+                    Decision
+                </label>
+                <select id="decision" name="decision" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <option value="">Select a decision</option>
+                    <option value="approved">Approve</option>
+                    <option value="rejected">Reject</option>
+                    <option value="sent_back">Send Back for Revision</option>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="comments">
+                    Comments
+                </label>
+                <textarea id="comments" name="comments" rows="5" 
+                          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="smt_document">
+                    Upload Document (Optional)
+                </label>
+                <div class="flex items-center">
+                    <input type="file" id="smt_document" name="smt_document" 
+                           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                           accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
+                </div>
+                <p class="text-sm text-gray-500 mt-1">Upload a report or supporting document (PDF, Word, Excel, PowerPoint)</p>
+                <div id="file-preview" class="mt-2 hidden">
+                    <p class="text-sm font-medium">Selected file: <span id="file-name"></span></p>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between">
+                <button type="submit" id="submitDecisionBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Submit Decision
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('smt-decision-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const decision = document.getElementById('decision').value;
+    const comments = document.getElementById('comments').value;
+    
+    if (!decision) {
+        alert('Please select a decision.');
+        return;
+    }
+    
+    if ((decision === 'rejected' || decision === 'sent_back') && !comments.trim()) {
+        alert('Comments are required for rejection or revision requests.');
+        return;
+    }
+    
+    if (confirm('Are you sure you want to submit this decision?')) {
+        this.submit();
+    }
+});
+
+// File preview functionality
+document.getElementById('smt_document').addEventListener('change', function() {
+    const filePreview = document.getElementById('file-preview');
+    const fileName = document.getElementById('file-name');
+    
+    if (this.files.length > 0) {
+        fileName.textContent = this.files[0].name;
+        filePreview.classList.remove('hidden');
+    } else {
+        filePreview.classList.add('hidden');
+    }
+});
+</script>
+{% endblock %} 

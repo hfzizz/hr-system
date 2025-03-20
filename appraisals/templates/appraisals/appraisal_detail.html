@@ -247,6 +247,18 @@
                 </div>
             </div>
         </div>
-    </div>
+
+        <!-- Publication -->
+         <div class="rounded-lg bg-white">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-base font-semibold leading-6 text-gray-900">Publications</h3>
+                <div class ="mt-4 rounded-md bg-gray-50 p-4">
+                    <div class="text-sm text-gray-900">
+                        {{ appraisal.publications|default:"No publication information available"|linebreaks }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
 </div>
 {% endblock %}

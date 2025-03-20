@@ -40,7 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'employees',
     'appraisals',
+    'contract',
     'hr_system',
+    'employee_promotion',
     'widget_tweaks',
     'roles',
     'components',
@@ -78,6 +80,9 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'appraisals.context_processors.appraisal_context_processor',
+                'contract.context_processors.contract_status',
+                'contract.context_processors.notifications',
+                'contract.context_processors.contract_context',
             ],
         },
     },
@@ -133,7 +138,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Brunei'
 
 USE_I18N = True
 
@@ -170,3 +175,18 @@ AUTHENTICATION_BACKENDS = [
 FILE_UPLOAD_PERMISSIONS = 0o644
 
 
+
+
+# Cache configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache_table',
+    }
+}
+
+# OpenAI Settings
+OPENAI_API_KEY = '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'  # Better to use environment variable
+
+# Add this near the top of the file
+SCOPUS_API_KEY = "b00d238c0e21d681e480dfec863bbb9f"

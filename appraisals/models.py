@@ -56,7 +56,12 @@ class Appraisal(models.Model):
     appraisal_id = models.AutoField(primary_key=True)
     STATUS_CHOICES = [
         ('pending', 'Pending'),
-        ('in_review', 'In Review'),
+        ('primary_review', 'Under Primary Appraiser Review'),
+        ('secondary_review', 'Under Secondary Appraiser Review'),
+        ('pending_response', 'Pending Response'),
+        ('disagreed', 'Disagreed'),
+        ('reassigned', 'Reassigned'),
+        ('reassigned_review', 'Under Reassigned Appraiser Review'),
         ('completed', 'Completed')
     ]
 
@@ -69,6 +74,13 @@ class Appraisal(models.Model):
         Employee, 
         on_delete=models.CASCADE, 
         related_name='conducted_appraisals',
+        null=True,
+        blank=True
+    )
+    appraiser_secondary = models.ForeignKey(
+        Employee,
+        on_delete=models.SET_NULL,
+        related_name='secondary_appraisals',
         null=True,
         blank=True
     )
@@ -87,6 +99,7 @@ class Appraisal(models.Model):
     higher_degree_students_supervised = models.TextField(blank=True, null=True)
     last_research = models.TextField(blank=True, null=True)
     ongoing_research = models.TextField(blank=True, null=True)
+    publications = models.TextField(blank=True, null=True) # temporary
     attendance = models.TextField(blank=True, null=True)
     conference_papers = models.TextField(blank=True, null=True)
     consultancy_work = models.TextField(blank=True, null=True)
@@ -145,6 +158,16 @@ class Appraisal(models.Model):
         if self.appraiser and self.employee and self.appraiser == self.employee:
             raise ValidationError({
                 'appraiser': 'Appraiser cannot be the same as the employee being appraised.'
+            })
+        
+        if self.appraiser_secondary and self.employee and self.appraiser_secondary == self.employee:
+            raise ValidationError({
+                'appraiser_secondary': 'Secondary appraiser cannot be the same as the employee being appraised.'
+            })
+        
+        if self.appraiser and self.appraiser_secondary and self.appraiser == self.appraiser_secondary:
+            raise ValidationError({
+                'appraiser_secondary': 'Secondary appraiser cannot be the same as the primary appraiser.'
             })
 
         super().clean()
