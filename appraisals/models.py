@@ -61,7 +61,7 @@ class Appraisal(models.Model):
         ('pending_response', 'Pending Response'),
         ('disagreed', 'Disagreed'),
         ('reassigned', 'Reassigned'),
-        ('ressigned_review', 'Under Reassigned Appraiser Review'),
+        ('reassigned_review', 'Under Reassigned Appraiser Review'),
         ('completed', 'Completed')
     ]
 

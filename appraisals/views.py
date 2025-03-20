@@ -90,6 +90,25 @@ def create_period(request):
         logger.error(f"Error creating appraisal period: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
+@login_required
+def appraisal_delete(request):
+    if request.method == 'POST':
+        appraisal_id = request.POST.get('appraisal_id')
+        user = request.user
+        
+        # Only allow HR users or staff to delete appraisals
+        if user.is_staff or user.groups.filter(name=HR_GROUP_NAME).exists():
+            try:
+                appraisal = Appraisal.objects.get(appraisal_id=appraisal_id)
+                appraisal.delete()
+                messages.success(request, "Appraisal successfully deleted.")
+            except Appraisal.DoesNotExist:
+                messages.error(request, "Appraisal not found.")
+        else:
+            messages.error(request, "You don't have permission to delete appraisals.")
+            
+    return redirect('appraisals:form_list')
+
 # ============================================================================
 # Appraisal Management Views
 # ============================================================================
@@ -125,6 +144,7 @@ class AppraisalListView(LoginRequiredMixin, ListView):
         
         # Common data
         context['departments'] = Department.objects.all()
+        context['periods'] = AppraisalPeriod.objects.all().order_by('-start_date')
         
         # My Appraisals tab - show only appraisals where user is the employee
         context['my_appraisals'] = Appraisal.objects.filter(
@@ -132,101 +152,23 @@ class AppraisalListView(LoginRequiredMixin, ListView):
             status='pending' or 'pending_response',
         ).select_related('employee__user', 'appraiser__user', 'appraiser_secondary')  # Add select_related
         
-        # Review tab - show appraisals where user is the appraiser
+        # Review tab - show appraisals where user is the primary or secondary appraiser
         context['review_appraisals'] = Appraisal.objects.filter(
-            appraiser__user=user,
-            status='submitted'
+            Q(appraiser__user=user) | Q(appraiser_secondary__user=user),
+            status__in=['primary_review', 'secondary_review']
         )
         
         # Completed tab - show completed appraisals for the user
         context['completed_appraisals'] = Appraisal.objects.filter(
-            Q(employee__user=user) | Q(appraiser__user=user),
+            Q(employee__user=user) | Q(appraiser__user=user) | Q(appraiser_secondary__user=user),
             status='completed'
         )
-        
-        # ... rest of the configurations remain the same
 
-        # HR View - All Appraisals
-        if user.is_staff or user.groups.filter(name='HR').exists():
+        # Only add all_appraisals to the context if the user is HR or staff
+        if user.groups.filter(name=HR_GROUP_NAME).exists():
             context['all_appraisals'] = Appraisal.objects.all().select_related(
-                'employee__user',
-                'employee__department',
-                'appraiser__user'
+                'employee__user', 'appraiser__user', 'appraiser_secondary'
             ).order_by('-date_created')
-
-            context['all_columns'] = [
-                {'id': 'appraisal_id', 'label': 'Appraisal ID', 'value': 'appraisal_id', 'clickable': True, 'url_name': 'appraisals:form_detail'},
-                {
-                    'id': 'employee', 
-                    'label': 'Employee', 
-                    'value': 'employee'  # Works due to __str__
-                },
-                {
-                    'id': 'appraiser', 
-                    'label': 'Appraiser', 
-                    'value': 'appraiser'  # Works due to __str__
-                },
-                {
-                    'id': 'department', 
-                    'label': 'Department', 
-                    'value': lambda x: str(x.employee.department) if x.employee and x.employee.department else 'Not Assigned'
-                },
-                {
-                    'id': 'review_period', 
-                    'label': 'Review Period', 
-                    'value': 'get_review_period_display'  # Add this method to model
-                },
-                {'id': 'status', 'label': 'Status', 'value': 'status'},
-                {
-                    'id': 'date_created', 
-                    'label': 'Created On', 
-                    'value': 'get_date_created_display'  # Add this method to model
-                },
-                {
-                    'id': 'actions',
-                    'label': 'Actions',
-                    'value': lambda x: {
-                        'appraisal_id': x.appraisal_id,
-                        'status': x.status
-                    },
-                    'template': 'appraisals/includes/hr_actions.html'
-                }
-            ]
-            
-            # Table configuration (separate from columns)
-            context['all_config'] = {
-                'actions': True,
-                'action_url_name': 'appraisals:form_detail',
-                'enable_sorting': True,
-                'default_sort': '-date_created',
-                'filters': ['department', 'status'],
-                'search': True,
-                'row_link': True,  # Add this line to enable clickable rows
-                'row_url_name': 'appraisals:form_detail',  # URL name to navigate to
-                'row_pk_field': 'appraisal_id'  # Field to use as the PK in the URL
-            }
-
-            # Add debug print statements
-            print("Debug: Department Access")
-            first_appraisal = context['all_appraisals'].first()
-            if first_appraisal:
-                print(f"""
-                Direct access: {first_appraisal.employee.department}
-                Str method: {str(first_appraisal.employee.department)}
-                Name field: {first_appraisal.employee.department.name if first_appraisal.employee.department else 'None'}
-                Has employee: {bool(first_appraisal.employee)}
-                Has department: {bool(first_appraisal.employee.department if first_appraisal.employee else None)}
-                """)
-
-            # Table configuration similar to employee list
-            context['all_config'] = {
-                'actions': True,
-                'action_url_name': 'appraisals:form_detail',
-                'enable_sorting': True,
-                'default_sort': '-date_created',
-                'filters': ['department', 'status'],
-                'search': True
-            }
 
         return context
 class AppraisalDetailView(LoginRequiredMixin, DetailView):
