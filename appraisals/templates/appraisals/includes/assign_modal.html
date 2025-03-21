@@ -529,7 +529,7 @@
         allAppraisers.forEach(appraiser => {
             // IMPORTANT: Skip if the appraiser is the employee being assigned
             if (appraiser.id !== employeeId) {
-                // Add to primary dropdown
+               // Add to primary dropdown
                 const department = appraiser.department || 'Other';
                 
                 if (!departments[department]) {
@@ -577,7 +577,7 @@
         console.log("Secondary options:", secondarySelect.options.length - 1);
     }
 
-        // Update secondary appraiser options when primary appraiser changes
+    // Update secondary appraiser options when primary appraiser changes
     document.getElementById('appraiser').addEventListener('change', function() {
         const primaryValue = this.value;
         const secondarySelect = document.getElementById('appraiser_secondary');

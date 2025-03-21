@@ -27,6 +27,7 @@ from django.conf import settings
 import os
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +145,6 @@ class AppraisalListView(LoginRequiredMixin, ListView):
         
         # Common data
         context['departments'] = Department.objects.all()
-        context['periods'] = AppraisalPeriod.objects.all().order_by('-start_date')
         
         # My Appraisals tab - show only appraisals where user is the employee
         context['my_appraisals'] = Appraisal.objects.filter(
@@ -371,11 +371,13 @@ class AppraisalAssignView(LoginRequiredMixin, PermissionRequiredMixin, View):
         
         return context
     
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
         try:
             # Get the basic required fields
-            employee_id = request.POST.get('employee_id')
-            appraiser_id = request.POST.get('appraiser')
+            employee_id = kwargs.get('pk')
+            appraiser_id = kwargs.get('pk')
+            appraiser_secondary_id = kwargs.get('pk')
             period_id = request.POST.get('period')
 
             # Validate required fields
@@ -387,28 +389,24 @@ class AppraisalAssignView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
             try:
                 # Get the required objects
-                employee = Employee.objects.get(id=employee_id)
-                appraiser = Employee.objects.get(id=appraiser_id)
+                employee = Employee.objects.get(employee_id=employee_id)
+                appraiser = Employee.objects.get(employee_id=appraiser_id)
                 period = AppraisalPeriod.objects.get(id=period_id)
-                
-                # Check for existing appraisal
-                existing_appraisal = Appraisal.objects.filter(
-                    employee=employee,
-                    appraiser=appraiser,
-                    review_period_start=period.start_date,
-                    review_period_end=period.end_date
-                ).exists()
-                
-                if existing_appraisal:
-                    return JsonResponse({
-                        'success': False,
-                        'error': 'An appraisal already exists for this employee, appraiser and period'
-                    }, status=400)
-                
+
+                # Handle optional secondary appraiser
+                appraiser_secondary = None
+                if appraiser_secondary_id:
+                    try:
+                        appraiser_secondary = Employee.objects.get(employee_id=appraiser_secondary_id)
+                    except Employee.DoesNotExist:
+                        # Optional field, so we can just log this
+                        logger.warning(f"Secondary appraiser not found: {appraiser_secondary_id}")
+        
                 # Create appraisal with period dates
                 appraisal = Appraisal.objects.create(
                     employee=employee,
                     appraiser=appraiser,
+                    appraiser_secondary=appraiser_secondary,
                     review_period_start=period.start_date,
                     review_period_end=period.end_date,
                     status='pending',
@@ -587,9 +585,9 @@ def get_appraisers_api(request):
     # Format the data for the frontend
     appraisers_data = [
         {
-            'id': str(appraiser.id), 
+            'id': appraiser.employee_id, 
             'name': appraiser.get_full_name(),
-            'position': appraiser.post,
+            'position': appraiser.post or '',
             'department': appraiser.department.name if appraiser.department else ''
         }
         for appraiser in appraisers
