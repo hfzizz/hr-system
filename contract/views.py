@@ -55,7 +55,7 @@ class ContractSubmissionView(LoginRequiredMixin, CreateView):
             # For non-HR users, check their contract status
             try:
                 employee = Employee.objects.get(user=self.request.user)
-                if employee.appointment_type and employee.appointment_type.name == 'Contract':
+                if employee.appointment_type == 'Contract':
                     contract_status = ContractRenewalStatus.objects.filter(
                         employee=employee
                     ).first()
@@ -843,7 +843,7 @@ def send_notification(request):
     try:
         # Get all contract employees with enabled contract renewal status
         contract_employees = Employee.objects.filter(
-            appointment_type__name='Contract',
+            appointment_type='Contract',
             contractrenewalstatus__is_enabled=True
         ).select_related('department')
         

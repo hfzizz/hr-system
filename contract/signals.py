@@ -26,7 +26,7 @@ def check_contract_renewals(sender, user, request, **kwargs):
     eligible_employees = []
 
     contract_employees = Employee.objects.filter(
-        appointment_type__name='Contract',
+        appointment_type='Contract',
         contractrenewalstatus__is_enabled=False  # Contract renewal not enabled
     ).exclude(
         # Exclude employees with active contract submissions
