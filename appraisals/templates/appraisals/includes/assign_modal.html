@@ -1,3 +1,11 @@
+{% load static %}
+
+{% block scripts %}
+    <script src="{% static 'appraisals/js/assign_modal.js' %}" defer></script> 
+{% endblock %}
+
+<div id="appraiser-options-container" class="hidden"></div>
+
 <!-- Enhance modal styling -->
 <style>
     /* Modal animation styles */
@@ -142,530 +150,150 @@
     .hidden {
     display: none !important;
     }
-    </style>
+</style>
     
-    <!-- Assign Modal with enhanced UI -->
-    <div id="assignModal" class="hidden fixed inset-0 z-50 overflow-y-auto"  aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <!-- Background overlay -->
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+<!-- Assign Modal with enhanced UI -->
+<div id="assignModal" class="hidden fixed inset-0 z-50 overflow-y-auto"  aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        
+        <!-- Modal panel -->
+        <div class="relative inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6 opacity-0 translate-y-4">
+            <!-- Close Button -->
+            <div class="hidden sm:block absolute top-0 right-0 pt-4 pr-4">
+                <button type="button" onclick="closeAssignModal()" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <span class="sr-only">Close</span>
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal header -->
+            <div class="mb-5">
+                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-indigo-100 sm:mx-0 sm:h-12 sm:w-12 mb-3">
+                    <svg class="h-6 w-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                </div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                    Assign Appraisal
+                </h3>
+                <p class="mt-1 text-sm text-gray-500">
+                    Select appraisers and review period for the employee.
+                </p>
+            </div>
             
-            <!-- Modal panel -->
-            <div class="relative inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6 opacity-0 translate-y-4">
-                <!-- Close Button -->
-                <div class="hidden sm:block absolute top-0 right-0 pt-4 pr-4">
-                    <button type="button" onclick="closeAssignModal()" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        <span class="sr-only">Close</span>
-                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+            <!-- Form content -->
+            <form id="assignForm" method="post" class="mt-4">
+                {% csrf_token %}
+                <input type="hidden" id="selected_employee_id" name="employee_id" value="">
+                
+                <div class="space-y-5">
+                    <!-- Employee Display -->
+                    <div class="form-field">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Employee
+                        </label>
+                        <div class="employee-card mt-1">
+                            <div class="employee-avatar">
+                                <span id="employee-initials">👤</span>
+                            </div>
+                            <div>
+                                <span id="selected_employee_name" class="text-sm">
+                                    <!-- Will be populated by JavaScript -->
+                                </span>
+                                <span id="employee-position" class="text-xs block text-gray-500">
+                                    <!-- Optional position information -->
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Primary Appraiser Selection -->
+                    <div class="form-field">
+                        <label for="appraiser" class="block text-sm font-medium text-gray-700">
+                            Primary Appraiser <span class="required-indicator">*</span>
+                        </label>
+                        <select id="appraiser" name="appraiser" required
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="">Select a primary appraiser</option>
+                            <!-- Options will be populated by HMTX -->
+                        </select>
+                    </div>
+                    
+                    <!-- Secondary Appraiser Selection (Optional) -->
+                    <div class="form-field">
+                        <label for="appraiser_secondary" class="block text-sm font-medium text-gray-700 flex items-center">
+                            Secondary Appraiser 
+                            <span class="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Optional</span>
+                        </label>
+                        <select id="appraiser_secondary" name="appraiser_secondary"
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="">Select a secondary appraiser (optional)</option>
+                            <!-- Options will be populated by HTMX -->
+                        </select>
+                        <p class="hint-text">Leave empty if no secondary appraiser is needed</p>
+                    </div>
+
+                    <!-- Appraisal Period Selection -->
+                    <div class="form-field">
+                        <label for="period_select" class="block text-sm font-medium text-gray-700">
+                            Appraisal Period <span class="required-indicator">*</span>
+                        </label>
+                        <select id="period_select" name="period" required
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="">Select a period</option>
+                            {% for period in periods %}
+                                <option value="{{ period.id }}" 
+                                        data-start="{{ period.start_date|date:'Y-m-d' }}" 
+                                        data-end="{{ period.end_date|date:'Y-m-d' }}">
+                                    {{ period.name }} ({{ period.start_date|date:"M d, Y" }} - {{ period.end_date|date:"M d, Y" }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Hidden Review Period Fields -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-field">
+                            <label for="review_period_start" class="block text-sm font-medium text-gray-700">Review Start Date</label>
+                            <input type="date" id="review_period_start" name="review_period_start" 
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-50" readonly>
+                        </div>
+                        <div class="form-field">
+                            <label for="review_period_end" class="block text-sm font-medium text-gray-700">Review End Date</label>
+                            <input type="date" id="review_period_end" name="review_period_end" 
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-50" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error Message Display -->
+                <div id="errorMessage" class="error-message hidden mt-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span></span>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="mt-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit"
+                            class="btn-primary w-full sm:w-auto">
+                        Assign Appraisal
+                    </button>
+                    <button type="button"
+                            onclick="closeAssignModal()"
+                            class="btn-secondary mt-3 sm:mt-0 sm:mr-3 w-full sm:w-auto">
+                        Cancel
                     </button>
                 </div>
-    
-                <!-- Modal header -->
-                <div class="mb-5">
-                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-indigo-100 sm:mx-0 sm:h-12 sm:w-12 mb-3">
-                        <svg class="h-6 w-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                        </svg>
-                    </div>
-                    <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                        Assign Appraisal
-                    </h3>
-                    <p class="mt-1 text-sm text-gray-500">
-                        Select appraisers and review period for the employee.
-                    </p>
-                </div>
-                
-                <!-- Form content -->
-                <form id="assignForm" method="post" class="mt-4">
-                    {% csrf_token %}
-                    <input type="hidden" id="selected_employee_id" name="employee_id" value="">
-                    
-                    <div class="space-y-5">
-                        <!-- Employee Display -->
-                        <div class="form-field">
-                            <label class="block text-sm font-medium text-gray-700">
-                                Employee
-                            </label>
-                            <div class="employee-card mt-1">
-                                <div class="employee-avatar">
-                                    <span id="employee-initials">👤</span>
-                                </div>
-                                <div>
-                                    <span id="selected_employee_name" class="text-sm">
-                                        <!-- Will be populated by JavaScript -->
-                                    </span>
-                                    <span id="employee-position" class="text-xs block text-gray-500">
-                                        <!-- Optional position information -->
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-    
-                        <!-- Primary Appraiser Selection -->
-                        <div class="form-field">
-                            <label for="appraiser" class="block text-sm font-medium text-gray-700">
-                                Primary Appraiser <span class="required-indicator">*</span>
-                            </label>
-                            <select id="appraiser" name="appraiser" required
-                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                <option value="">Select a primary appraiser</option>
-                                <!-- Options will be populated by JavaScript -->
-                            </select>
-                        </div>
-                        
-                        <!-- Secondary Appraiser Selection (Optional) -->
-                        <div class="form-field">
-                            <label for="appraiser_secondary" class="block text-sm font-medium text-gray-700 flex items-center">
-                                Secondary Appraiser 
-                                <span class="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Optional</span>
-                            </label>
-                            <select id="appraiser_secondary" name="appraiser_secondary"
-                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                <option value="">Select a secondary appraiser (optional)</option>
-                                <!-- Options will be populated by JavaScript -->
-                            </select>
-                            <p class="hint-text">Leave empty if no secondary appraiser is needed</p>
-                        </div>
-    
-                        <!-- Appraisal Period Selection -->
-                        <div class="form-field">
-                            <label for="period_select" class="block text-sm font-medium text-gray-700">
-                                Appraisal Period <span class="required-indicator">*</span>
-                            </label>
-                            <select id="period_select" name="period" required
-                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                <option value="">Select a period</option>
-                                {% for period in periods %}
-                                    <option value="{{ period.id }}" 
-                                            data-start="{{ period.start_date|date:'Y-m-d' }}" 
-                                            data-end="{{ period.end_date|date:'Y-m-d' }}">
-                                        {{ period.name }} ({{ period.start_date|date:"M d, Y" }} - {{ period.end_date|date:"M d, Y" }})
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <!-- Hidden Review Period Fields -->
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="form-field">
-                                <label for="review_period_start" class="block text-sm font-medium text-gray-700">Review Start Date</label>
-                                <input type="date" id="review_period_start" name="review_period_start" 
-                                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-50" readonly>
-                            </div>
-                            <div class="form-field">
-                                <label for="review_period_end" class="block text-sm font-medium text-gray-700">Review End Date</label>
-                                <input type="date" id="review_period_end" name="review_period_end" 
-                                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-50" readonly>
-                            </div>
-                        </div>
-                    </div>
-    
-                    <!-- Error Message Display -->
-                    <div id="errorMessage" class="error-message hidden mt-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <span></span>
-                    </div>
-    
-                    <!-- Form Actions -->
-                    <div class="mt-6 sm:flex sm:flex-row-reverse">
-                        <button type="submit"
-                                class="btn-primary w-full sm:w-auto">
-                            Assign Appraisal
-                        </button>
-                        <button type="button"
-                                onclick="closeAssignModal()"
-                                class="btn-secondary mt-3 sm:mt-0 sm:mr-3 w-full sm:w-auto">
-                            Cancel
-                        </button>
-                    </div>
-                </form>
-            </div>
+            </form>
         </div>
     </div>
-    
-    <script>
-    // Update period dates when selection changes
-    document.getElementById('period_select').addEventListener('change', updatePeriodDates);
-    
-    function updatePeriodDates() {
-        const periodSelect = document.getElementById('period_select');
-        const startField = document.getElementById('review_period_start');
-        const endField = document.getElementById('review_period_end');
-        
-        if (periodSelect && startField && endField) {
-            const selectedOption = periodSelect.options[periodSelect.selectedIndex];
-            
-            if (selectedOption && selectedOption.value) {
-                startField.value = selectedOption.dataset.start || '';
-                endField.value = selectedOption.dataset.end || '';
-            } else {
-                startField.value = '';
-                endField.value = '';
-            }
-        }
-    }
-    
-    // Validation to prevent primary and secondary appraiser from being the same
-    document.getElementById('appraiser').addEventListener('change', validateAppraisers);
-    document.getElementById('appraiser_secondary').addEventListener('change', validateAppraisers);
-    
-    function validateAppraisers() {
-        const employeeId = document.getElementById('selected_employee_id').value;
-        const primary = document.getElementById('appraiser').value;
-        const secondary = document.getElementById('appraiser_secondary').value;
-        const errorMessage = document.getElementById('errorMessage');
-        
-        // Reset styles
-        document.getElementById('appraiser').classList.remove('border-red-500');
-        document.getElementById('appraiser_secondary').classList.remove('border-red-500');
-        
-        // Check if employee is assigned as their own appraiser (should never happen with UI filtering)
-        if (primary === employeeId || secondary === employeeId) {
-            // Apply error styles
-            if (primary === employeeId) document.getElementById('appraiser').classList.add('border-red-500');
-            if (secondary === employeeId) document.getElementById('appraiser_secondary').classList.add('border-red-500');
-            
-            // Show error message
-            errorMessage.querySelector('span').textContent = 'An employee cannot be their own appraiser.';
-            errorMessage.classList.remove('hidden');
-            return false;
-        }
-        
-        // Only validate if both are selected
-        if (primary && secondary && primary === secondary) {
-            // Apply error styles
-            document.getElementById('appraiser').classList.add('border-red-500');
-            document.getElementById('appraiser_secondary').classList.add('border-red-500');
-            
-            // Show error message
-            errorMessage.querySelector('span').textContent = 'Primary and secondary appraisers cannot be the same person.';
-            errorMessage.classList.remove('hidden');
-            return false;
-        } else {
-            errorMessage.classList.add('hidden');
-            return true;
-        }
-    }
-    
-    // Form submission handler
-    document.getElementById('assignForm').addEventListener('submit', async function(event) {
-        event.preventDefault();
-        
-        // Validate appraisers first
-        if (!validateAppraisers()) {
-            return;
-        }
-        
-        // Disable the submit button to prevent double submission
-        const submitButton = this.querySelector('button[type="submit"]');
-        submitButton.disabled = true;
-        submitButton.innerHTML = `
-            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Processing...
-        `;
-        
-        // Clear previous error
-        const errorMessage = document.getElementById('errorMessage');
-        errorMessage.classList.add('hidden');
-        
-        // Validate form
-        const appraiser = document.getElementById('appraiser').value;
-        const period = document.getElementById('period_select').value;
-        
-        // Show error with highlighted fields if required fields are missing
-        if (!appraiser || !period) {
-            if (!appraiser) document.getElementById('appraiser').classList.add('border-red-500');
-            if (!period) document.getElementById('period_select').classList.add('border-red-500');
-            
-            errorMessage.querySelector('span').textContent = 'Please select both a primary appraiser and an appraisal period.';
-            errorMessage.classList.remove('hidden');
-            submitButton.disabled = false;
-            submitButton.textContent = 'Assign Appraisal';
-            return;
-        }
-        
-        try {
-            // Update the form action URL with the actual employee ID
-            const employeeId = document.getElementById('selected_employee_id').value;
-            this.action = `/appraisals/appraisers/assign/${employeeId}/`;
-            
-            const response = await fetch(this.action, {
-                method: 'POST',
-                body: new FormData(this),
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                }
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                // Create a success notification with animation
-                const successMessage = document.createElement('div');
-                successMessage.className = 'success-notification fixed top-4 right-4 z-50';
-                successMessage.innerHTML = `
-                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>${data.message || 'Appraiser assigned successfully!'}</span>
-                `;
-                document.body.appendChild(successMessage);
-                
-                // Close modal
-                closeAssignModal();
-                
-                // Remove success message after a delay and reload
-                setTimeout(() => {
-                    successMessage.style.opacity = '0';
-                    successMessage.style.transform = 'translateY(-20px)';
-                    setTimeout(() => {
-                        successMessage.remove();
-                        window.location.reload();
-                    }, 300);
-                }, 2000);
-            } else {
-                // Show error with message
-                errorMessage.querySelector('span').textContent = data.error || 'An error occurred while assigning the appraisal.';
-                errorMessage.classList.remove('hidden');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            errorMessage.querySelector('span').textContent = 'A network error occurred. Please try again.';
-            errorMessage.classList.remove('hidden');
-        } finally {
-            // Re-enable the submit button
-            submitButton.disabled = false;
-            submitButton.textContent = 'Assign Appraisal';
-        }
-    });
-    
-    // Extract employee initials for avatar
-    function updateEmployeeInitials() {
-        const nameElement = document.getElementById('selected_employee_name');
-        const initialsElement = document.getElementById('employee-initials');
-        
-        if (nameElement && initialsElement && nameElement.textContent) {
-            const name = nameElement.textContent.trim();
-            const nameParts = name.split(' ');
-            
-            if (nameParts.length >= 2) {
-                const initials = nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0);
-                initialsElement.textContent = initials.toUpperCase();
-            } else if (nameParts.length === 1 && nameParts[0]) {
-                initialsElement.textContent = nameParts[0].charAt(0).toUpperCase();
-            } else {
-                initialsElement.textContent = '👤';
-            }
-        }
-    }
-    
-    // Update employee initials when name is set
-    const originalSetText = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent').set;
-    Object.defineProperty(document.getElementById('selected_employee_name'), 'textContent', {
-        set(text) {
-            originalSetText.call(this, text);
-            setTimeout(updateEmployeeInitials, 0);
-        }
-    });
-    
-    
-    // Add data-employee-id attribute to all employee rows for easy lookup
-    document.addEventListener('DOMContentLoaded', function() {
-        // Set up rows
-        document.querySelectorAll('#appraisers-table tbody tr').forEach(row => {
-            const checkbox = row.querySelector('input[name="selected_employees"]');
-            const idCell = row.querySelector('td[data-column="id"]');
-            
-            let employeeId = null;
-            if (checkbox && checkbox.value) {
-                employeeId = checkbox.value;
-            } else if (idCell) {
-                employeeId = idCell.textContent.trim();
-            }
-            
-            if (employeeId) {
-                row.setAttribute('data-employee-id', employeeId);
-            }
-        });
-        
-        // Add tabindex to selects for keyboard navigation
-        document.querySelectorAll('#assignForm select').forEach((select, index) => {
-            select.setAttribute('tabindex', index + 1);
-        });
-    });
+</div>
 
-    // Store all appraisers data
-    let allAppraisers = [];
 
-    // Updated populateAppraiserOptions function to preserve selections
-    function populateAppraiserOptions() {
-        const employeeId = document.getElementById('selected_employee_id').value;
-        const primarySelect = document.getElementById('appraiser');
-        const secondarySelect = document.getElementById('appraiser_secondary');
-        
-        // Save current selections
-        const currentPrimaryValue = primarySelect.value;
-        const currentSecondaryValue = secondarySelect.value;
-        
-        console.log("Populating appraiser dropdowns. Employee ID:", employeeId);
-        console.log("Current primary value:", currentPrimaryValue);
-        console.log("Current secondary value:", currentSecondaryValue);
-        
-        // Clear dropdowns
-        primarySelect.innerHTML = '<option value="">Select a primary appraiser</option>';
-        secondarySelect.innerHTML = '<option value="">Select a secondary appraiser (optional)</option>';
-        
-        // Group appraisers by department
-        const departments = {};
-        
-        allAppraisers.forEach(appraiser => {
-            // IMPORTANT: Skip if the appraiser is the employee being assigned
-            if (appraiser.id !== employeeId) {
-               // Add to primary dropdown
-                const department = appraiser.department || 'Other';
-                
-                if (!departments[department]) {
-                    departments[department] = {
-                        primary: document.createElement('optgroup'),
-                        secondary: document.createElement('optgroup')
-                    };
-                    departments[department].primary.label = department;
-                    departments[department].secondary.label = department;
-                    primarySelect.appendChild(departments[department].primary);
-                    secondarySelect.appendChild(departments[department].secondary);
-                }
-                
-                // Create option for primary dropdown
-                const primaryOption = document.createElement('option');
-                primaryOption.value = appraiser.id;
-                primaryOption.textContent = `${appraiser.name} (${appraiser.position || 'No position'})`;
-                
-                // Set as selected if it was previously selected
-                if (currentPrimaryValue === appraiser.id) {
-                    primaryOption.selected = true;
-                }
-                
-                departments[department].primary.appendChild(primaryOption);
-                
-                // Only add to secondary if not the current primary selection
-                if (currentPrimaryValue !== appraiser.id) {
-                    const secondaryOption = document.createElement('option');
-                    secondaryOption.value = appraiser.id;
-                    secondaryOption.textContent = `${appraiser.name} (${appraiser.position || 'No position'})`;
-                    
-                    // Set as selected if it was previously selected
-                    if (currentSecondaryValue === appraiser.id) {
-                        secondaryOption.selected = true;
-                    }
-                    
-                    departments[department].secondary.appendChild(secondaryOption);
-                }
-            } else {
-                console.log("Filtered out employee:", appraiser.name);
-            }
-        });
-        
-        console.log("Dropdowns populated. Primary options:", primarySelect.options.length - 1);
-        console.log("Secondary options:", secondarySelect.options.length - 1);
-    }
 
-    // Update secondary appraiser options when primary appraiser changes
-    document.getElementById('appraiser').addEventListener('change', function() {
-        const primaryValue = this.value;
-        const secondarySelect = document.getElementById('appraiser_secondary');
-        const currentSecondaryValue = secondarySelect.value;
-        
-        console.log("Primary appraiser changed to:", primaryValue);
-        
-        // If the secondary appraiser is the same as the primary, clear it
-        if (primaryValue && primaryValue === currentSecondaryValue) {
-            secondarySelect.value = '';
-            console.log("Cleared secondary appraiser because it matched primary");
-        }
-        
-        // Repopulate the appraiser dropdowns
-        populateAppraiserOptions();
-        
-        // Validate the selections
-        validateAppraisers();
-    });
-
-    // Update openAssignModal function to call populateAppraiserOptions
-    const originalOpenAssignModal = window.openAssignModal;
-    window.openAssignModal = function(employeeId, employeeName) {
-        // Call the original function
-        if (typeof originalOpenAssignModal === 'function') {
-            originalOpenAssignModal(employeeId, employeeName);
-        } else {
-            console.error("Original openAssignModal function not available");
-            // Fallback implementation
-            document.getElementById('selected_employee_id').value = employeeId;
-            document.getElementById('selected_employee_name').textContent = employeeName;
-            document.getElementById('assignModal').classList.remove('hidden');
-        }
-        
-        // Populate appraiser options after employee is set
-        setTimeout(populateAppraiserOptions, 0);
-    };
-
-    // Make sure to initialize the options when the DOM is loaded
-    document.addEventListener('DOMContentLoaded', function() {
-        // This will fetch the appraisers immediately when the page loads
-        fetchAppraisers();
-        
-        // Set up the change handler for primary appraiser
-        const primarySelect = document.getElementById('appraiser');
-        if (primarySelect) {
-            primarySelect.addEventListener('change', function() {
-                // Re-populate options when primary appraiser changes
-                populateAppraiserOptions();
-            });
-        }
-    });
-
-    // In assign_modal.html
-    async function fetchAppraisers() {
-        try {
-            console.log("Fetching appraisers via AJAX...");
-            const response = await fetch('/appraisals/api/appraisers/');
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            console.log("Fetched appraisers data:", data);
-            
-            if (data.appraisers && Array.isArray(data.appraisers)) {
-                allAppraisers = data.appraisers;
-                console.log(`Successfully loaded ${allAppraisers.length} appraisers`);
-                
-                // Populate dropdowns with the fetched data
-                populateAppraiserOptions();
-            } else {
-                console.error("Invalid appraisers data format:", data);
-            }
-        } catch (error) {
-            console.error("Error fetching appraisers:", error);
-            
-            // For testing: create sample data if API fails
-            console.log("Using test data instead");
-            allAppraisers = [
-                { id: "1", name: "John Doe", position: "Manager", department: "HR" },
-                { id: "2", name: "Jane Smith", position: "Director", department: "Finance" },
-                { id: "3", name: "Bob Johnson", position: "Team Lead", department: "IT" },
-                { id: "4", name: "Sarah Williams", position: "VP", department: "Operations" },
-                { id: "5", name: "Michael Brown", position: "Supervisor", department: "Sales" }
-            ];
-            populateAppraiserOptions();
-        }
-    }
-    </script>

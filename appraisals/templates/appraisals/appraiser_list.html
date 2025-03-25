@@ -139,9 +139,9 @@
                     <table class="min-w-full divide-y divide-gray-200" id="appraisers-table">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th scope="col" data-column="id" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    <div class="flex items-center cursor-pointer" id="sort-id" data-sort="id">
-                                        ID
+                                <th scope="col" data-column="employee-id" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <div class="flex items-center cursor-pointer" id="sort-employee-id" data-sort="employee-id">
+                                        Employee ID
                                         <svg class="w-4 h-4 ml-1 sort-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                                         </svg>
@@ -174,7 +174,7 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             {% for item in assign_employees %}
                             <tr class="hover:bg-gray-50">
-                                <td data-column="id" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td data-column="employee-id" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {{ item.employee_id }}
                                 </td>
                                 <td data-column="employee" class="px-6 py-4 whitespace-nowrap">
@@ -207,6 +207,10 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex justify-center w-full">
                                         <button 
+                                            hx-get="/appraisals/api/appraisers/"
+                                            hx-trigger="click"
+                                            hx-target="#appraiser-options-container"
+                                            hx-vals='{"exclude_employee_id": "{{ item.employee_id }}"}'
                                             onclick="openAssignModal('{{ item.employee_id }}', '{{ item.get_full_name }}')" 
                                             class="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
                                         >
@@ -378,4 +382,4 @@
         border-bottom-color: #4f46e5;
         color: #4f46e5;
     }
-    </style>
+</style>

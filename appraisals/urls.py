@@ -27,5 +27,5 @@ urlpatterns = [
     path('forms/<int:pk>/review/', views.AppraiserWizard.as_view(), name='appraisal_review'),
     # path('forms/<int:pk>/review/', views.AppraisalReviewView.as_view(), name='form_review'),
 
-    path('api/appraisers/', views.get_appraisers_api, name='api_get_appraisers'),
+    path('api/appraisers/', views.get_appraisers, name='get_appraisers'),
 ]

@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ----- Initialize Tables -----
     initMainTable();
     initRolesTable();
+    initTableSorting();
     
     // ----- Initialize Form Handlers -----
     initAssignForm();
@@ -162,9 +163,9 @@ function saveColumnPreferences() {
 // ----- Table Sorting Functions -----
 
 function initTableSorting() {
-    // Initialize sort states for sortable columns
+    // Initialize sort states for sortable columns - make sure keys match data-sort values
     const sortStates = {
-        'id': { ascending: true },
+        'employee-id': { ascending: true },         // Changed from 'employee-id' to 'id'
         'employee': { ascending: true },
         'department': { ascending: true }
     };
@@ -173,19 +174,25 @@ function initTableSorting() {
     document.querySelectorAll('[data-sort]').forEach(header => {
         header.addEventListener('click', () => {
             const column = header.dataset.sort;
-            sortTable(column);
+            sortTable(column, sortStates); // Pass sortStates to the function
         });
     });
     
     // Initial sort by ID
-    if (document.querySelector('#sort-id')) {
-        sortTable('id');
+    if (document.querySelector('[data-sort="employee-id"]')) {
+        sortTable('id', sortStates);
     }
     
-    // Table sorting function
-    function sortTable(column) {
+    // Table sorting function with sortStates parameter
+    function sortTable(column, sortStates) {
         const tbody = document.querySelector('#appraisers-table tbody');
         if (!tbody) return;
+        
+        // Make sure the column exists in sortStates
+        if (!sortStates[column]) {
+            console.warn(`No sort state found for column "${column}". Adding it now.`);
+            sortStates[column] = { ascending: true };
+        }
         
         const rows = Array.from(tbody.querySelectorAll('tr:not(:last-child)'));
         
@@ -207,9 +214,10 @@ function initTableSorting() {
         // Clear and repopulate table
         rows.forEach(row => tbody.appendChild(row));
 
-        // Update sort icons
+        // Update sort icons for all columns
         document.querySelectorAll('[data-sort]').forEach(header => {
             const icon = header.querySelector('.sort-icon');
+            console.log(`Column: ${header.dataset.sort}, Icon found: ${!!icon}`);
             if (!icon) return;
             
             if (header.dataset.sort === column) {

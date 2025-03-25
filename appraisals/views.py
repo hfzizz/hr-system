@@ -28,6 +28,10 @@ import os
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.db import transaction
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from django.http import JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
 
 logger = logging.getLogger(__name__)
 
@@ -374,10 +378,10 @@ class AppraisalAssignView(LoginRequiredMixin, PermissionRequiredMixin, View):
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         try:
-            # Get the basic required fields
-            employee_id = kwargs.get('pk')
-            appraiser_id = kwargs.get('pk')
-            appraiser_secondary_id = kwargs.get('pk')
+            # Get the basic required fields from the POST data
+            employee_id = request.POST.get('employee_id')  # Changed from kwargs.get('pk')
+            appraiser_id = request.POST.get('appraiser')   # Changed from kwargs.get('pk')
+            appraiser_secondary_id = request.POST.get('appraiser_secondary')  # Changed from kwargs.get('pk')
             period_id = request.POST.get('period')
 
             # Validate required fields
@@ -574,26 +578,33 @@ class AppraiserListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         
         return context
     
-@login_required
-def get_appraisers_api(request):
-    """API endpoint to fetch appraisers for the modal"""
-    from employees.models import Employee  # Import here to avoid circular imports
+@require_http_methods(["GET"])
+def get_appraisers(request):
+    exclude_employee_id = request.GET.get('exclude_employee_id')
     
-    # Get all employees who can be appraisers
-    appraisers = Employee.objects.filter(roles__name='Appraiser').select_related('department')
+    # Get all employees that can be appraisers
+    appraisers_queryset = Employee.objects.all()
     
-    # Format the data for the frontend
+    # Exclude the current employee if ID is provided
+    if exclude_employee_id:
+        appraisers_queryset = appraisers_queryset.exclude(employee_id=exclude_employee_id)
+    
+    # Format for template
     appraisers_data = [
         {
-            'id': appraiser.employee_id, 
+            'id': appraiser.employee_id,
             'name': appraiser.get_full_name(),
-            'position': appraiser.post or '',
-            'department': appraiser.department.name if appraiser.department else ''
+            'post': appraiser.post,
+            'department': appraiser.department.name if appraiser.department else 'Other'
         }
-        for appraiser in appraisers
+        for appraiser in appraisers_queryset
     ]
     
-    return JsonResponse({'appraisers': appraisers_data})
+    # Render the template
+    content = render_to_string('appraisals/includes/appraiser_options.html', 
+                              {'appraisers': appraisers_data})
+    
+    return HttpResponse(content, content_type='application/json')
 
 class AppraiserRoleView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
     """
