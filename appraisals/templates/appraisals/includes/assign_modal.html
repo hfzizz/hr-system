@@ -1,4 +1,5 @@
 {% load static %}
+{% csrf_token %}
 
 {% block scripts %}
     <script src="{% static 'appraisals/js/assign_modal.js' %}" defer></script> 
@@ -254,21 +255,34 @@
                             {% endfor %}
                         </select>
                     </div>
-                    
-                    <!-- Hidden Review Period Fields -->
+
+                    <!-- Appraisal Period Fields -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-field">
+                            <label for="appraisal_period_start" class="block text-sm font-medium text-gray-700">Appraisal Start Date</label>
+                            <input type="date" id="appraisal_period_start" name="appraisal_period_start" 
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-50" readonly>
+                        </div>
+                        <div class="form-field">
+                            <label for="appraisal_period_end" class="block text-sm font-medium text-gray-700">Appraisal End Date</label>
+                            <input type="date" id="appraisal_period_end" name="appraisal_period_end" 
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-50" readonly>
+                        </div>
+                    </div>
+
+                    <!-- Review Period Fields -->
                     <div class="grid grid-cols-2 gap-4">
                         <div class="form-field">
                             <label for="review_period_start" class="block text-sm font-medium text-gray-700">Review Start Date</label>
-                            <input type="date" id="review_period_start" name="review_period_start" 
-                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-50" readonly>
+                            <input type="date" id="review_period_start" name="review_period_start"
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" >
                         </div>
                         <div class="form-field">
                             <label for="review_period_end" class="block text-sm font-medium text-gray-700">Review End Date</label>
                             <input type="date" id="review_period_end" name="review_period_end" 
-                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-50" readonly>
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" >
                         </div>
                     </div>
-                </div>
 
                 <!-- Error Message Display -->
                 <div id="errorMessage" class="error-message hidden mt-4">

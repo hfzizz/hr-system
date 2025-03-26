@@ -1,23 +1,4 @@
-// Update period dates when selection changes
-document.getElementById('period_select').addEventListener('change', updatePeriodDates);
 
-function updatePeriodDates() {
-    const periodSelect = document.getElementById('period_select');
-    const startField = document.getElementById('review_period_start');
-    const endField = document.getElementById('review_period_end');
-    
-    if (periodSelect && startField && endField) {
-        const selectedOption = periodSelect.options[periodSelect.selectedIndex];
-        
-        if (selectedOption && selectedOption.value) {
-            startField.value = selectedOption.dataset.start || '';
-            endField.value = selectedOption.dataset.end || '';
-        } else {
-            startField.value = '';
-            endField.value = '';
-        }
-    }
-}
 
 // Validation to prevent primary and secondary appraiser from being the same
 document.getElementById('appraiser').addEventListener('change', validateAppraisers);
@@ -89,6 +70,30 @@ document.getElementById('assignForm').addEventListener('submit', async function(
     const appraiser = document.getElementById('appraiser').value;
     const period = document.getElementById('period_select').value;
     
+    const reviewStart = document.getElementById('review_period_start').value;
+    const reviewEnd = document.getElementById('review_period_end').value;
+    const appraisalStart = document.getElementById('appraisal_period_start').value;
+    const appraisalEnd = document.getElementById('appraisal_period_end').value;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const reviewStartDate = new Date(reviewStart);
+
+    if (reviewStartDate < today) {
+        errorMessage.querySelector('span').textContent = 'The review period start date cannot be in the past.';
+        errorMessage.classList.remove('hidden');
+        submitButton.disabled = false; 
+        submitButton.textContent = 'Assign Appraisal';
+        return;
+    }
+
+    if (new Date(reviewStart) > new Date(reviewEnd)) {
+        event.preventDefault();
+        errorMessage.querySelector('span').textContent = 'The review period start date cannot be after the end date.';
+        errorMessage.classList.remove('hidden');
+        return;
+    }
+
     // Show error with highlighted fields if required fields are missing
     if (!appraiser || !period) {
         if (!appraiser) document.getElementById('appraiser').classList.add('border-red-500');
@@ -102,13 +107,20 @@ document.getElementById('assignForm').addEventListener('submit', async function(
     }
     
     try {
+        // Create a FormData object and log its contents for debugging
+        const formData = new FormData(this);
+        console.log("Form data being submitted:");
+        for (let pair of formData.entries()) {
+            console.log(pair[0] + ': ' + pair[1]);
+        }
+        
         // Update the form action URL with the actual employee ID
         const employeeId = document.getElementById('selected_employee_id').value;
         this.action = `/appraisals/appraisers/assign/${employeeId}/`;
         
         const response = await fetch(this.action, {
             method: 'POST',
-            body: new FormData(this),
+            body: formData,
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
@@ -116,6 +128,7 @@ document.getElementById('assignForm').addEventListener('submit', async function(
         });
         
         const data = await response.json();
+        console.log("Server response:", data);
         
         if (data.success) {
             // Create a success notification with animation
@@ -186,11 +199,134 @@ Object.defineProperty(document.getElementById('selected_employee_name'), 'textCo
     }
 });
 
-
-// Add data-employee-id attribute to all employee rows for easy lookup
+// Set minimum date for review period inputs to today
 document.addEventListener('DOMContentLoaded', function() {
-    // Set up rows
-    document.querySelectorAll('#appraisers-table tbody tr').forEach(row => {
+
+    // Get the date input elements
+    const reviewStartField = document.getElementById('review_period_start');
+    const reviewEndField = document.getElementById('review_period_end');
+    
+    if (!reviewStartField || !reviewEndField) {
+        console.error('Review date fields not found on page load');
+        return;
+    }
+    
+
+    // Format today's date as YYYY-MM-DD for the min attribute
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
+    const dd = String(today.getDate()).padStart(2, '0');
+    const formattedToday = `${yyyy}-${mm}-${dd}`;
+
+      // Set minimum date constraints
+    reviewStartField.min = formattedToday;
+    reviewEndField.min = formattedToday;
+    
+    if (reviewStartField && reviewEndField) {
+        // Set minimum date constraints
+        reviewStartField.min = formattedToday;
+        reviewEndField.min = formattedToday;
+        
+        // Handle review start date changes
+        reviewStartField.addEventListener('change', function() {
+            // When start date changes, update end date minimum
+            if (this.value) {
+                reviewEndField.min = this.value;
+                
+                // If end date is now before start date, update it
+                if (reviewEndField.value && new Date(reviewEndField.value) < new Date(this.value)) {
+                    reviewEndField.value = this.value;
+                }
+            } else {
+                // If start date is cleared, reset end date min to today
+                reviewEndField.min = formattedToday;
+            }
+        });
+        
+        // Handle review end date changes - this helps prevent the issue
+        reviewEndField.addEventListener('change', function() {
+            // If end date is before start date, update start date
+            if (this.value && reviewStartField.value && new Date(this.value) < new Date(reviewStartField.value)) {
+                reviewStartField.value = this.value;
+            }
+        });
+    }
+
+    // Handle review end date changes
+    reviewEndField.addEventListener('change', function() {
+        const selectedDate = new Date(this.value);
+        selectedDate.setHours(0, 0, 0, 0);
+        
+        // Ensure end date is not before today
+        if (selectedDate < today) {
+            console.warn('Selected end date is before today, resetting to today');
+            this.value = formattedToday;
+        }
+        
+        // Ensure end date is not before start date
+        if (reviewStartField.value && new Date(this.value) < new Date(reviewStartField.value)) {
+            console.warn('Selected end date is before start date, adjusting');
+            this.value = reviewStartField.value;
+        }
+    });
+
+    // Add period select event handler to update dates
+    document.getElementById('period_select').addEventListener('change', function() {
+        const periodSelect = this;
+        const selectedOption = periodSelect.options[periodSelect.selectedIndex];
+        
+        // Get the date fields
+        const appraisalStartField = document.getElementById('appraisal_period_start');
+        const appraisalEndField = document.getElementById('appraisal_period_end');
+        
+        if (selectedOption && selectedOption.value) {
+            // Set appraisal period dates (these are read-only so just set them directly)
+            appraisalStartField.value = selectedOption.dataset.start || '';
+            appraisalEndField.value = selectedOption.dataset.end || '';
+            
+            // For review dates, make sure they're not in the past
+            const periodStartDate = new Date(selectedOption.dataset.start);
+            const periodEndDate = new Date(selectedOption.dataset.end);
+            
+            // Use the later of today or the period start date
+            if (periodStartDate >= today) {
+                reviewStartField.value = selectedOption.dataset.start;
+            } else {
+                reviewStartField.value = formattedToday;
+            }
+            
+            reviewEndField.value = selectedOption.dataset.end;
+        } else {
+            // Clear all date fields if no period is selected
+            appraisalStartField.value = '';
+            appraisalEndField.value = '';
+            reviewStartField.value = '';
+            reviewEndField.value = '';
+        }
+    });
+    
+    // Initial validation of any existing values in the date fields
+    if (reviewStartField.value) {
+        const startDate = new Date(reviewStartField.value);
+        startDate.setHours(0, 0, 0, 0);
+        
+        if (startDate < today) {
+            reviewStartField.value = formattedToday;
+        }
+    }
+    
+    if (reviewEndField.value) {
+        const endDate = new Date(reviewEndField.value);
+        endDate.setHours(0, 0, 0, 0);
+        
+        if (endDate < today) {
+            reviewEndField.value = formattedToday;
+        }
+    }
+
+     // Set up rows
+     document.querySelectorAll('#appraisers-table tbody tr').forEach(row => {
         const checkbox = row.querySelector('input[name="selected_employees"]');
         const idCell = row.querySelector('td[data-column="id"]');
         
@@ -211,7 +347,7 @@ document.addEventListener('DOMContentLoaded', function() {
         select.setAttribute('tabindex', index + 1);
     });
 });
-
+   
 // HTMX Response Handler - New function
 document.body.addEventListener('htmx:afterSwap', function(event) {
     if (event.target.id === 'appraiser-options-container') {
@@ -226,7 +362,6 @@ document.body.addEventListener('htmx:afterSwap', function(event) {
         updateAppraisersFromHtmx();
     }
 });
-
 
 // Function to process HTMX response and update dropdowns
 function updateAppraisersFromHtmx() {
@@ -282,28 +417,6 @@ function updateAppraisersFromHtmx() {
         console.error('Error processing HTMX response:', error);
     }
 }
-// Update secondary appraiser options when primary appraiser changes
-document.getElementById('appraiser').addEventListener('change', function() {
-    const primaryValue = this.value;
-    const secondarySelect = document.getElementById('appraiser_secondary');
-    const currentSecondaryValue = secondarySelect.value;
-    
-    console.log("Primary appraiser changed to:", primaryValue);
-    
-    // If the secondary appraiser is the same as the primary, clear it
-    if (primaryValue && primaryValue === currentSecondaryValue) {
-        secondarySelect.value = '';
-        console.log("Cleared secondary appraiser because it matched primary");
-    }
-
-      // Disable the selected primary in secondary dropdown
-      Array.from(secondarySelect.options).forEach(option => {
-        option.disabled = option.value === primaryValue;
-    });
-    
-    // Validate the selections
-    validateAppraisers();
-});
 
 // Update openAssignModal function
 window.openAssignModal = function(employeeId, employeeName) {

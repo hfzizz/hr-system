@@ -379,13 +379,19 @@ class AppraisalAssignView(LoginRequiredMixin, PermissionRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         try:
             # Get the basic required fields from the POST data
-            employee_id = request.POST.get('employee_id')  # Changed from kwargs.get('pk')
-            appraiser_id = request.POST.get('appraiser')   # Changed from kwargs.get('pk')
-            appraiser_secondary_id = request.POST.get('appraiser_secondary')  # Changed from kwargs.get('pk')
+            employee_id = request.POST.get('employee_id')
+            appraiser_id = request.POST.get('appraiser')
+            appraiser_secondary_id = request.POST.get('appraiser_secondary')  
             period_id = request.POST.get('period')
 
+            # Get the period dates
+            appraisal_period_start = request.POST.get('appraisal_period_start')
+            appraisal_period_end = request.POST.get('appraisal_period_end')
+            review_period_start = request.POST.get('review_period_start')
+            review_period_end = request.POST.get('review_period_end')
+
             # Validate required fields
-            if not all([employee_id, appraiser_id, period_id]):
+            if not all([employee_id, appraiser_id, period_id, appraisal_period_start, appraisal_period_end, review_period_start, review_period_end]):
                 return JsonResponse({
                     'success': False,
                     'error': 'Please fill in all required fields'
@@ -411,8 +417,10 @@ class AppraisalAssignView(LoginRequiredMixin, PermissionRequiredMixin, View):
                     employee=employee,
                     appraiser=appraiser,
                     appraiser_secondary=appraiser_secondary,
-                    review_period_start=period.start_date,
-                    review_period_end=period.end_date,
+                    appraisal_period_start=period.start_date,
+                    appraisal_period_end=period.end_date,
+                    review_period_start=review_period_start,
+                    review_period_end=review_period_end,
                     status='pending',
                     last_modified_by=request.user
                 )

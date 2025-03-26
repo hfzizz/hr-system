@@ -452,8 +452,8 @@ function updatePeriodDates() {
     if (!periodSelect) return;
     
     const selectedOption = periodSelect.options[periodSelect.selectedIndex];
-    const startField = document.getElementById('review_period_start');
-    const endField = document.getElementById('review_period_end');
+    const startField = document.getElementById('appraisal_period_start');
+    const endField = document.getElementById('appraisal_period_end');
     
     if (!startField || !endField) return;
     

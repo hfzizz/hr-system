@@ -116,6 +116,8 @@ class Appraisal(models.Model):
         related_name='modified_appraisals'
     )
     last_modified_date = models.DateTimeField(auto_now=True)
+    appraisal_period_start=models.DateField(null=True, blank=True)
+    appraisal_period_end=models.DateField(null=True, blank=True)
     review_period_start = models.DateField(
         help_text=_("Start date of review period"),
         null=True,
@@ -195,6 +197,12 @@ class Appraisal(models.Model):
             return self.employee.ic_no or "Not provided"
         except AttributeError:
             return "Not provided"
+        
+    def get_appraisal_period_display(self):
+        """Returns formatted appraisal period string."""
+        if self.appraisal_period_start and self.appraisal_period_end:
+            return f"{self.appraisal_period_start.strftime('%d %b %Y')} - {self.appraisal_period_end.strftime('%d %b %Y')}"
+        return 'Not Set'
 
     def get_review_period_display(self):
         """Returns formatted review period string."""
