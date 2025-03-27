@@ -333,3 +333,16 @@ class Membership(models.Model):
             raise ValidationError({
                 'to_date': _('End date must be after start date.')
             })
+        
+class AppraisalSection(models.Model):
+    """Stores section-specific data for appraisals"""
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.CASCADE, related_name='sections')
+    section_name = models.CharField(max_length=50)  # e.g., 'B1', 'B2', etc.
+    data = models.JSONField(default=dict, blank=True)  # Stores all field values for this section
+    appraiser = models.ForeignKey('employees.Employee', on_delete=models.CASCADE, related_name='appraisal_sections')
+    
+    class Meta:
+        unique_together = ('appraisal', 'section_name', 'appraiser')
+        
+    def __str__(self):
+        return f"Section {self.section_name} for Appraisal {self.appraisal.appraisal_id} by {self.appraiser.name}"

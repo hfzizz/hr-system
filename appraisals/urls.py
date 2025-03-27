@@ -4,9 +4,7 @@ from . import views
 app_name = 'appraisals'
 
 urlpatterns = [
-    # Dashboard
-    path('', views.AppraisalDashboardView.as_view(), name='dashboard'),
-    
+
     # Appraisal Periods
     path('periods/', views.AppraisalPeriodListView.as_view(), name='period_list'),
     path('periods/create/', views.create_period, name='period_create'),
@@ -24,8 +22,20 @@ urlpatterns = [
     # path('forms/create/', views.AppraisalCreateForm.as_view(), name='form_create'),
     path('forms/<int:pk>/', views.AppraisalDetailView.as_view(), name='form_detail'),
     path('forms/<int:appraisal_id>/fill/', views.AppraiseeUpdateView.as_view(), name='appraisal_fill'),
-    path('forms/<int:pk>/review/', views.AppraiserWizard.as_view(), name='appraisal_review'),
+    path('forms/<int:appraisal_id>/review/', views.AppraiserWizard.as_view(), name='appraisal_review'),
     # path('forms/<int:pk>/review/', views.AppraisalReviewView.as_view(), name='form_review'),
 
     path('api/appraisers/', views.get_appraisers, name='get_appraisers'),
+
+    # HTMX endpoints for Section B
+    path('save-rating/', views.save_rating, name='save_rating'),
+    path('save-text-field/', views.save_text_field, name='save_text_field'),
+    path('save-field/', views.save_field, name='save_field'),
+    path('toggle-leadership-section/', views.toggle_leadership_section, name='toggle_leadership_section'),
+    path('toggle-other-relationship/', views.toggle_other_relationship, name='toggle_other_relationship'),
+
+        # Add these URL patterns for the wizard sections
+    path('forms/<int:appraisal_id>/review/section-a/', views.appraisal_wizard_section_a, name='appraisal_wizard_section_a'),
+    path('forms/<int:appraisal_id>/review/section-c/', views.appraisal_wizard_section_c, name='appraisal_wizard_section_c'),
+
 ]
