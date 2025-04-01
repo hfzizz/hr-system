@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HR Contract Management System{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        @media print {
+            @page {
+                size: A4;
+                margin: 1cm;
+            }
+            
+            body {
+                font-family: Arial, sans-serif;
+                font-size: 12pt;
+                line-height: 1.5;
+                color: #000;
+                background: #fff;
+            }
+            
+            .print\:hidden {
+                display: none !important;
+            }
+            
+            .print\:px-0 {
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+            }
+            
+            /* Add more print-specific styles as needed */
+            a {
+                text-decoration: none;
+                color: #000;
+            }
+            
+            table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+            
+            table, th, td {
+                border: 1px solid #ddd;
+            }
+            
+            th, td {
+                padding: 8px;
+                text-align: left;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-white">
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 

@@ -6,10 +6,22 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between mb-6">
             <h1 class="text-2xl font-bold text-gray-900">Review Contract Renewal</h1>
-            <a href="{% url 'contract:view_submissions' employee_id=contract.employee.id %}" 
-               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700">
-                Back to Submissions
-            </a>
+            {% if user.groups.all.0.name == 'HR' %}
+                <a href="{% url 'contract:view_submissions' employee_id=contract.employee.id %}" 
+                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700">
+                    Back to Submissions
+                </a>
+            {% elif user.groups.all.0.name == 'Dean'%}
+                <a href="{% url 'contract:dean_department_contracts' %}" 
+                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700">
+                    Back to Department Contracts
+                </a>
+                {% elif user.groups.all.0.name == 'Dean' or user.groups.all.0.name == 'SMT' %}
+                <a href="{% url 'contract:smt_contracts' %}" 
+                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700">
+                    Back to SMT Review
+                </a>
+            {% endif %}
         </div>
 
         <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
@@ -653,18 +665,31 @@
             <!-- Dean's Comments Section -->
             {% if contract.dean_reviews.exists %}
             <div class="mt-6 bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-semibold mb-4">Dean's Comments</h2>
+                <h2 class="text-xl font-semibold mb-4 text-indigo-800">Dean's Comments</h2>
                 
                 {% for review in contract.dean_reviews.all %}
-                <div class="mb-4 p-4 border rounded {% if not forloop.last %}border-b{% endif %}">
-                    <p class="font-semibold">{{ review.dean.get_full_name }} ({{ review.created_at|date:"F d, Y" }})</p>
-                    <p class="mt-2 whitespace-pre-line">{{ review.comments }}</p>
+                <div class="mb-4 p-4 border rounded-lg border-indigo-200 bg-indigo-50 {% if not forloop.last %}mb-6{% endif %}">
+                    <p class="font-semibold text-indigo-900">{{ review.dean.get_full_name }} ({{ review.created_at|date:"F d, Y" }})</p>
+                    <p class="mt-2 whitespace-pre-line text-gray-800">{{ review.comments }}</p>
                     
                     {% if review.document_name %}
-                    <div class="mt-2">
-                        <a href="{% url 'contract:download_dean_document' contract.id review.id %}" class="text-blue-600 hover:underline">
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a href="{% url 'contract:download_dean_document' contract.id review.id %}" 
+                           class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150 shadow-sm">
+                            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
                             Download Document: {{ review.document_name }}
                         </a>
+                        <button type="button" 
+                                onclick="fetchAndPreviewDocument('dean', {{ contract.id }}, {{ review.id }}, '{{ review.document_name }}')"
+                                class="inline-flex items-center px-4 py-2 border-2 border-indigo-500 text-sm font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 transition-colors duration-150 shadow-sm">
+                            <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            Preview Document
+                        </button>
                     </div>
                     {% endif %}
                 </div>
@@ -675,26 +700,219 @@
             <!-- SMT Decision & Comments Section -->
             {% if contract.smt_reviews.exists %}
             <div class="mt-6 bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-semibold mb-4">SMT Decision & Comments</h2>
+                <h2 class="text-xl font-semibold mb-4 text-indigo-800">SMT Decision & Comments</h2>
                 
                 {% for review in contract.smt_reviews.all %}
-                <div class="mb-4 p-4 border rounded {% if not forloop.last %}border-b{% endif %}">
+                <div class="mb-4 p-4 border rounded-lg border-indigo-200 bg-indigo-50 {% if not forloop.last %}mb-6{% endif %}">
                     <div class="flex justify-between items-center">
-                        <p class="font-semibold">{{ review.smt_member.get_full_name }} ({{ review.created_at|date:"F d, Y" }})</p>
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            {% if review.decision == 'approved' %}bg-green-100 text-green-800
-                            {% elif review.decision == 'rejected' %}bg-red-100 text-red-800
-                            {% else %}bg-orange-100 text-orange-800{% endif %}">
+                        <p class="font-semibold text-indigo-900">{{ review.smt_member.get_full_name }} ({{ review.created_at|date:"F d, Y" }})</p>
+                        <span class="px-3 py-1 inline-flex text-sm font-semibold rounded-full 
+                            {% if review.decision == 'smt_approved' %}bg-green-100 text-green-800 border border-green-300
+                            {% elif review.decision == 'smt_rejected' %}bg-red-100 text-red-800 border border-red-300
+                            {% else %}bg-orange-100 text-orange-800 border border-orange-300{% endif %}">
                             {{ review.get_decision_display }}
                         </span>
                     </div>
-                    <p class="mt-2 whitespace-pre-line">{{ review.comments }}</p>
+                    <p class="mt-2 whitespace-pre-line text-gray-800">{{ review.comments }}</p>
                     
                     {% if review.document_name %}
-                    <div class="mt-2">
-                        <a href="{% url 'contract:download_smt_document_with_id' contract.id review.id %}" class="text-blue-600 hover:underline">
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a href="{% url 'contract:download_smt_document_with_id' contract.id review.id %}" 
+                           class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150 shadow-sm">
+                            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
                             Download Document: {{ review.document_name }}
                         </a>
+                        <button type="button" 
+                                onclick="fetchAndPreviewDocument('smt', {{ contract.id }}, {{ review.id }}, '{{ review.document_name }}')"
+                                class="inline-flex items-center px-4 py-2 border-2 border-indigo-500 text-sm font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 transition-colors duration-150 shadow-sm">
+                            <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            Preview Document
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+
+            <!-- MOE Decision Section - Only visible if contract has been approved by SMT -->
+            <div class="my-8 border-t border-gray-200"></div>
+
+            {% if user.groups.all.0.name == 'HR' and contract.status == 'pending' %}
+                <!-- Check if any SMT review has an 'smt_approved' decision -->
+                {% for review in contract.smt_reviews.all %}
+                    {% if review.decision == 'smt_approved' %}
+                        <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+                            <h2 class="text-xl font-semibold mb-4 text-indigo-800">Ministry of Education Decision</h2>
+                            
+                            <!-- Print Contract Form Button -->
+                            <div class="mb-6">
+                                <a href="{% url 'contract:print_contract_form' contract.id %}"
+                                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                                    </svg>
+                                    Print Contract Form for MOE Submission
+                                </a>
+                            </div>
+                            
+                            <!-- MOE Decision Form -->
+                            <form id="moe-decision-form" method="post" action="{% url 'contract:moe_decision' contract.id %}" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="mb-4">
+                                    <label class="block text-gray-700 text-sm font-bold mb-2" for="moe_decision">
+                                        MOE Decision
+                                    </label>
+                                    <select id="moe_decision" name="decision" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                        <option value="">Select MOE's decision</option>
+                                        <option value="moe_approved">Approved by MOE</option>
+                                        <option value="moe_rejected">Rejected by MOE</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="block text-gray-700 text-sm font-bold mb-2" for="moe_comments">
+                                        Comments from MOE
+                                    </label>
+                                    <textarea id="moe_comments" name="comments" rows="5" 
+                                              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="block text-gray-700 text-sm font-bold mb-2" for="moe_document">
+                                        Upload MOE Document (Optional)
+                                    </label>
+                                    <div class="flex items-center">
+                                        <input type="file" id="moe_document" name="document" 
+                                               class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                               accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Upload MOE approval/rejection letter or supporting document (PDF, Word, Excel, PowerPoint)</p>
+                                </div>
+                                
+                                <div class="flex items-center justify-end">
+                                    <button type="submit" 
+                                            class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                                        Submit MOE Decision
+                                    </button>
+                                </div>
+                            </form>
+                            
+                            <!-- JavaScript for form validation with improved error handling -->
+                            <script>
+                                document.getElementById('moe-decision-form').addEventListener('submit', function(e) {
+                                    e.preventDefault();
+                                    
+                                    const decision = document.getElementById('moe_decision').value;
+                                    const comments = document.getElementById('moe_comments').value;
+                                    
+                                    if (!decision) {
+                                        alert('Please select MOE\'s decision.');
+                                        return;
+                                    }
+                                    
+                                    if (decision === 'moe_rejected' && !comments.trim()) {
+                                        alert('Comments are required for MOE rejection.');
+                                        return;
+                                    }
+                                    
+                                    if (confirm('Are you sure you want to submit this MOE decision?')) {
+                                        // Use fetch API to submit the form
+                                        const formData = new FormData(this);
+                                        
+                                        // Log form data for debugging
+                                        console.log('Form action URL:', this.action);
+                                        for (let pair of formData.entries()) {
+                                            console.log(pair[0] + ': ' + pair[1]);
+                                        }
+                                        
+                                        // Regular form submission instead of fetch
+                                        this.submit();
+                                        
+                                        /* Commenting out the fetch implementation until we fix the issue
+                                        fetch(this.action, {
+                                            method: 'POST',
+                                            body: formData,
+                                            headers: {
+                                                'X-Requested-With': 'XMLHttpRequest'
+                                            }
+                                        })
+                                        .then(response => {
+                                            console.log('Response status:', response.status);
+                                            if (!response.ok) {
+                                                return response.text().then(text => {
+                                                    console.error('Error response:', text);
+                                                    throw new Error('Network response was not ok: ' + response.status);
+                                                });
+                                            }
+                                            return response.json();
+                                        })
+                                        .then(data => {
+                                            console.log('Success data:', data);
+                                            if (data.success) {
+                                                // Show success message
+                                                alert('MOE decision submitted successfully!');
+                                                // Redirect to the employee contracts page
+                                                window.location.href = "{% url 'contract:employee_contracts' %}";
+                                            } else {
+                                                alert('Error: ' + (data.error || 'Unknown error occurred'));
+                                            }
+                                        })
+                                        .catch(error => {
+                                            console.error('Fetch error:', error);
+                                            alert('An error occurred while submitting the form. Please try again. Error: ' + error.message);
+                                        });
+                                        */
+                                    }
+                                });
+                            </script>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+
+                        <!-- MOE Decision & Comments Section -->
+            {% if contract.moe_reviews.exists %}
+            <div class="mt-6 bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4 text-indigo-800">MOE Decision & Comments</h2>
+                
+                {% for review in contract.moe_reviews.all %}
+                <div class="mb-4 p-4 border rounded-lg border-indigo-200 bg-indigo-50 {% if not forloop.last %}mb-6{% endif %}">
+                    <div class="flex justify-between items-center">
+                        <p class="font-semibold text-indigo-900">{{ review.hr_officer.get_full_name }} ({{ review.created_at|date:"F d, Y" }})</p>
+                        <span class="px-3 py-1 inline-flex text-sm font-semibold rounded-full 
+                            {% if review.decision == 'moe_approved' %}bg-green-100 text-green-800 border border-green-300
+                            {% elif review.decision == 'moe_rejected' %}bg-red-100 text-red-800 border border-red-300
+                            {% else %}bg-orange-100 text-orange-800 border border-orange-300{% endif %}">
+                            {{ review.get_decision_display }}
+                        </span>
+                    </div>
+                    <p class="mt-2 whitespace-pre-line text-gray-800">{{ review.comments }}</p>
+                    
+                    {% if review.document_name %}
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a href="{% url 'contract:download_moe_document' contract.id review.id %}" 
+                        class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150 shadow-sm">
+                            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            Download Document: {{ review.document_name }}
+                        </a>
+                        <button type="button" 
+                                onclick="fetchAndPreviewDocument('moe', {{ contract.id }}, {{ review.id }}, '{{ review.document_name }}')"
+                                class="inline-flex items-center px-4 py-2 border-2 border-indigo-500 text-sm font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 transition-colors duration-150 shadow-sm">
+                            <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            Preview Document
+                        </button>
                     </div>
                     {% endif %}
                 </div>
@@ -705,23 +923,27 @@
             <!-- Action Buttons -->
             <div class="flex justify-end space-x-4 mt-8">
                 {% if user.groups.all.0.name == 'HR' and contract.status == 'pending' %}
-                    <button type="button"
-                            onclick="openSendBackModal()"
-                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
-                        Send Back to Employee
-                    </button>
-                    
-                    <button type="button"
-                            onclick="forwardToDean({{ contract.id }})"
-                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        Forward to Dean for Review
-                    </button>
-                    
-                    <button type="button"
-                            onclick="forwardToSMT({{ contract.id }})"
-                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                        Forward to SMT
-                    </button>
+                    {% if not contract.smt_reviews.exists or contract.smt_reviews.last.decision != 'smt_approved' %}
+                        {% if not contract.dean_reviews.exists %}
+                            <button type="button"
+                                    onclick="openSendBackModal()"
+                                    class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                                Send Back to Employee
+                            </button>
+                            
+                            <button type="button"
+                                    onclick="forwardToDean({{ contract.id }})"
+                                    class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Forward to Dean for Review
+                            </button>
+                        {% endif %}
+                        
+                        <button type="button"
+                                onclick="forwardToSMT({{ contract.id }})"
+                                class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            Forward to SMT
+                        </button>
+                    {% endif %}
                 {% endif %}
             </div>
         </div>
@@ -749,6 +971,64 @@
                     Confirm Send Back
                 </button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Document Preview Modal - with colored borders and improved styling -->
+<div id="documentPreviewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-11/12 h-5/6 max-w-6xl flex flex-col border-4 border-indigo-600">
+        <div class="flex justify-between items-center bg-indigo-600 text-white px-6 py-3">
+            <h3 class="text-lg font-medium" id="previewDocumentTitle">Document Preview</h3>
+            <button onclick="closePreviewModal()" class="text-white hover:text-gray-200">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="flex-1 overflow-hidden relative border-t border-indigo-200">
+            <!-- Loading indicator -->
+            <div id="iframeLoader" class="absolute inset-0 flex items-center justify-center bg-white">
+                <div class="text-center">
+                    <svg class="animate-spin h-10 w-10 text-indigo-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="text-indigo-800 font-medium">Loading document preview...</p>
+                </div>
+            </div>
+            
+            <!-- Preview container - will be populated by JS -->
+            <div id="previewContainer" class="w-full h-full"></div>
+            
+            <!-- Fallback content -->
+            <div id="previewFallback" class="hidden absolute inset-0 flex items-center justify-center bg-white">
+                <div class="text-center p-8 max-w-lg border-2 border-yellow-300 rounded-lg bg-yellow-50">
+                    <svg class="h-12 w-12 text-yellow-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <p class="text-lg font-medium text-gray-900 mb-2">Document preview unavailable</p>
+                    <p class="text-gray-600 mb-4">We couldn't preview this document type in the browser.</p>
+                    <a id="fallbackDownloadLink" href="#" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        Download instead
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="px-6 py-4 bg-gray-50 text-right border-t border-indigo-200">
+            <button type="button" onclick="closePreviewModal()" class="py-2 px-4 bg-gray-600 hover:bg-gray-700 text-white rounded-md">
+                Close
+            </button>
+            <a id="modalDownloadLink" href="#" download 
+               class="ml-3 py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md inline-flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+                Download
+            </a>
         </div>
     </div>
 </div>
@@ -888,6 +1168,134 @@ async function forwardToDean(contractId) {
         alert('Error forwarding contract to Dean');
     }
 }
+
+async function fetchAndPreviewDocument(docType, contractId, reviewId, documentName) {
+    // Show the modal first
+    document.getElementById('documentPreviewModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    
+    // Show loader, hide fallback
+    document.getElementById('iframeLoader').style.display = 'flex';
+    document.getElementById('previewFallback').classList.add('hidden');
+    
+    // Set download link and document title
+    let downloadUrl;
+    if (docType === 'dean') {
+        downloadUrl = `/contract/download-dean-document/${contractId}/${reviewId}/`;
+    } else if (docType === 'smt') {
+        downloadUrl = `/contract/download-smt-document-with-id/${contractId}/${reviewId}/`;
+    } else if (docType === 'moe') {
+        downloadUrl = `/contract/download-moe-document/${contractId}/${reviewId}/`;
+    }
+    
+    document.getElementById('modalDownloadLink').href = downloadUrl;
+    document.getElementById('fallbackDownloadLink').href = downloadUrl;
+    
+    // Set title
+    const documentTitle = document.getElementById('previewDocumentTitle');
+    documentTitle.textContent = 'Document Preview: ' + documentName;
+    
+    try {
+        // Get file content using fetch API
+        const response = await fetch(downloadUrl);
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch document');
+        }
+        
+        // Get content type
+        const contentType = response.headers.get('Content-Type');
+        const previewContainer = document.getElementById('previewContainer');
+        
+        // Handle different content types
+        if (contentType.includes('pdf')) {
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            
+            // Create and embed PDF viewer - use object tag for better PDF rendering
+            previewContainer.innerHTML = `
+                <object 
+                    data="${objectUrl}" 
+                    type="application/pdf" 
+                    width="100%" 
+                    height="100%" 
+                    style="display: block; width: 100%; height: 100%;">
+                </object>`;
+            
+        } else if (contentType.includes('image/')) {
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            
+            // Create responsive image viewer
+            previewContainer.innerHTML = `
+                <div class="flex items-center justify-center h-full">
+                    <img 
+                        src="${objectUrl}" 
+                        alt="${documentName}" 
+                        class="max-w-full max-h-full object-contain">
+                </div>`;
+            
+        } else if (contentType.includes('text/')) {
+            const text = await response.text();
+            
+            // Create text viewer
+            previewContainer.innerHTML = `
+                <div class="w-full h-full bg-white p-4 overflow-auto">
+                    <pre class="whitespace-pre-wrap">${text}</pre>
+                </div>`;
+            
+        } else {
+            // For non-previewable types, show fallback
+            throw new Error('Document type not previewable');
+        }
+        
+        // Hide loader
+        document.getElementById('iframeLoader').style.display = 'none';
+        
+    } catch (error) {
+        console.error('Error loading preview:', error);
+        // Hide loader, show fallback
+        document.getElementById('iframeLoader').style.display = 'none';
+        document.getElementById('previewFallback').classList.remove('hidden');
+    }
+}
+
+function closePreviewModal() {
+    // Hide the modal
+    document.getElementById('documentPreviewModal').classList.add('hidden');
+    
+    // Clear preview container 
+    document.getElementById('previewContainer').innerHTML = '';
+    
+    // Reset UI state
+    document.getElementById('iframeLoader').style.display = 'flex';
+    document.getElementById('previewFallback').classList.add('hidden');
+    
+    // Re-enable body scrolling
+    document.body.style.overflow = 'auto';
+    
+    // Clean up any blob URLs to prevent memory leaks
+    const embedElements = document.querySelectorAll('embed, iframe, img');
+    embedElements.forEach(element => {
+        if (element.src && element.src.startsWith('blob:')) {
+            URL.revokeObjectURL(element.src);
+        }
+    });
+}
+
+// Close modal if user clicks outside the content area
+document.getElementById('documentPreviewModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closePreviewModal();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !document.getElementById('documentPreviewModal').classList.contains('hidden')) {
+        closePreviewModal();
+    }
+});
 </script>
 
 <!-- Debug Information Section -->

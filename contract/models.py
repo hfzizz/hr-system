@@ -13,8 +13,11 @@ class Contract(models.Model):
         ('sent_back', 'Sent Back to Employee'),
         ('dean_review', 'Dean Review'),
         ('smt_review', 'Currently under SMT Review'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
+        ('smt_approved', 'Approved by SMT'),
+        ('smt_rejected', 'Rejected by SMT'),
+        ('moe_review', 'Currently under MOE Review'),
+        ('moe_approved', 'Approved by MOE'),
+        ('moe_rejected', 'Rejected by MOE'),
     ]
     
     CONTRACT_TYPE_CHOICES = [
@@ -214,3 +217,18 @@ class SMTReview(models.Model):
     
     def __str__(self):
         return f"SMT Review by {self.smt_member.get_full_name()} for {self.contract.contract_id}"
+
+class MOEReview(models.Model):
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='moe_reviews')
+    hr_officer = models.ForeignKey('employees.Employee', on_delete=models.CASCADE, related_name='moe_reviews')
+    decision = models.CharField(max_length=20, choices=Contract.STATUS_CHOICES)
+    comments = models.TextField()
+    document = models.BinaryField(null=True, blank=True)
+    document_name = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"MOE Review processed by {self.hr_officer.get_full_name()} for {self.contract.contract_id}"

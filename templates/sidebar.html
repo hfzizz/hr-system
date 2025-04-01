@@ -161,20 +161,85 @@
 
       <!-- Contract Renewal -->
       {% if perms.contract.view_contract %}
-        {% if contract_enabled or is_hr_contract or is_dean or user.groups.all.0.name == 'SMT' %}
           <li>
-            <a href="{% if is_hr_contract %}{% url 'contract:list' %}{% elif is_dean %}{% url 'contract:dean_department_contracts' %}{% elif user.groups.all.0.name == 'SMT' %}{% url 'contract:smt_contracts' %}{% else %}{% url 'contract:employee_contracts' %}{% endif %}" 
-               class="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 {% if 'contract' in request.path %}bg-gray-100 text-gray-900{% endif %}">
-              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M8 7V15C8 16.1046 8.89543 17 10 17H16M8 7V5C8 3.89543 8.89543 3 10 3H14L20 9V15C20 16.1046 19.1046 17 18 17H16M8 7H6C4.89543 7 4 7.89543 4 9V19C4 20.1046 4.89543 21 6 21H14C15.1046 21 16 20.1046 16 19V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M14 3V9H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <div>
-                <span class="whitespace-nowrap overflow-hidden">Contract Renewal</span>
-              </div>
-            </a>
+            <details class="group [&_summary::-webkit-details-marker]:hidden"
+            {% if 'contract' in request.path %}open{% endif %}>
+              <summary
+                class="flex cursor-point items-center gap-3 rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-700"
+              > 
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8 7V15C8 16.1046 8.89543 17 10 17H16M8 7V5C8 3.89543 8.89543 3 10 3H14L20 9V15C20 16.1046 19.1046 17 18 17H16M8 7H6C4.89543 7 4 7.89543 4 9V19C4 20.1046 4.89543 21 6 21H14C15.1046 21 16 20.1046 16 19V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M14 3V9H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div>
+                  <span class="text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"> Contract Renewal </span>
+                </div>
+                
+                <span class="shrink-0 transition duration-300 group-open:-rotate-180">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="size-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                    fill-rule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clip-rule="evenodd"
+                  />
+                  </svg>
+                </span>
+              </summary>
+
+              <ul class="mt-2 space-y-1 px-4">
+                {% if is_hr_contract %}
+                <li>
+                  <a
+                    href="{% url 'contract:list' %}"
+                    class="block rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 {% if 'contract/list' in request.path %}bg-gray-100 text-gray-900{% endif %}"
+                  >
+                    Employee Contracts
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="{% url 'contract:view_all_submissions' %}"
+                    class="block rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 {% if 'all_submissions' in request.path %}bg-gray-100 text-gray-900{% endif %}"
+                  >
+                    All Submissions
+                  </a>
+                </li>
+                {% elif is_dean %}
+                <li>
+                  <a
+                    href="{% url 'contract:dean_department_contracts' %}"
+                    class="block rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 {% if 'dean_department' in request.path %}bg-gray-100 text-gray-900{% endif %}"
+                  >
+                    Department Contracts
+                  </a>
+                </li>
+                {% elif user.groups.all.0.name == 'SMT' %}
+                <li>
+                  <a
+                    href="{% url 'contract:smt_contracts' %}"
+                    class="block rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 {% if 'smt_contracts' in request.path %}bg-gray-100 text-gray-900{% endif %}"
+                  >
+                    SMT Review
+                  </a>
+                </li>
+                {% else %}
+                <li>
+                  <a
+                    href="{% url 'contract:employee_contracts' %}"
+                    class="block rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 {% if 'employee_contracts' in request.path %}bg-gray-100 text-gray-900{% endif %}"
+                  >
+                    My Contracts
+                  </a>
+                </li>
+                {% endif %}
+              </ul>
+            </details>
           </li>
-        {% endif %}
       {% endif %}
 
         <!-- Settings -->

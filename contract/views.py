@@ -3,7 +3,7 @@ from django.views.generic import TemplateView, CreateView, ListView, UpdateView,
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponse, FileResponse, HttpResponseNotFound, HttpResponseRedirect
 from django.core.cache import cache
-from .models import Contract, AdministrativePosition, DeanReview, SMTReview
+from .models import Contract, AdministrativePosition, DeanReview, SMTReview, MOEReview
 from .forms import ContractRenewalForm, ContractForm
 from appraisals.models import Appraisal
 from django.contrib import messages
@@ -944,10 +944,8 @@ def forward_to_smt(request, contract_id):
             for smt_user in smt_users:
                 try:
                     smt_employee = Employee.objects.get(user=smt_user)
-                    # Create notification with link to SMT review page
-                    review_url = reverse('contract:smt_review', args=[contract.id])
-                    message = f"HR has forwarded contract {contract.contract_id} for {contract.employee.get_full_name()} for SMT review. "
-                    message += f'<a href="{review_url}" class="text-blue-600 hover:underline">Review Contract</a>'
+                    # Create notification with just the message, no link
+                    message = f"HR has forwarded contract {contract.contract_id} for {contract.employee.get_full_name()} for SMT review."
                     
                     ContractNotification.objects.create(
                         employee=smt_employee,
@@ -994,40 +992,47 @@ class ViewAllSubmissionsView(LoginRequiredMixin, View):
         
         # For SMT users with specific filters
         if request.user.groups.filter(name='SMT').exists():
-            if filter_param == 'approved':
+            if filter_param == 'smt_approved':
                 in_process_contracts = Contract.objects.filter(
-                    status='approved'
+                    status='smt_approved'
                 ).select_related('employee', 'employee__department').order_by('-submission_date')[:100]
                 pending_contracts = Contract.objects.none()
-            elif filter_param == 'rejected':
+                moe_decision_contracts = Contract.objects.none()
+            elif filter_param == 'smt_rejected':
                 in_process_contracts = Contract.objects.filter(
-                    status='rejected'
+                    status='smt_rejected'
                 ).select_related('employee', 'employee__department').order_by('-submission_date')[:100]
                 pending_contracts = Contract.objects.none()
+                moe_decision_contracts = Contract.objects.none()
             else:
                 # Default view for SMT - show contracts waiting for review
                 in_process_contracts = Contract.objects.filter(
                     status='smt_review'
                 ).select_related('employee', 'employee__department').order_by('-submission_date')[:100]
                 pending_contracts = Contract.objects.none()
+                moe_decision_contracts = Contract.objects.none()
         elif request.user.groups.filter(name='HR').exists():
             # For HR users, show all contracts
             in_process_contracts = Contract.objects.filter(
-                status__in=['smt_review', 'approved', 'rejected', 'sent_back', 'dean_review']
+                status__in=['smt_review', 'smt_approved', 'smt_rejected', 'sent_back', 'dean_review']
             ).select_related('employee', 'employee__department').order_by('-submission_date')[:100]
 
             pending_contracts = Contract.objects.filter(
-            status='pending'
+                status='pending'
+            ).select_related('employee', 'employee__department').order_by('-submission_date')[:100]
+            
+            # Add MOE decision contracts
+            moe_decision_contracts = Contract.objects.filter(
+                status__in=['moe_approved', 'moe_rejected']
             ).select_related('employee', 'employee__department').order_by('-submission_date')[:100]
         else:
             # For other users
             in_process_contracts = Contract.objects.none()
             pending_contracts = Contract.objects.none()
+            moe_decision_contracts = Contract.objects.none()
         
-        
-
         # Pre-calculate months_remaining to avoid doing it in the template
-        for contracts in [in_process_contracts, pending_contracts]:
+        for contracts in [in_process_contracts, pending_contracts, moe_decision_contracts]:
             for contract in contracts:
                 renewal_date = contract.employee.hire_date + relativedelta(years=3)
                 while renewal_date < today:
@@ -1042,6 +1047,7 @@ class ViewAllSubmissionsView(LoginRequiredMixin, View):
         context = {
             'in_process_contracts': in_process_contracts,
             'pending_contracts': pending_contracts,
+            'moe_decision_contracts': moe_decision_contracts,
             'departments': Department.objects.all(),
             'is_smt': request.user.groups.filter(name='SMT').exists(),
             'filter': filter_param,
@@ -1059,7 +1065,7 @@ class EmployeeContractView(LoginRequiredMixin, View):
         # Fetch contracts for the current user
         previous_contracts = Contract.objects.filter(
             employee=request.user.employee,
-            status__in=['approved', 'rejected']
+            status__in=['smt_approved', 'smt_rejected', 'moe_approved', 'moe_rejected']
         ).select_related('employee', 'employee__department')
 
         current_contracts = Contract.objects.filter(
@@ -1572,22 +1578,29 @@ class DeanContractView(LoginRequiredMixin, View):
                 status='dean_review'
             ).select_related('employee', 'employee__department').order_by('-submission_date')
             
+            # Get all department contracts regardless of status
+            all_department_contracts = Contract.objects.filter(
+                employee__department=dean_department
+            ).select_related('employee', 'employee__department').order_by('-submission_date')
+            
             # Calculate months remaining for each contract
             today = datetime.now().date()
-            for contract in dean_review_contracts:
-                renewal_date = contract.employee.hire_date + relativedelta(years=3)
-                while renewal_date < today:
-                    renewal_date += relativedelta(years=3)
-                
-                r_date = datetime(renewal_date.year, renewal_date.month, 1)
-                t_date = datetime(today.year, today.month, 1)
-                
-                contract.months_remaining = ((r_date.year - t_date.year) * 12 + 
-                                          r_date.month - t_date.month)
+            for contracts in [dean_review_contracts, all_department_contracts]:
+                for contract in contracts:
+                    renewal_date = contract.employee.hire_date + relativedelta(years=3)
+                    while renewal_date < today:
+                        renewal_date += relativedelta(years=3)
+                    
+                    r_date = datetime(renewal_date.year, renewal_date.month, 1)
+                    t_date = datetime(today.year, today.month, 1)
+                    
+                    contract.months_remaining = ((r_date.year - t_date.year) * 12 + 
+                                            r_date.month - t_date.month)
             
             context = {
                 'department': dean_department,
                 'dean_review_contracts': dean_review_contracts,
+                'all_department_contracts': all_department_contracts,
             }
             
             return render(request, self.template_name, context)
@@ -1901,11 +1914,11 @@ def smt_decision(request, contract_id):
         comments = request.POST.get('comments', '')
         
         # Validate the decision
-        if decision not in ['approved', 'rejected', 'sent_back']:
+        if decision not in ['smt_approved', 'smt_rejected', 'sent_back']:
             return JsonResponse({'error': 'Invalid decision'}, status=400)
         
         # Validate comments for rejection or send back
-        if decision in ['rejected', 'sent_back'] and not comments.strip():
+        if decision in ['smt_rejected', 'sent_back'] and not comments.strip():
             return JsonResponse({'error': 'Comments are required for rejection or revision requests'}, status=400)
         
         # Create SMT review object
@@ -1925,21 +1938,22 @@ def smt_decision(request, contract_id):
         # Save the review
         smt_review.save()
         
-        # Update contract status
-        contract.status = decision
+        # Update contract status - if approved, set back to pending for HR to print contract
+        if decision == 'smt_approved':
+            contract.status = 'pending'
+        else:
+            contract.status = decision
         contract.save()
         
         # Create notification for the employee
         notification_message = ""
-        if decision == 'approved':
-            notification_message = f"Your contract renewal (ID: {contract.contract_id}) has been approved by the SMT."
-        elif decision == 'rejected':
-            notification_message = f"Your contract renewal (ID: {contract.contract_id}) has been rejected by the SMT. Reason: {comments}"
-        else:  # sent_back
-            notification_message = f"Your contract renewal (ID: {contract.contract_id}) has been sent back for revision by the SMT. Comments: {comments}"
+        if decision == 'smt_rejected':
+            notification_message = f"Your contract renewal {contract.contract_id} has been rejected by the SMT. Reason: {comments}"
+        elif decision == 'sent_back':
+            notification_message = f"Your contract renewal {contract.contract_id} has been sent back for revision by the SMT. Comments: {comments}"
         
         # Add document info to notification if a document was uploaded
-        if document:
+        if document and decision != 'smt_approved':
             notification_message += f" A document has been attached to this decision."
         
         ContractNotification.objects.create(
@@ -1959,10 +1973,17 @@ def smt_decision(request, contract_id):
             hr_group = Group.objects.get(name='HR')
             hr_users = hr_group.user_set.all()
             
+            # Map decision codes to human-readable text
+            decision_text = {
+                'smt_approved': 'approved',
+                'smt_rejected': 'rejected',
+                'sent_back': 'sent back'
+            }.get(decision, decision)  # Fallback to the original value if not found
+            
             for hr_user in hr_users:
                 try:
                     hr_employee = Employee.objects.get(user=hr_user)
-                    hr_message = f"SMT has {decision} contract {contract.contract_id} for {contract.employee.get_full_name()}."
+                    hr_message = f"SMT has {decision_text} contract {contract.contract_id} for {contract.employee.get_full_name()}."
                     
                     # Add document info to notification if a document was uploaded
                     if document:
@@ -1985,7 +2006,7 @@ def smt_decision(request, contract_id):
         except Group.DoesNotExist:
             pass
         
-        return JsonResponse({'status': 'success'})
+        return redirect('contract:smt_contracts')
     except Contract.DoesNotExist:
         return JsonResponse({'error': 'Contract not found'}, status=404)
     except Exception as e:
@@ -2000,17 +2021,31 @@ class SMTContractsView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         return self.request.user.groups.filter(name='SMT').exists()
     
     def get_queryset(self):
-        filter_param = self.request.GET.get('filter')
+        # Get all contracts
+        contracts = Contract.objects.all().order_by('-submission_date')
         
-        if filter_param == 'approved':
-            # Show approved contracts
-            return Contract.objects.filter(status='approved').order_by('-submission_date')
-        elif filter_param == 'rejected':
-            # Show rejected contracts
-            return Contract.objects.filter(status='rejected').order_by('-submission_date')
-        else:
-            # Show contracts awaiting SMT review
-            return Contract.objects.filter(status='smt_review').order_by('-submission_date')
+        # Add flags to indicate SMT review status
+        for contract in contracts:
+            # Check if this contract has been reviewed by SMT
+            smt_reviews = contract.smt_reviews.all()
+            contract.has_smt_review = smt_reviews.exists()
+            
+            # If it has reviews, get the latest decision
+            if contract.has_smt_review:
+                latest_review = smt_reviews.latest('created_at')
+                contract.smt_decision = latest_review.decision
+                contract.is_smt_approved = latest_review.decision == 'smt_approved'
+                contract.is_smt_rejected = latest_review.decision == 'smt_rejected'
+                contract.is_sent_back = latest_review.decision == 'sent_back'
+                contract.smt_review_date = latest_review.created_at
+                contract.smt_reviewer = latest_review.smt_member
+            else:
+                contract.smt_decision = None
+                contract.is_smt_approved = False
+                contract.is_smt_rejected = False
+                contract.is_sent_back = False
+        
+        return contracts
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -2032,3 +2067,314 @@ class SMTContractsView(LoginRequiredMixin, UserPassesTestMixin, ListView):
                                       r_date.month - t_date.month)
                 
         return context
+
+@login_required
+def preview_dean_document(request, contract_id, review_id):
+    """View function to preview a dean document in the browser."""
+    # Get the review object
+    contract = get_object_or_404(Contract, pk=contract_id)
+    review = get_object_or_404(DeanReview, pk=review_id, contract=contract)
+    
+    # Security check
+    if not (request.user.groups.filter(name__in=['Dean', 'SMT', 'HOD', 'HR']).exists() or 
+            Contract.objects.filter(pk=contract_id, employee__user=request.user).exists()):
+        return HttpResponse("Permission denied", status=403)
+    
+    if not review.document:
+        return HttpResponse("No document available", status=404)
+    
+    # Determine content type based on file extension
+    filename = review.document_name
+    content_type = 'application/octet-stream'  # Default
+    
+    if filename.lower().endswith('.pdf'):
+        content_type = 'application/pdf'
+    elif filename.lower().endswith('.docx'):
+        content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    elif filename.lower().endswith('.doc'):
+        content_type = 'application/msword'
+    elif filename.lower().endswith(('.xls', '.xlsx')):
+        content_type = 'application/vnd.ms-excel'
+    elif filename.lower().endswith(('.ppt', '.pptx')):
+        content_type = 'application/vnd.ms-powerpoint'
+    
+    # Create the response
+    response = HttpResponse(review.document, content_type=content_type)
+    response['Content-Disposition'] = f'inline; filename="{filename}"'
+    return response
+
+@login_required
+def print_contract_form(request, contract_id):
+    # Check if user is HR
+    if not request.user.groups.filter(name='HR').exists():
+        messages.error(request, "You don't have permission to perform this action.")
+        return redirect('dashboard')
+    
+    try:
+        # Get the contract
+        contract = Contract.objects.get(id=contract_id)
+        
+        # Check if contract has been approved by SMT
+        smt_approves = False
+        if contract.smt_reviews.exists():
+            latest_smt_review = contract.smt_reviews.latest('created_at')
+            smt_approves = latest_smt_review.decision == 'smt_approved'
+        
+        if not smt_approves:
+            messages.error(request, "This contract has not been approved by SMT yet.")
+            return redirect('contract:review', pk=contract_id)
+        
+        # Render the contract form template
+        context = {
+            'contract': contract,
+            'employee': contract.employee,
+            'dean_reviews': contract.dean_reviews.all(),
+            'smt_reviews': contract.smt_reviews.all(),
+            'today': timezone.now().date(),
+        }
+        
+        return render(request, 'contract/print_contract_form.html', context)
+    
+    except Contract.DoesNotExist:
+        messages.error(request, "Contract not found.")
+        return redirect('dashboard')
+    except Exception as e:
+        messages.error(request, f"Error: {str(e)}")
+        return redirect('dashboard')
+
+@login_required
+def preview_smt_document(request, contract_id, review_id):
+    """View function to preview an SMT document in the browser."""
+    # Get the review object
+    contract = get_object_or_404(Contract, pk=contract_id)
+    review = get_object_or_404(SMTReview, pk=review_id, contract=contract)
+    
+    # Security check
+    if not (request.user.groups.filter(name__in=['SMT', 'HR']).exists() or 
+            Contract.objects.filter(pk=contract_id, employee__user=request.user).exists()):
+        return HttpResponse("Permission denied", status=403)
+    
+    if not review.document:
+        return HttpResponse("No document available", status=404)
+    
+    # Determine content type based on file extension
+    filename = review.document_name
+    content_type = 'application/octet-stream'  # Default
+    
+    if filename.lower().endswith('.pdf'):
+        content_type = 'application/pdf'
+    elif filename.lower().endswith('.docx'):
+        content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    elif filename.lower().endswith('.doc'):
+        content_type = 'application/msword'
+    elif filename.lower().endswith(('.xls', '.xlsx')):
+        content_type = 'application/vnd.ms-excel'
+    elif filename.lower().endswith(('.ppt', '.pptx')):
+        content_type = 'application/vnd.ms-powerpoint'
+    
+    # Debugging: Log the content type and filename
+    print(f"Serving SMT document: {filename} with content type: {content_type}")
+    
+    # Create the response with proper content type
+    response = HttpResponse(review.document, content_type=content_type)
+    response['Content-Disposition'] = f'inline; filename="{filename}"'
+    return response
+
+@login_required
+@require_POST
+def moe_decision(request, contract_id):
+    # Check if user is in HR group
+    if not request.user.groups.filter(name='HR').exists():
+        messages.error(request, 'You are not authorized to perform this action.')
+        return redirect('contract:dashboard')
+    
+    try:
+        # Get the contract
+        contract = Contract.objects.get(id=contract_id)
+        
+        # Check if contract has been approved by SMT
+        if contract.status != 'pending':
+            messages.error(request, 'This contract is not in the correct state for MOE decision.')
+            return redirect('contract:review', pk=contract_id)
+        
+        # Get form data
+        decision = request.POST.get('decision')
+        comments = request.POST.get('comments', '')
+        
+        # Validate the decision
+        if decision not in ['moe_approved', 'moe_rejected']:
+            messages.error(request, 'Invalid decision.')
+            return redirect('contract:review', pk=contract_id)
+        
+        # Validate comments for rejection
+        if decision == 'moe_rejected' and not comments.strip():
+            messages.error(request, 'Comments are required for MOE rejection.')
+            return redirect('contract:review', pk=contract_id)
+        
+        # Create MOE review object
+        moe_review = MOEReview(
+            contract=contract,
+            hr_officer=request.user.employee,
+            decision=decision,
+            comments=comments
+        )
+        
+        # Handle document upload
+        document = request.FILES.get('document')
+        if document:
+            moe_review.document = document.read()
+            moe_review.document_name = document.name
+        
+        # Save the review
+        moe_review.save()
+        
+        # Update contract status
+        contract.status = decision
+        contract.save()
+        
+        # Create notification for the employee
+        notification_message = ""
+        if decision == 'moe_rejected':
+            notification_message = f"Your contract renewal (ID: {contract.contract_id}) has been rejected by the Ministry of Education."
+        else:  # moe_approved
+            notification_message = f"Your contract renewal (ID: {contract.contract_id}) has been approved by the Ministry of Education."
+        
+        # Add comments to notification if provided
+        if comments.strip():
+            notification_message += f" Comments: {comments}"
+        
+        # Add document info to notification if a document was uploaded
+        if document:
+            notification_message += f" A document has been attached to this decision."
+        
+        ContractNotification.objects.create(
+            employee=contract.employee,
+            message=notification_message,
+            contract=contract,
+            metadata={
+                'moe_decision': decision,
+                'moe_comments': comments,
+                'processed_by': request.user.employee.id,
+                'has_document': bool(document),
+                'moe_review_id': moe_review.id
+            }
+        )
+        
+        # Create notification for SMT
+        try:
+            smt_group = Group.objects.get(name='SMT')
+            smt_users = smt_group.user_set.all()
+            
+            # Map decision codes to human-readable text
+            decision_text = {
+                'moe_approved': 'approved',
+                'moe_rejected': 'rejected'
+            }.get(decision, decision)
+            
+            for smt_user in smt_users:
+                try:
+                    smt_employee = Employee.objects.get(user=smt_user)
+                    smt_message = f"MOE has {decision_text} contract {contract.contract_id} for {contract.employee.get_full_name()}."
+                    
+                    # Add document info to notification if a document was uploaded
+                    if document:
+                        smt_message += f" A document has been attached to this decision."
+                    
+                    ContractNotification.objects.create(
+                        employee=smt_employee,
+                        message=smt_message,
+                        contract=contract,
+                        metadata={
+                            'moe_decision': decision,
+                            'moe_comments': comments,
+                            'processed_by': request.user.employee.id,
+                            'has_document': bool(document),
+                            'moe_review_id': moe_review.id
+                        }
+                    )
+                except Employee.DoesNotExist:
+                    continue
+        except Group.DoesNotExist:
+            pass
+        
+        messages.success(request, f'MOE decision has been recorded successfully.')
+        return redirect('contract:all_submissions')  # Redirect to all submissions page
+    
+    except Contract.DoesNotExist:
+        messages.error(request, 'Contract not found.')
+        return redirect('contract:dashboard')
+    except Exception as e:
+        messages.error(request, f'An error occurred: {str(e)}')
+        return redirect('contract:review', pk=contract_id)
+
+@login_required
+def download_moe_document(request, contract_id, review_id):
+    """View function to download an MOE document."""
+    # Get the review object
+    contract = get_object_or_404(Contract, pk=contract_id)
+    review = get_object_or_404(MOEReview, pk=review_id, contract=contract)
+    
+    # Security check
+    if not (request.user.groups.filter(name__in=['HR', 'SMT']).exists() or 
+            Contract.objects.filter(pk=contract_id, employee__user=request.user).exists()):
+        return HttpResponse("Permission denied", status=403)
+    
+    if not review.document:
+        return HttpResponse("No document available", status=404)
+    
+    # Determine content type based on file extension
+    filename = review.document_name or "moe_document.pdf"
+    content_type = 'application/octet-stream'  # Default
+    
+    if filename.lower().endswith('.pdf'):
+        content_type = 'application/pdf'
+    elif filename.lower().endswith('.docx'):
+        content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    elif filename.lower().endswith('.doc'):
+        content_type = 'application/msword'
+    elif filename.lower().endswith(('.xls', '.xlsx')):
+        content_type = 'application/vnd.ms-excel'
+    elif filename.lower().endswith(('.ppt', '.pptx')):
+        content_type = 'application/vnd.ms-powerpoint'
+    
+    # Create the response
+    response = HttpResponse(review.document, content_type=content_type)
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+class EmployeeContractsView(LoginRequiredMixin, View):
+    template_name = 'contract/employee_contracts.html'
+    
+    def get(self, request):
+        # Check if user is an employee
+        try:
+            employee = Employee.objects.get(user=request.user)
+        except Employee.DoesNotExist:
+            messages.error(request, "You don't have an employee profile.")
+            return redirect('home')
+        
+        # Get current contracts (those in process)
+        current_contracts = Contract.objects.filter(
+            employee=employee,
+            status__in=['pending', 'dean_review', 'smt_review', 'sent_back']
+        ).order_by('-submission_date')
+        
+        # Get previous contracts (completed ones, including those with MOE decisions)
+        previous_contracts = Contract.objects.filter(
+            employee=employee,
+            status__in=['smt_approved', 'smt_rejected', 'moe_approved', 'moe_rejected']
+        ).order_by('-submission_date')
+        
+        # Check if contract submission is enabled for this employee
+        contract_status = ContractRenewalStatus.objects.filter(
+            employee=employee
+        ).first()
+        contract_enabled = contract_status.is_enabled if contract_status else False
+        
+        context = {
+            'current_contracts': current_contracts,
+            'previous_contracts': previous_contracts,
+            'contract_enabled': contract_enabled
+        }
+        
+        return render(request, self.template_name, context)

@@ -38,5 +38,9 @@ urlpatterns = [
     path('smt-decision/<int:contract_id>/', views.smt_decision, name='smt_decision'),
     path('smt-contracts/', views.SMTContractsView.as_view(), name='smt_contracts'),
     path('download-smt-document/<int:contract_id>/', views.download_smt_document, name='download_smt_document'),
-    path('download-smt-document/<int:contract_id>/<int:review_id>/', views.download_smt_document, name='download_smt_document_with_id'),
+    path('download-smt-document-with-id/<int:contract_id>/<int:review_id>/', views.download_smt_document, name='download_smt_document_with_id'),
+    path('preview-dean-document/<int:contract_id>/<int:review_id>/', views.preview_dean_document, name='preview_dean_document'),
+    path('print-contract-form/<int:contract_id>/', views.print_contract_form, name='print_contract_form'),
+    path('moe-decision/<int:contract_id>/', views.moe_decision, name='moe_decision'),
+    path('download-moe-document/<int:contract_id>/<int:review_id>/', views.download_moe_document, name='download_moe_document'),
 ]

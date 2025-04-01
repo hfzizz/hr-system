@@ -1,0 +1,363 @@
+{% extends 'base_print.html' %}
+{% load static %}
+
+{% block title %}Contract Form - {{ contract.contract_id }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 print:px-0">
+    <div class="flex justify-between items-center mb-8 print:hidden">
+        <div class="flex items-center space-x-4">
+            <button onclick="window.history.back()" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back
+            </button>
+            <h1 class="text-2xl font-bold">Contract Form - {{ contract.contract_id }}</h1>
+        </div>
+        <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Print Form
+        </button>
+    </div>
+
+    <!-- University Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-xl font-bold uppercase">University Contract Renewal Form</h1>
+        <p class="text-sm">Human Resources Department</p>
+    </div>
+
+    <!-- Contract Information -->
+    <div class="mb-8 border-b pb-4">
+        <h2 class="text-lg font-bold mb-4">Contract Information</h2>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <p class="text-sm font-medium">Contract ID:</p>
+                <p>{{ contract.contract_id }}</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium">Submission Date:</p>
+                <p>{{ contract.submission_date|date:"F d, Y" }}</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium">Contract Type:</p>
+                <p>{{ contract.get_contract_type_display }}</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium">Status:</p>
+                <p>{{ contract.get_status_display }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Information -->
+    <div class="mb-8 border-b pb-4">
+        <h2 class="text-lg font-bold mb-4">Employee Information</h2>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <p class="text-sm font-medium">Employee ID:</p>
+                <p>{{ employee.employee_id }}</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium">Full Name:</p>
+                <p>{{ employee.get_full_name }}</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium">Department:</p>
+                <p>{{ employee.department.name }}</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium">Position:</p>
+                <p>{{ employee.post }}</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium">Hire Date:</p>
+                <p>{{ employee.hire_date|date:"F d, Y" }}</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium">Email:</p>
+                <p>{{ employee.email }}</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium">IC Number:</p>
+                <p>{{ employee.ic_no }}</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium">IC Color:</p>
+                <p>{{ employee.get_ic_colour_display }}</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium">Phone Number:</p>
+                <p>{{ employee.phone_number }}</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium">Department:</p>
+                <p>{{ employee.department.name }}</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium">Present Position:</p>
+                <p>{{ employee.post }}</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium">Salary Scale Division:</p>
+                <p>{{ contract.salary_scale_division }}</p>
+            </div>
+        </div>
+    </div>
+    <!-- Academic Qualifications -->
+    <div class="mb-8 border-b pb-4">
+        <h2 class="text-lg font-bold mb-4">Academic Qualifications</h2>
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead>
+                <tr>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-900">Qualification</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-900">Institution</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-900">Year</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if contract.academic_qualifications.all %}
+                    {% for qualification in contract.academic_qualifications.all %}
+                    <tr>
+                        <td class="px-4 py-2 text-sm text-gray-900">{{ qualification.qualification }}</td>
+                        <td class="px-4 py-2 text-sm text-gray-900">{{ qualification.institution }}</td>
+                        <td class="px-4 py-2 text-sm text-gray-900">{{ qualification.year }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="3" class="px-4 py-2 text-sm text-gray-500 text-center">No academic qualifications provided</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Professional Qualifications -->
+    <div class="mb-8 border-b pb-4">
+        <h2 class="text-lg font-bold mb-4">Professional Qualifications</h2>
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead>
+                <tr>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-900">Qualification</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-900">Institution</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-900">Year</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if contract.professional_qualifications.all %}
+                    {% for qualification in contract.professional_qualifications.all %}
+                    <tr>
+                        <td class="px-4 py-2 text-sm text-gray-900">{{ qualification.qualification }}</td>
+                        <td class="px-4 py-2 text-sm text-gray-900">{{ qualification.institution }}</td>
+                        <td class="px-4 py-2 text-sm text-gray-900">{{ qualification.year }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="3" class="px-4 py-2 text-sm text-gray-500 text-center">No professional qualifications provided</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Administrative Positions -->
+    <div class="mb-8 border-b pb-4">
+        <h2 class="text-lg font-bold mb-4">Administrative Positions</h2>
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead>
+                <tr>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-900">Title</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-900">From Date</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-900">To Date</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-900">Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if contract.administrative_positions.all %}
+                    {% for position in contract.administrative_positions.all %}
+                    <tr>
+                        <td class="px-4 py-2 text-sm text-gray-900">{{ position.title }}</td>
+                        <td class="px-4 py-2 text-sm text-gray-900">{{ position.from_date|date:"F d, Y" }}</td>
+                        <td class="px-4 py-2 text-sm text-gray-900">{{ position.to_date|date:"F d, Y" }}</td>
+                        <td class="px-4 py-2 text-sm text-gray-900">{{ position.details }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" class="px-4 py-2 text-sm text-gray-500 text-center">No administrative positions provided</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Teaching Experience -->
+    <div class="mb-8 border-b pb-4">
+        <h2 class="text-lg font-bold mb-4">Teaching Experience</h2>
+        <div class="mb-4">
+            <p class="text-sm font-medium">Teaching Experience:</p>
+            <p class="whitespace-pre-line">{{ contract.teaching_experience }}</p>
+        </div>
+        <div class="mb-4">
+            <p class="text-sm font-medium">Modules Taught:</p>
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr>
+                        <th class="px-4 py-2 text-left text-sm font-medium text-gray-900">Module Code</th>
+                        <th class="px-4 py-2 text-left text-sm font-medium text-gray-900">Module Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if contract.modules_taught.all %}
+                        {% for module in contract.modules_taught.all %}
+                        <tr>
+                            <td class="px-4 py-2 text-sm text-gray-900">{{ module.code }}</td>
+                            <td class="px-4 py-2 text-sm text-gray-900">{{ module.name }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="2" class="px-4 py-2 text-sm text-gray-500 text-center">No modules taught provided</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Research and Publications -->
+    <div class="mb-8 border-b pb-4">
+        <h2 class="text-lg font-bold mb-4">Research and Publications</h2>
+        <div class="mb-4">
+            <p class="text-sm font-medium">Research Interests:</p>
+            <p class="whitespace-pre-line">{{ contract.research_interests }}</p>
+        </div>
+        <div class="mb-4">
+            <p class="text-sm font-medium">Publications:</p>
+            <p class="whitespace-pre-line">{{ contract.publications }}</p>
+        </div>
+        <div class="mb-4">
+            <p class="text-sm font-medium">Conferences:</p>
+            <p class="whitespace-pre-line">{{ contract.conferences }}</p>
+        </div>
+    </div>
+
+    <!-- Achievements -->
+    <div class="mb-8 border-b pb-4">
+        <h2 class="text-lg font-bold mb-4 text-black-800">Achievements</h2>
+        <div class="mb-4 p-4 border rounded-lg border-gray-200 bg-gray-50">
+            <p class="whitespace-pre-line text-gray-700">{{ contract.achievements }}</p>
+        </div>
+    </div>
+
+    <!-- Future Plans -->
+    <div class="mb-8 border-b pb-4">
+        <h2 class="text-lg font-bold mb-4 text-black-800">Future Plans</h2>
+        <div class="mb-4 p-4 border rounded-lg border-gray-200 bg-gray-50">
+            <p class="whitespace-pre-line text-gray-700">{{ contract.future_plans }}</p>
+        </div>
+    </div>
+
+    <!-- Other Information -->
+    <div class="mb-8 border-b pb-4">
+        <h2 class="text-lg font-bold mb-4 text-black-800">Other Information</h2>
+        <div class="mb-4 p-4 border rounded-lg border-gray-200 bg-gray-50">
+            <p class="whitespace-pre-line text-gray-700">{{ contract.other_information }}</p>
+        </div>
+    </div>
+
+    <!-- Appraiser Comments -->
+    <div class="mb-8 border-b pb-4">
+        <h2 class="text-lg font-bold mb-4 text-black-800">Appraiser Comments</h2>
+        <div class="mb-4 p-4 border rounded-lg border-gray-200 bg-gray-50">
+            <p class="whitespace-pre-line text-gray-700">{{ contract.appraiser_comments }}</p>
+        </div>
+    </div>
+
+    <!-- Dean's Review -->
+    {% if dean_reviews %}
+    <div class="mb-8 border-b pb-4">
+        <h2 class="text-lg font-bold mb-4">Dean's Review</h2>
+        {% for review in dean_reviews %}
+        <div class="mb-4">
+            <p class="text-sm font-medium">Reviewed by:</p>
+            <p>{{ review.dean.get_full_name }} on {{ review.created_at|date:"F d, Y" }}</p>
+            
+            <p class="text-sm font-medium mt-2">Comments:</p>
+            <p class="whitespace-pre-line">{{ review.comments }}</p>
+            
+            {% if review.document_name %}
+            <p class="text-sm font-medium mt-2">Document:</p>
+            <p>{{ review.document_name }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- SMT Review -->
+    {% if smt_reviews %}
+    <div class="mb-8 border-b pb-4">
+        <h2 class="text-lg font-bold mb-4">SMT Review</h2>
+        {% for review in smt_reviews %}
+        <div class="mb-4">
+            <p class="text-sm font-medium">Reviewed by:</p>
+            <p>{{ review.smt_member.get_full_name }} on {{ review.created_at|date:"F d, Y" }}</p>
+            
+            <p class="text-sm font-medium mt-2">Decision:</p>
+            <p>
+                {% if review.decision == 'smt_approved' %}
+                    Approved
+                {% elif review.decision == 'smt_rejected' %}
+                    Rejected
+                {% elif review.decision == 'sent_back' %}
+                    Sent Back for Revision
+                {% else %}
+                    {{ review.get_decision_display }}
+                {% endif %}
+            </p>
+            
+            <p class="text-sm font-medium mt-2">Comments:</p>
+            <p class="whitespace-pre-line">{{ review.comments }}</p>
+            
+            {% if review.document_name %}
+            <p class="text-sm font-medium mt-2">Document:</p>
+            <p>{{ review.document_name }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- HR Approval Section -->
+    <div class="mb-8">
+        <h2 class="text-lg font-bold mb-4">HR Approval</h2>
+        <div class="grid grid-cols-2 gap-8 mt-8">
+            <div>
+                <p class="text-sm font-medium mb-8">Approved by:</p>
+                <div class="border-t border-black pt-2">
+                    <p>HR Director</p>
+                    <p class="text-sm">Date: {{ today|date:"F d, Y" }}</p>
+                </div>
+            </div>
+            <div>
+                <p class="text-sm font-medium mb-8">Processed by:</p>
+                <div class="border-t border-black pt-2">
+                    <p>HR Officer</p>
+                    <p class="text-sm">Date: {{ today|date:"F d, Y" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center text-sm mt-16">
+        <p>This document is automatically generated by the HR Contract Management System.</p>
+        <p>Printed on: {{ today|date:"F d, Y" }}</p>
+    </div>
+</div>
+{% endblock %} 

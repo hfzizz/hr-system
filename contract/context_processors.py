@@ -72,11 +72,11 @@ def contract_context(request):
         context['smt_pending_reviews'] = smt_pending_reviews
         
         # Count approved contracts
-        smt_approved_contracts = Contract.objects.filter(status='approved').count()
+        smt_approved_contracts = Contract.objects.filter(status='smt_approved').count()
         context['smt_approved_contracts'] = smt_approved_contracts
         
         # Count rejected contracts
-        smt_rejected_contracts = Contract.objects.filter(status='rejected').count()
+        smt_rejected_contracts = Contract.objects.filter(status='smt_rejected').count()
         context['smt_rejected_contracts'] = smt_rejected_contracts
     
-    return context
+    return context  
