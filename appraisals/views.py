@@ -441,12 +441,149 @@ def save_field(request):
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
+# @require_GET
+# @login_required
+# def toggle_leadership_section(request):
+#     """Toggle the leadership section visibility"""
+#     try:
+#         show = 'is_leadership_role' in request.GET
+#         appraisal_id = request.GET.get('appraisal_id')
+        
+#         if not appraisal_id:
+#             return JsonResponse({'status': 'error', 'message': 'Missing appraisal_id'}, status=400)
+            
+#         appraisal = get_object_or_404(Appraisal, appraisal_id=appraisal_id)
+        
+#         # Check if user has permission to view this appraisal
+#         if not (appraisal.appraiser.user == request.user or request.user.groups.filter(name='HR').exists()):
+#             return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=403)
+        
+#         # Get or create the section object to store leadership role flag
+#         section_obj, created = AppraisalSection.objects.get_or_create(
+#             appraisal=appraisal,
+#             section_name='B10'
+#         )
+        
+#         if not section_obj.data:
+#             section_obj.data = {}
+            
+#         # Update the section data to reflect leadership role status
+#         section_obj.data['is_leadership_role'] = show
+#         section_obj.save()
+        
+#         # Return HTML for leadership fields if showing
+#         if show:
+#             # HTML for leadership rating form elements
+#             html = f"""
+#             <div class="bg-white rounded p-4">
+#                 <div class="mb-6">
+#                     <label class="block text-gray-700 mb-2">Leadership qualities</label>
+#                     <div class="flex items-center gap-4">
+#                         <div class="flex items-center">
+#                             <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+#                                 type="radio" name="b10_leadership" id="b10_leadership_1" value="1"
+#                                 hx-post="/appraisals/save-rating/"
+#                                 hx-trigger="change"
+#                                 hx-vals='{"field": "b10_leadership", "section": "B10", "value": "1", "appraisal_id": "%s"}'
+#                                 hx-swap="none"
+#                                 hx-indicator="#save-indicator">
+#                             <label class="ml-1 text-gray-700" for="b10_leadership_1">1</label>
+#                         </div>
+#                         <div class="flex items-center">
+#                             <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+#                                 type="radio" name="b10_leadership" id="b10_leadership_2" value="2"
+#                                 hx-post="/appraisals/save-rating/"
+#                                 hx-trigger="change"
+#                                 hx-vals='{"field": "b10_leadership", "section": "B10", "value": "2", "appraisal_id": "%s"}'
+#                                 hx-swap="none"
+#                                 hx-indicator="#save-indicator">
+#                             <label class="ml-1 text-gray-700" for="b10_leadership_2">2</label>
+#                         </div>
+#                         <div class="flex items-center">
+#                             <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+#                                 type="radio" name="b10_leadership" id="b10_leadership_3" value="3"
+#                                 hx-post="/appraisals/save-rating/"
+#                                 hx-trigger="change"
+#                                 hx-vals='{"field": "b10_leadership", "section": "B10", "value": "3", "appraisal_id": "%s"}'
+#                                 hx-swap="none"
+#                                 hx-indicator="#save-indicator">
+#                             <label class="ml-1 text-gray-700" for="b10_leadership_3">3</label>
+#                         </div>
+#                         <div class="flex items-center">
+#                             <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+#                                 type="radio" name="b10_leadership" id="b10_leadership_4" value="4"
+#                                 hx-post="/appraisals/save-rating/"
+#                                 hx-trigger="change"
+#                                 hx-vals='{"field": "b10_leadership", "section": "B10", "value": "4", "appraisal_id": "%s"}'
+#                                 hx-swap="none"
+#                                 hx-indicator="#save-indicator">
+#                             <label class="ml-1 text-gray-700" for="b10_leadership_4">4</label>
+#                         </div>
+#                     </div>
+#                 </div>
+                
+#                 <div class="mb-6">
+#                     <label class="block text-gray-700 mb-2">Decision-making abilities</label>
+#                     <div class="flex items-center gap-4">
+#                         <div class="flex items-center">
+#                             <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+#                                 type="radio" name="b10_decision_making" id="b10_decision_making_1" value="1"
+#                                 hx-post="/appraisals/save-rating/"
+#                                 hx-trigger="change"
+#                                 hx-vals='{"field": "b10_decision_making", "section": "B10", "value": "1", "appraisal_id": "%s"}'
+#                                 hx-swap="none"
+#                                 hx-indicator="#save-indicator">
+#                             <label class="ml-1 text-gray-700" for="b10_decision_making_1">1</label>
+#                         </div>
+#                         <div class="flex items-center">
+#                             <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+#                                 type="radio" name="b10_decision_making" id="b10_decision_making_2" value="2"
+#                                 hx-post="/appraisals/save-rating/"
+#                                 hx-trigger="change"
+#                                 hx-vals='{"field": "b10_decision_making", "section": "B10", "value": "2", "appraisal_id": "%s"}'
+#                                 hx-swap="none"
+#                                 hx-indicator="#save-indicator">
+#                             <label class="ml-1 text-gray-700" for="b10_decision_making_2">2</label>
+#                         </div>
+#                         <div class="flex items-center">
+#                             <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+#                                 type="radio" name="b10_decision_making" id="b10_decision_making_3" value="3"
+#                                 hx-post="/appraisals/save-rating/"
+#                                 hx-trigger="change"
+#                                 hx-vals='{"field": "b10_decision_making", "section": "B10", "value": "3", "appraisal_id": "%s"}'
+#                                 hx-swap="none"
+#                                 hx-indicator="#save-indicator">
+#                             <label class="ml-1 text-gray-700" for="b10_decision_making_3">3</label>
+#                         </div>
+#                         <div class="flex items-center">
+#                             <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+#                                 type="radio" name="b10_decision_making" id="b10_decision_making_4" value="4"
+#                                 hx-post="/appraisals/save-rating/"
+#                                 hx-trigger="change"
+#                                 hx-vals='{"field": "b10_decision_making", "section": "B10", "value": "4", "appraisal_id": "%s"}'
+#                                 hx-swap="none"
+#                                 hx-indicator="#save-indicator">
+#                             <label class="ml-1 text-gray-700" for="b10_decision_making_4">4</label>
+#                         </div>
+#                     </div>
+#                 </div>
+#             </div>
+#             """ (appraisal_id, appraisal_id, appraisal_id, appraisal_id, appraisal_id, appraisal_id, appraisal_id, appraisal_id)
+            
+#             return JsonResponse({'status': 'success', 'html': html})
+#         else:
+#             # If not showing leadership section, return empty HTML
+#             return JsonResponse({'status': 'success', 'html': ''})
+    
+#     except Exception as e:
+#         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
 @require_GET
 @login_required
 def toggle_leadership_section(request):
     """Toggle the leadership section visibility"""
     try:
-        show = request.GET.get('show', 'false').lower() == 'true'
+        show = 'is_leadership_role' in request.GET
         appraisal_id = request.GET.get('appraisal_id')
         
         if not appraisal_id:
@@ -458,114 +595,37 @@ def toggle_leadership_section(request):
         if not (appraisal.appraiser.user == request.user or request.user.groups.filter(name='HR').exists()):
             return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=403)
         
-        # We'll just return the HTML for the leadership fields here
+        # Get or create the section object to store leadership role flag
+        section_obj, created = AppraisalSection.objects.get_or_create(
+            appraisal=appraisal,
+            section_name='B10'
+        )
+        
+        if not section_obj.data:
+            section_obj.data = {}
+            
+        # Update the section data to reflect leadership role status
+        section_obj.data['is_leadership_role'] = show
+        section_obj.save()
+        
+        # Return a simplified response for debugging
         if show:
-            html = """
-            <div class="form-group">
-                <label>Leadership qualities</label>
-                <div class="rating-group">
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="b10_leadership" id="b10_leadership_1" value="1"
-                               hx-post="{url}" hx-trigger="change" hx-vals='{{"field": "b10_leadership", "section": "B10", "value": "1", "appraisal_id": "{appraisal_id}"}}' hx-swap="none" hx-indicator="#save-indicator">
-                        <label class="form-check-label" for="b10_leadership_1">1</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="b10_leadership" id="b10_leadership_2" value="2"
-                               hx-post="{url}" hx-trigger="change" hx-vals='{{"field": "b10_leadership", "section": "B10", "value": "2", "appraisal_id": "{appraisal_id}"}}' hx-swap="none" hx-indicator="#save-indicator">
-                        <label class="form-check-label" for="b10_leadership_2">2</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="b10_leadership" id="b10_leadership_3" value="3"
-                               hx-post="{url}" hx-trigger="change" hx-vals='{{"field": "b10_leadership", "section": "B10", "value": "3", "appraisal_id": "{appraisal_id}"}}' hx-swap="none" hx-indicator="#save-indicator">
-                        <label class="form-check-label" for="b10_leadership_3">3</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="b10_leadership" id="b10_leadership_4" value="4"
-                               hx-post="{url}" hx-trigger="change" hx-vals='{{"field": "b10_leadership", "section": "B10", "value": "4", "appraisal_id": "{appraisal_id}"}}' hx-swap="none" hx-indicator="#save-indicator">
-                        <label class="form-check-label" for="b10_leadership_4">4</label>
-                    </div>
-                </div>
+            # Just return a simple div for now to test if it works
+            html = f"""
+            <div class="bg-white rounded p-4">
+                <p>Leadership section is now visible. Appraisal ID: {appraisal_id}</p>
             </div>
-            
-            <div class="form-group">
-                <label>Problem-solving qualities</label>
-                <div class="rating-group">
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="b10_problem_solving" id="b10_problem_solving_1" value="1"
-                               hx-post="{url}" hx-trigger="change" hx-vals='{{"field": "b10_problem_solving", "section": "B10", "value": "1", "appraisal_id": "{appraisal_id}"}}' hx-swap="none" hx-indicator="#save-indicator">
-                        <label class="form-check-label" for="b10_problem_solving_1">1</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="b10_problem_solving" id="b10_problem_solving_2" value="2"
-                               hx-post="{url}" hx-trigger="change" hx-vals='{{"field": "b10_problem_solving", "section": "B10", "value": "2", "appraisal_id": "{appraisal_id}"}}' hx-swap="none" hx-indicator="#save-indicator">
-                        <label class="form-check-label" for="b10_problem_solving_2">2</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="b10_problem_solving" id="b10_problem_solving_3" value="3"
-                               hx-post="{url}" hx-trigger="change" hx-vals='{{"field": "b10_problem_solving", "section": "B10", "value": "3", "appraisal_id": "{appraisal_id}"}}' hx-swap="none" hx-indicator="#save-indicator">
-                        <label class="form-check-label" for="b10_problem_solving_3">3</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="b10_problem_solving" id="b10_problem_solving_4" value="4"
-                               hx-post="{url}" hx-trigger="change" hx-vals='{{"field": "b10_problem_solving", "section": "B10", "value": "4", "appraisal_id": "{appraisal_id}"}}' hx-swap="none" hx-indicator="#save-indicator">
-                        <label class="form-check-label" for="b10_problem_solving_4">4</label>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label>Decision-making qualities</label>
-                <div class="rating-group">
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="b10_decision_making" id="b10_decision_making_1" value="1"
-                               hx-post="{url}" hx-trigger="change" hx-vals='{{"field": "b10_decision_making", "section": "B10", "value": "1", "appraisal_id": "{appraisal_id}"}}' hx-swap="none" hx-indicator="#save-indicator">
-                        <label class="form-check-label" for="b10_decision_making_1">1</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="b10_decision_making" id="b10_decision_making_2" value="2"
-                               hx-post="{url}" hx-trigger="change" hx-vals='{{"field": "b10_decision_making", "section": "B10", "value": "2", "appraisal_id": "{appraisal_id}"}}' hx-swap="none" hx-indicator="#save-indicator">
-                        <label class="form-check-label" for="b10_decision_making_2">2</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="b10_decision_making" id="b10_decision_making_3" value="3"
-                               hx-post="{url}" hx-trigger="change" hx-vals='{{"field": "b10_decision_making", "section": "B10", "value": "3", "appraisal_id": "{appraisal_id}"}}' hx-swap="none" hx-indicator="#save-indicator">
-                        <label class="form-check-label" for="b10_decision_making_3">3</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="b10_decision_making" id="b10_decision_making_4" value="4"
-                               hx-post="{url}" hx-trigger="change" hx-vals='{{"field": "b10_decision_making", "section": "B10", "value": "4", "appraisal_id": "{appraisal_id}"}}' hx-swap="none" hx-indicator="#save-indicator">
-                        <label class="form-check-label" for="b10_decision_making_4">4</label>
-                    </div>
-                </div>
-            </div>
-            """.format(url=request.build_absolute_uri('/appraisals/save-rating/'), appraisal_id=appraisal_id)
-            
-            # Also update the appraisal to note this is a leadership role
-            section_obj, created = AppraisalSection.objects.get_or_create(
-                appraisal=appraisal,
-                section_name='B10'
-            )
-            if not section_obj.data:
-                section_obj.data = {}
-            section_obj.data['is_leadership_role'] = True
-            section_obj.save()
-            
-            return HttpResponse(html)
+            """
+            return JsonResponse({'status': 'success', 'html': html})
         else:
-            # Update the appraisal to note this is not a leadership role
-            section_obj, created = AppraisalSection.objects.get_or_create(
-                appraisal=appraisal,
-                section_name='B10'
-            )
-            if not section_obj.data:
-                section_obj.data = {}
-            section_obj.data['is_leadership_role'] = False
-            section_obj.save()
-            
-            return HttpResponse("")  # Empty response to hide the section
+            return JsonResponse({'status': 'success', 'html': ''})
+    
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
+        # Add more detailed error logging
+        import traceback
+        error_msg = f"Error in toggle_leadership_section: {str(e)}\n{traceback.format_exc()}"
+        return JsonResponse({'status': 'error', 'message': error_msg}, status=500)
+    
 @require_GET
 @login_required
 def toggle_other_relationship(request):
@@ -781,6 +841,8 @@ class AppraiserListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
             'user',
             'department'
         )
+
+        context['employee_roles'] = Employee.objects.all()
         
         # Common data
         context['departments'] = Department.objects.all()

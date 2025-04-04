@@ -783,13 +783,12 @@
         <div class="mb-6">
             <div class="flex items-center">
                 <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" 
-                       type="checkbox" id="is_leadership_role" name="is_leadership_role"
-                       hx-get="{% url 'appraisals:toggle_leadership_section' %}"
-                       hx-target="#leadership-ratings"
-                       hx-trigger="change"
-                       hx-indicator="#leadership-indicator">
-                <label class="ml-2 text-gray-700" for="is_leadership_role">
-                    Appraisee is in a leadership role (Dean/Deputy Dean/Head of FICO)
+                        type="checkbox" id="is_leadership_role" name="is_leadership_role"
+                        hx-get="{% url 'appraisals:toggle_leadership_section' %}?appraisal_id={{ appraisal.appraisal_id }}"
+                        hx-target="#leadership-ratings"
+                        hx-trigger="change"
+                        hx-indicator="#leadership-indicator"> 
+                     Appraisee is in a leadership role (Dean/Deputy Dean/Head of FICO)
                 </label>
                 <div id="leadership-indicator" class="htmx-indicator ml-2">
                     <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

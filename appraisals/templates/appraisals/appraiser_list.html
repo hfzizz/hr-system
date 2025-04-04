@@ -235,8 +235,6 @@
             </div>
         </div>
 
-        {% include "appraisals/includes/assign_modal.html" with appraisers=appraisers periods=periods %}
-
         <div id="roles-tab" class="tab-content hidden mt-8">
             <!-- Table Controls -->
             <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -290,7 +288,7 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            {% for item in assign_employees %}
+                            {% for item in employee_roles %}
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {{ item.employee_id }}
@@ -353,6 +351,9 @@
                 </div>
             </div>
         </div>
+
+        <!-- Assign Modal -->
+        {% include "appraisals/includes/assign_modal.html" with appraisers=appraisers periods=periods %}
 
         {% else %}
         <!-- Forbidden View -->
