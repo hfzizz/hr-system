@@ -229,7 +229,9 @@ class Appraisal(models.Model):
         """Returns the present post of the employee."""
         return self.employee.post or "Not specified"
 
-
+    def get_latest_3_appraisals(self):
+        """Returns the last three appraisals for the employee."""
+        return Appraisal.objects.filter(employee=self.employee).order_by('-date_created')[:3]
 
 class Module(models.Model):
     employee = models.ForeignKey(
