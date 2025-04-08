@@ -1,5 +1,3 @@
-
-
 // Validation to prevent primary and secondary appraiser from being the same
 document.getElementById('appraiser').addEventListener('change', validateAppraisers);
 document.getElementById('appraiser_secondary').addEventListener('change', validateAppraisers);
@@ -219,39 +217,36 @@ document.addEventListener('DOMContentLoaded', function() {
     const dd = String(today.getDate()).padStart(2, '0');
     const formattedToday = `${yyyy}-${mm}-${dd}`;
 
-      // Set minimum date constraints
+    // calculate one month from today for default end date
+    const oneMonthLater = new Date(today);
+    oneMonthLater.setMonth(today.getMonth() + 1);  
+    const endYyyy = oneMonthLater.getFullYear();
+    const endMm = String(oneMonthLater.getMonth() + 1).padStart(2, '0'); // January is 0!
+    const endDd = String(oneMonthLater.getDate()).padStart(2, '0');
+    const formattedOneMonthLater = `${endYyyy}-${endMm}-${endDd}`;
+
+    // Set minimum date constraints
     reviewStartField.min = formattedToday;
     reviewEndField.min = formattedToday;
-    
-    if (reviewStartField && reviewEndField) {
-        // Set minimum date constraints
-        reviewStartField.min = formattedToday;
-        reviewEndField.min = formattedToday;
-        
-        // Handle review start date changes
-        reviewStartField.addEventListener('change', function() {
-            // When start date changes, update end date minimum
-            if (this.value) {
-                reviewEndField.min = this.value;
-                
-                // If end date is now before start date, update it
-                if (reviewEndField.value && new Date(reviewEndField.value) < new Date(this.value)) {
-                    reviewEndField.value = this.value;
-                }
-            } else {
-                // If start date is cleared, reset end date min to today
-                reviewEndField.min = formattedToday;
+
+    // Set default values
+    reviewStartField.value = formattedToday;  
+    reviewEndField.value = formattedOneMonthLater;
+
+    reviewStartField.addEventListener('change', function() {
+        // When start date changes, update end date minimum
+        if (this.value) {
+            reviewEndField.min = this.value;
+
+            if( reviewEndField.value && new Date(reviewEndField.value) < new Date(this.value)) {
+                reviewEndField.value = this.value;
             }
-        });
-        
-        // Handle review end date changes - this helps prevent the issue
-        reviewEndField.addEventListener('change', function() {
-            // If end date is before start date, update start date
-            if (this.value && reviewStartField.value && new Date(this.value) < new Date(reviewStartField.value)) {
-                reviewStartField.value = this.value;
-            }
-        });
-    }
+        } else {
+            // If start date is cleared, reset end date min to today
+            reviewEndField.min = formattedToday;
+            this.value = formattedToday; // Reset start date to today
+        }
+    });
 
     // Handle review end date changes
     reviewEndField.addEventListener('change', function() {
@@ -418,7 +413,6 @@ function updateAppraisersFromHtmx() {
     }
 }
 
-// Update openAssignModal function
 window.openAssignModal = function(employeeId, employeeName) {
     // Set the employee details
     document.getElementById('selected_employee_id').value = employeeId;
@@ -428,14 +422,30 @@ window.openAssignModal = function(employeeId, employeeName) {
     document.getElementById('appraiser').value = '';
     document.getElementById('appraiser_secondary').value = '';
     document.getElementById('period_select').value = '';
-    document.getElementById('review_period_start').value = '';
-    document.getElementById('review_period_end').value = '';
     document.getElementById('errorMessage').classList.add('hidden');
     
+    // Set default value for review start date
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const formattedToday = `${yyyy}-${mm}-${dd}`;
+    
+    const reviewStartField = document.getElementById('review_period_start');
+    if (reviewStartField) {
+        reviewStartField.value = formattedToday;
+    }
+    
+    // Trigger HTMX to refresh the end date field
+    const reviewEndField = document.getElementById('review_period_end');
+    if (reviewEndField && reviewEndField.getAttribute('hx-get')) {
+        htmx.trigger(reviewEndField, 'load');
+    }
+
     // Show the modal
     document.getElementById('assignModal').classList.remove('hidden');
     
-    // Add animation class after a small delay to ensure proper rendering
+    // Add animation class after a small delay
     setTimeout(() => {
         const modalPanel = document.querySelector('#assignModal .transform');
         if (modalPanel) {
@@ -447,7 +457,6 @@ window.openAssignModal = function(employeeId, employeeName) {
     // Update employee initials
     updateEmployeeInitials();
 };
-
 // Primary appraiser change handler
 document.getElementById('appraiser').addEventListener('change', function() {
     const primaryValue = this.value;

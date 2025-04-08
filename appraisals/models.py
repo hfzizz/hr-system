@@ -9,6 +9,7 @@ class AppraisalPeriod(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     is_active = models.BooleanField(default=False)
+    is_default = models.BooleanField(default=False, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -27,26 +28,6 @@ class AppraisalPeriod(models.Model):
 
         if self.start_date and self.end_date and self.start_date >= self.end_date:
             raise ValidationError("End date must be after start date")
-
-        # Check if there's an overlap with other periods
-        overlapping = AppraisalPeriod.objects.filter(
-            start_date__lte=self.end_date,
-            end_date__gte=self.start_date
-        )
-        
-        if self.pk:  # If updating existing period
-            overlapping = overlapping.exclude(pk=self.pk)
-            
-        if overlapping.exists():
-            raise ValidationError("This period overlaps with an existing period")
-
-        # If trying to activate, check no other active periods
-        if self.is_active:
-            active_periods = AppraisalPeriod.objects.filter(is_active=True)
-            if self.pk:
-                active_periods = active_periods.exclude(pk=self.pk)
-            if active_periods.exists():
-                raise ValidationError("Another period is already active")
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -341,7 +322,7 @@ class AppraisalSection(models.Model):
     appraisal = models.ForeignKey(Appraisal, on_delete=models.CASCADE, related_name='sections')
     section_name = models.CharField(max_length=50)  # e.g., 'B1', 'B2', etc.
     data = models.JSONField(default=dict, blank=True)  # Stores all field values for this section
-    appraiser = models.ForeignKey('employees.Employee', on_delete=models.CASCADE, related_name='appraisal_sections')
+    appraiser = models.ForeignKey('employees.Employee', on_delete=models.CASCADE, related_name='appraisal_sections', null=True, blank=True)
     
     class Meta:
         unique_together = ('appraisal', 'section_name', 'appraiser')

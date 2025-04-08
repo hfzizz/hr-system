@@ -501,3 +501,84 @@ function openRoleModal(employeeId) {
     // To be implemented
     console.log('Opening role modal for employee:', employeeId);
 }
+
+document.getElementById('createPeriodForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    
+    const form = this;
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Server error');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            document.getElementById('createPeriodModal').classList.add('hidden');
+            window.location.reload();
+        } else {
+            alert(data.error || 'An error occurred while creating the period.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(error.message || 'An error occurred while creating the period.');
+    });
+});
+
+// Initialize date inputs with today's date
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('period_start').value = today;
+    document.getElementById('period_end').value = today;
+});
+
+// Add date validation
+document.getElementById('period_start').addEventListener('change', function() {
+    document.getElementById('period_end').min = this.value;
+});
+
+document.getElementById('period_end').addEventListener('change', function() {
+    document.getElementById('period_start').max = this.value;
+});
+
+  // Show edit modal when edit button is clicked
+  document.body.addEventListener('click', function(event) {
+    if (event.target.matches('button[hx-get*="/appraisals/periods/"][hx-target="#edit-period-form-container"]')) {
+        document.getElementById('editPeriodModal').classList.remove('hidden');
+    }
+});
+
+// Validate date fields
+document.body.addEventListener('htmx:afterSwap', function(event) {
+    if (event.detail.target.id === 'edit-period-form-container') {
+        const startField = document.getElementById('edit_period_start');
+        const endField = document.getElementById('edit_period_end');
+        
+        if (startField && endField) {
+            startField.addEventListener('change', function() {
+                endField.min = this.value;
+            });
+            
+            endField.addEventListener('change', function() {
+                startField.max = this.value;
+            });
+            
+            // Set initial constraints
+            endField.min = startField.value;
+            startField.max = endField.value;
+        }
+    }
+});

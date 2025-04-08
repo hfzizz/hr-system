@@ -3,6 +3,7 @@
 
 {% block scripts %}
     <script src="{% static 'appraisals/js/assign_modal.js' %}" defer></script> 
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
 {% endblock %}
 
 <div id="appraiser-options-container" class="hidden"></div>
@@ -151,6 +152,98 @@
     .hidden {
     display: none !important;
     }
+    .datepicker-picker,
+    .datepicker-dropdown,
+    .datepicker-main,
+    .datepicker-view,
+    .datepicker-grid,
+    .datepicker-header,
+    .datepicker-footer,
+    .datepicker-controls,
+    .datepicker-cell,
+    .datepicker-title {
+        background-color: white !important;
+        color: #374151 !important;
+        border-color: #e5e7eb !important;
+    }
+    
+    .datepicker-picker .datepicker-header .datepicker-controls .button {
+        background-color: white !important;
+        color: #374151 !important;
+        border-color: #e5e7eb !important;
+    }
+    
+    .datepicker-picker .datepicker-header .datepicker-controls .button:hover {
+        background-color: #f9fafb !important;
+    }
+    
+    .datepicker-picker .datepicker-footer .datepicker-controls .button {
+        background-color: white !important;
+        color: #374151 !important;
+        border-color: #e5e7eb !important;
+    }
+    
+    .datepicker-cell:not(.selected):not(:hover) {
+        background-color: white !important;
+        color: #374151 !important;
+    }
+    
+    .datepicker-cell.selected {
+        background-color: #3b82f6 !important;
+        color: white !important;
+    }
+    
+    .datepicker-cell:hover:not(.selected):not(.disabled) {
+        background-color: #f3f4f6 !important;
+    }
+
+    div[class*="datepicker"],
+    .datepicker-dropdown * {
+        background-color: white !important;
+        color: #374151 !important;
+    }
+    
+    /* Target specific datepicker elements with higher specificity */
+    html body div.datepicker-dropdown div.datepicker-picker,
+    html body div.datepicker-dropdown div.datepicker-picker *,
+    .datepicker-picker .datepicker-header .datepicker-controls .button,
+    .datepicker-picker .datepicker-footer .datepicker-controls .button,
+    .datepicker-cell:not(.selected):not(.disabled),
+    .datepicker-view,
+    .datepicker-grid,
+    .datepicker-header,
+    .datepicker-footer,
+    .datepicker-title {
+        background-color: white !important;
+        color: #374151 !important;
+    }
+    
+    /* Target datepicker buttons */
+    .datepicker-header button,
+    .datepicker-footer button {
+        background-color: white !important;
+        color: #374151 !important;
+        border-color: #e5e7eb !important;
+    }
+    
+    /* Selected date */
+    .datepicker-cell.selected {
+        background-color: #3b82f6 !important;
+        color: white !important;
+    }
+    
+    /* Hover styles */
+    .datepicker-cell:hover:not(.selected):not(.disabled),
+    .datepicker-controls button:hover {
+        background-color: #f3f4f6 !important;
+    }
+
+    /* Ensure input field has white background */
+    input[datepicker], 
+    input[datepicker]:focus {
+        background-color: white !important;
+        color: #374151 !important;
+    }
 </style>
     
 <!-- Assign Modal with enhanced UI -->
@@ -241,7 +334,7 @@
                     <!-- Appraisal Period Selection -->
                     <div class="form-field">
                         <label for="period_select" class="block text-sm font-medium text-gray-700">
-                            Appraisal Period <span class="required-indicator">*</span>
+                            Appraisal Period/Year <span class="required-indicator">*</span>
                         </label>
                         <select id="period_select" name="period" required
                                 class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
@@ -256,38 +349,31 @@
                         </select>
                     </div>
 
-                    <!-- Appraisal Period Fields -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="form-field">
-                            <label for="appraisal_period_start" class="block text-sm font-medium text-gray-700">Appraisal Start Date</label>
-                            <input type="date" id="appraisal_period_start" name="appraisal_period_start" 
-                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-50" readonly>
-                        </div>
-                        <div class="form-field">
-                            <label for="appraisal_period_end" class="block text-sm font-medium text-gray-700">Appraisal End Date</label>
-                            <input type="date" id="appraisal_period_end" name="appraisal_period_end" 
-                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-50" readonly>
-                        </div>
-                    </div>
-
-                    <!-- Review Period Fields -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="form-field">
-                            <label for="review_period_start" class="block text-sm font-medium text-gray-700">Review Start Date</label>
-                            <input type="date" id="review_period_start" name="review_period_start"
-                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" >
-                        </div>
-                        <div class="form-field">
-                            <label for="review_period_end" class="block text-sm font-medium text-gray-700">Review End Date</label>
-                            <input type="date" id="review_period_end" name="review_period_end" 
-                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" >
+                    <div class="form-field">
+                        <label for="review_period_end" class="block text-sm font-medium text-gray-700">Deadline</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                                <svg class="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
+                                </svg>
+                            </div>
+                            <input 
+                                id="review_period_end" 
+                                name="review_period_end" 
+                                type="date" 
+                                class="mt-1 block w-full pl-10 pr-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                hx-get="/appraisals/get-default-date/?offset=30"
+                                hx-trigger="load"
+                                hx-swap="outerHTML"
+                                hx-target="this"
+                            >
                         </div>
                     </div>
 
                 <!-- Error Message Display -->
                 <div id="errorMessage" class="error-message hidden mt-4">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9sv2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     <span></span>
                 </div>

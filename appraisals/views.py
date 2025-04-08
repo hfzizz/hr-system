@@ -30,6 +30,7 @@ from django.db import transaction
 from django.template.loader import render_to_string
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -41,57 +42,6 @@ APPRAISER_GROUP_NAME = 'Appraiser'
 # Appraisal Period Management Views
 # =============================================================================
 
-
-class AppraisalPeriodListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
-    """
-    Displays a list of all appraisal periods.
-    Only HR and users with specific permissions can access this view.
-    """
-    model = AppraisalPeriod
-    template_name = 'appraisals/period_list.html'
-    context_object_name = 'periods'
-    permission_required = ('appraisals.view_appraisalperiod',)
-    
-    def has_permission(self):
-        return self.request.user.groups.filter(name=HR_GROUP_NAME).exists() or super().has_permission()
-
-@login_required
-@permission_required('appraisals.add_appraisalperiod', raise_exception=True)
-def create_period(request):
-    """
-    Creates a new appraisal period.
-    Requires POST request with start_date and end_date.
-    """
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
-
-    try:
-        start_date = request.POST.get('start_date')
-        end_date = request.POST.get('end_date')
-        
-        if not all([start_date, end_date]):
-            return JsonResponse({
-                'success': False,
-                'error': 'Both start date and end date are required'
-            }, status=400)
-
-        period = AppraisalPeriod(
-            start_date=start_date,
-            end_date=end_date,
-            is_active=False
-        )
-        
-        period.full_clean()
-        period.save()
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Appraisal period created successfully'
-        })
-            
-    except Exception as e:
-        logger.error(f"Error creating appraisal period: {str(e)}")
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @login_required
 def appraisal_delete(request):
@@ -115,8 +65,6 @@ def appraisal_delete(request):
 # ============================================================================
 # Appraisal Management Views
 # ============================================================================
-
-
 
 class AppraisalListView(LoginRequiredMixin, ListView):
     """
@@ -739,74 +687,6 @@ class AppraisalAssignView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'error': 'An error occurred while assigning the appraisal'
             }, status=500)
 
-@login_required
-@require_http_methods(["POST"])
-def toggle_appraisal_period(request, pk):
-    period = get_object_or_404(AppraisalPeriod, pk=pk)
-    period.is_active = not period.is_active
-    try:
-        period.full_clean()
-        period.save()
-        message = 'Appraisal period activated' if period.is_active else 'Appraisal period deactivated'
-        status = 'success'
-    except ValidationError as e:
-        message = str(e)
-        status = 'error'
-    
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({'status': status, 'message': message})
-    messages.add_message(request, messages.INFO if status == 'success' else messages.ERROR, message)
-    return redirect('appraisals:period_list')
-
-@login_required
-@permission_required('appraisals.change_appraisalperiod')
-def toggle_period(request, pk):
-    """
-    Toggles the active status of an appraisal period.
-    
-    Args:
-        request: HTTP request
-        pk: Primary key of the AppraisalPeriod
-        
-    Returns:
-        JsonResponse with updated status
-    """
-    try:
-        period = get_object_or_404(AppraisalPeriod, pk=pk)
-        period.is_active = not period.is_active
-        period.full_clean()
-        period.save()
-        
-        message = 'Period activated' if period.is_active else 'Period deactivated'
-        return JsonResponse({
-            'status': 'success',
-            'message': f'Appraisal {message} successfully',
-            'is_active': period.is_active
-        })
-    except ValidationError as e:
-        return JsonResponse({
-            'status': 'error',
-            'message': str(e)
-        }, status=400)
-    except Exception as e:
-        logger.error(f"Error toggling period status: {str(e)}")
-        return JsonResponse({
-            'status': 'error',
-            'message': 'An error occurred while updating the period'
-        }, status=500)
-
-def get_appraisal_context(request):
-    """
-    Common context processor for appraisal-related views.
-    Provides consistent context data across multiple views.
-    """
-    return {
-        'active_periods': AppraisalPeriod.objects.filter(is_active=True),
-        'is_hr': request.user.groups.filter(name=HR_GROUP_NAME).exists(),
-        'is_appraiser': request.user.groups.filter(name=APPRAISER_GROUP_NAME).exists(),
-        'can_manage_appraisals': request.user.has_perm('appraisals.can_manage_appraisals'),
-    }
-
 class AppraiserListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     """
     Display and manage list of appraisers with traditional HTML table
@@ -815,6 +695,9 @@ class AppraiserListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     template_name = 'appraisals/appraiser_list.html'
     permission_required = 'appraisals.view_appraisal'
     context_object_name = 'appraisers'  # Changed to match the template context variable
+
+    current_year = datetime.now().year
+    year_range = list(range(current_year - 2, current_year + 4))
 
     def get_queryset(self):
         """
@@ -894,6 +777,191 @@ def get_appraisers(request):
     
     return HttpResponse(content, content_type='application/json')
 
+@login_required
+@permission_required('appraisals.add_appraisalperiod', raise_exception=True)
+def create_period(request):
+    """
+    Creates a new appraisal period.
+    Requires POST request with start_date and end_date.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+    try:
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        
+        if not all([start_date, end_date]):
+            return JsonResponse({
+                'success': False,
+                'error': 'Both start date and end date are required'
+            }, status=400)
+
+        period = AppraisalPeriod(
+            start_date=start_date,
+            end_date=end_date,
+            is_active=False
+        )
+        
+        period.full_clean()
+        period.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Appraisal period created successfully'
+        })
+            
+    except Exception as e:
+        logger.error(f"Error creating appraisal period: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+@require_POST
+def set_default_period(request, period_id):
+    """Set an appraisal period as the default."""
+    try:
+        # Make sure the user has HR permissions
+        if not request.user.is_staff and not request.user.groups.filter(name='HR').exists():
+            return HttpResponse('Permission denied', status=403)
+        
+        # First, unset any existing default periods
+        AppraisalPeriod.objects.filter(is_default=True).update(is_default=False)
+        
+        # Get the period and set it as default
+        period = AppraisalPeriod.objects.get(id=period_id)
+        period.is_default = True
+        # Also set it as active (if this behavior is desired)
+        period.is_active = True
+        period.save()
+        
+        # Get all periods to refresh the list
+        periods = AppraisalPeriod.objects.all().order_by('-start_date')
+        
+        # Return the updated period list
+        return render(request, 'appraisals/includes/period_list.html', {'periods': periods})
+    
+    except AppraisalPeriod.DoesNotExist:
+        return HttpResponse('Period not found', status=404)
+    
+    except Exception as e:
+        return HttpResponse(str(e), status=500)
+
+def get_appraisal_context(request):
+    """
+    Common context processor for appraisal-related views.
+    Provides consistent context data across multiple views.
+    """
+    return {
+        'active_periods': AppraisalPeriod.objects.filter(is_active=True),
+        'is_hr': request.user.groups.filter(name=HR_GROUP_NAME).exists(),
+        'is_appraiser': request.user.groups.filter(name=APPRAISER_GROUP_NAME).exists(),
+        'can_manage_appraisals': request.user.has_perm('appraisals.can_manage_appraisals'),
+    }
+
+def get_default_date(request):
+    # Get offset days from query parameter (default to 30 days)
+    offset_days = int(request.GET.get('offset', 30))
+    
+    # Calculate the date
+    default_date = timezone.now().date() + timedelta(days=offset_days)
+    
+    # Format the date as YYYY-MM-DD
+    formatted_date = default_date.strftime('%Y-%m-%d')
+    
+    # Return the input with value already set
+    return HttpResponse(f'''
+        <input 
+            id="review_period_end" 
+            name="review_period_end" 
+            type="date" 
+            value="{formatted_date}"
+            class="mt-1 block w-full pl-10 pr-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+        >
+    ''')
+
+from django.views.decorators.http import require_http_methods
+
+@login_required
+def edit_period(request, period_id):
+    """Return the form for editing an appraisal period."""
+    try:
+        # Make sure user has permissions
+        if not request.user.is_staff and not request.user.groups.filter(name='HR').exists():
+            return HttpResponse('Permission denied', status=403)
+        
+        # Get the period
+        period = get_object_or_404(AppraisalPeriod, id=period_id)
+        
+        # Return the form template
+        return render(request, 'appraisals/includes/edit_period_form.html', {'period': period})
+        
+    except Exception as e:
+        return HttpResponse(f"Error: {str(e)}", status=500)
+
+@login_required
+@require_http_methods(["POST"])
+def update_period(request, period_id):
+    """Update an existing appraisal period."""
+    try:
+        # Make sure user has permissions
+        if not request.user.is_staff and not request.user.groups.filter(name='HR').exists():
+            return HttpResponse('Permission denied', status=403)
+        
+        # Get the period
+        period = get_object_or_404(AppraisalPeriod, id=period_id)
+        
+        # Update period data
+        period.start_date = request.POST.get('start_date')
+        period.end_date = request.POST.get('end_date')
+        period.save()
+        
+        # Get all periods to refresh the list
+        periods = AppraisalPeriod.objects.all().order_by('-start_date')
+        
+        # Return updated list
+        return render(request, 'appraisals/includes/period_list.html', {'periods': periods})
+        
+    except Exception as e:
+        return HttpResponse(f"Error: {str(e)}", status=500)
+
+@login_required
+@require_http_methods(["DELETE"])
+def delete_period(request, period_id):
+    """Delete an appraisal period."""
+    try:
+        # Make sure user has permissions
+        if not request.user.is_staff and not request.user.groups.filter(name='HR').exists():
+            return HttpResponse('Permission denied', status=403)
+        
+        # Get the period
+        period = get_object_or_404(AppraisalPeriod, id=period_id)
+        
+        # Check if period is being used - IMPORTANT: Use the correct field name
+        # If your Appraisal model has a field named 'period', use:
+        if Appraisal.objects.filter(period=period).exists():
+            return HttpResponse('Cannot delete: Period is being used by existing appraisals', status=400)
+        
+        # If your Appraisal model has a field named 'appraisal_period', use:
+        # if Appraisal.objects.filter(appraisal_period=period).exists():
+        #     return HttpResponse('Cannot delete: Period is being used by existing appraisals', status=400)
+        
+        # Delete the period
+        period.delete()
+        
+        # Get all periods to refresh the list
+        periods = AppraisalPeriod.objects.all().order_by('-start_date')
+        
+        # Return updated list
+        return render(request, 'appraisals/includes/period_list.html', {'periods': periods})
+        
+    except Exception as e:
+        # Print the exception for debugging
+        import traceback
+        print(f"Error deleting period: {str(e)}")
+        print(traceback.format_exc())
+        
+        return HttpResponse(f"Error: {str(e)}", status=500)
+    
 class AppraiserRoleView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
     """
     Manage appraiser roles and permissions

@@ -6,10 +6,13 @@ app_name = 'appraisals'
 urlpatterns = [
 
     # Appraisal Periods
-    path('periods/', views.AppraisalPeriodListView.as_view(), name='period_list'),
     path('periods/create/', views.create_period, name='period_create'),
-    path('periods/<int:pk>/toggle/', views.toggle_period, name='period_toggle'),
-    
+    path('periods/<int:period_id>/set-default/', views.set_default_period, name='set_default_period'),
+    path('periods/<int:period_id>/edit/', views.edit_period, name='edit_period'),
+    path('periods/<int:period_id>/update/', views.update_period, name='update_period'),
+    path('periods/<int:period_id>/delete/', views.delete_period, name='delete_period'),
+
+
     # Appraisers
     path('appraisers/', views.AppraiserListView.as_view(), name='appraiser_list'),
     path('appraisers/assign/<str:employee_id>/', views.AppraisalAssignView.as_view(), name='appraiser_assign'),
@@ -26,6 +29,7 @@ urlpatterns = [
     # path('forms/<int:pk>/review/', views.AppraisalReviewView.as_view(), name='form_review'),
 
     path('api/appraisers/', views.get_appraisers, name='get_appraisers'),
+    path('get-default-date/', views.get_default_date, name='get_default_date'),
 
     # HTMX endpoints for Section B
     path('save-rating/', views.save_rating, name='save_rating'),
