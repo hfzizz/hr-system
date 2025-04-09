@@ -1,0 +1,802 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">Dean Review: Contract #{{ contract.contract_id }}</h1>
+            <a href="{% url 'contract:dean_department_contracts' %}" 
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700">
+                Back to Department Contracts
+            </a>
+        </div>
+
+        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+            <!-- Personal Details Section -->
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Personal Details</h2>
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">First Name</label>
+                        <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ first_name }}</div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Last Name</label>
+                        <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ last_name }}</div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">IC Number</label>
+                        <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ ic_no }}</div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">IC Colour</label>
+                        <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ ic_colour }}</div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Phone Number</label>
+                        <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ phone_number }}</div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Department</label>
+                        <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ department }}</div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Number of Past Contracts</label>
+                        <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ contract_count }}</div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Type of contract applied</label>
+                        <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">
+                            {{ contract.get_contract_type_display }}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Present Post</label>
+                        <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ contract.present_post }}</div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Salary Scale/Division</label>
+                        <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ contract.salary_scale_division }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Academic Qualifications Section -->
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Academic Information</h2>
+                <div class="space-y-6">
+                    <!-- Qualifications Table -->
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Degree/Diploma</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">University/College</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">To</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% if academic_qualifications %}
+                                    {% for qual in academic_qualifications %}
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ qual.degree_diploma }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ qual.university_college }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ qual.from_date }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ qual.to_date }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                                            No academic qualifications provided
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Current Enrollment -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Currently Enrolled in Higher/Professional Qualifications</label>
+                        <div class="mt-1 bg-gray-50 rounded p-4 border border-gray-200">
+                            <p class="text-sm text-gray-900 whitespace-pre-line">{{ contract.current_enrollment }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Research and Publications Section -->
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Research, Consultancy and Publications</h2>
+                <div class="space-y-6">
+                    <!-- Consultancy Work Table -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Consultancy Work</label>
+                        <div class="mt-4">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title/Project</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company/Institute</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        {% if consultancy_work %}
+                                            {% for work in consultancy_work %}
+                                                <tr>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ work.title }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ work.company }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ work.startDate }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ work.endDate }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                                                    No consultancy work records provided
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Research History Table -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Research History</label>
+                        <div class="mt-4">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title/Project</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Funding Agency</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        {% if research_history %}
+                                            {% for research in research_history %}
+                                                <tr>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.title }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.startDate }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.endDate }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.fundingAgency }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                                                    No research history records provided
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ongoing Research Table -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Ongoing Research</label>
+                        <div class="mt-4">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title/Project</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Funding Agency</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        {% if ongoing_research %}
+                                            {% for research in ongoing_research %}
+                                                <tr>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.title }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.startDate }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.endDate }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.fundingAgency }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                                                    No ongoing research records provided
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Conference Papers Table -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Conference Papers</label>
+                        <div class="mt-4">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Volume</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pages</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DOI</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        {% if conference_papers %}
+                                            {% for paper in conference_papers %}
+                                                <tr>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ paper.author }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ paper.year }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ paper.title }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ paper.volume }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ paper.pages }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ paper.doi }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                                                    No conference papers provided
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Administrative Duties Section -->
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Administrative Duties</h2>
+
+                <!-- Conference Attendance Table -->
+                <div class="overflow-x-auto">
+                    <h3 class="text-md font-medium text-gray-900 mb-4">Attendance at Conferences, Seminars, Workshops</h3>
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Event Name
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Type
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Date
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Location
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Role
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Details
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% if attendance_events %}
+                                {% for event in attendance_events %}
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ event.event_name }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ event.type }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ event.date }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ event.location }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ event.role }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ event.details }}</td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                                        No conference attendance records provided
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Administrative Positions Table -->
+                <div class="mt-6">
+                    <h3 class="text-md font-medium text-gray-900 mb-4">Administrative Positions</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200" id="administrativePositionsTable">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Position
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        From
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        To
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Details
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% if administrative_positions %}
+                                    {% for position in administrative_positions %}
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ position.title }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ position.from_date|date:"Y-m-d" }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ position.to_date|date:"Y-m-d" }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ position.details }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                                            No administrative positions recorded
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- University Committees Table -->
+                <div class="mt-6">
+                    <h3 class="text-md font-medium text-gray-900 mb-4">University Committees</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-3.5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Committee Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">To</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% if university_committees %}
+                                    {% for committee in university_committees %}
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ committee.name }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ committee.position }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ committee.from_date }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ committee.to_date }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ committee.details }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                                            No university committee positions recorded
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- External Committees Table -->
+                <div class="mt-6">
+                    <h3 class="text-md font-medium text-gray-900 mb-4">Committees Outside the University</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organization</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">To</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% if external_committees %}
+                                    {% for committee in external_committees %}
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ committee.organization }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ committee.position }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ committee.from_date }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ committee.to_date }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ committee.details }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                                            No external committee positions recorded
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Others Activities Section -->
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Other Activities</h2>
+                
+                <!-- Participation Within University -->
+                <div class="mb-6">
+                    <h3 class="text-md font-medium text-gray-900 mb-4">Participation Within University</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity/Event</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role/Position</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% if participation_within %}
+                                    {% for activity in participation_within %}
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ activity.activity }}</td>
+                                                                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ activity.role }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ activity.date }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ activity.remarks }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                                            No participation within university records provided
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Participation Outside University -->
+                <div>
+                    <h3 class="text-md font-medium text-gray-900 mb-4">Participation Outside University</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity/Event</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role/Position</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% if participation_outside %}
+                                    {% for activity in participation_outside %}
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ activity.activity }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ activity.role }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ activity.date }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ activity.remarks }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                                            No participation outside university records provided
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teaching Section -->
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Teaching</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title of Module</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Language Medium</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No of Students</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage if Jointly Taught</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hrs Weekly</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% if teaching_modules %}
+                                {% for module in teaching_modules %}
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ module.title }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ module.level }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ module.language }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ module.students }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ module.percentage }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ module.hours }}</td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                                        No teaching modules provided
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if contract.teaching_documents %}
+                <div class="mt-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Teaching Portfolio</label>
+                    <div class="flex items-center">
+                        <a href="{% url 'contract:download_document' contract.id 'teaching' %}" 
+                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            Download Portfolio
+                        </a>
+                        <span class="ml-4 text-sm text-gray-500">{{ contract.teaching_documents_name }}</span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="mt-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Teaching Documents</label>
+                    <p class="text-sm text-gray-500">No teaching documents uploaded.</p>
+                </div>
+                {% endif %}
+
+                <!-- Add Future Plan display -->
+                <div class="mt-6">
+                    <label class="block text-sm font-medium text-gray-700">Future Plan</label>
+                    <div class="mt-1 bg-gray-50 rounded p-4 border border-gray-200">
+                        <p class="text-sm text-gray-900 whitespace-pre-line">{{ contract.teaching_future_plan|default:"No future plan provided" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appraiser Comments Section -->
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Previous Appraisal Comments</h2>
+                <div class="space-y-4">
+                    {% if appraiser_comments %}
+                        {% for comment in appraiser_comments %}
+                            <div class="border-l-4 border-gray-200 pl-4 mb-4">
+                                <div class="text-sm text-gray-500 mb-2">
+                                    <span class="font-medium">{{ comment.appraiser_name }}</span> 
+                                    on {{ comment.date }}
+                                </div>
+                                <div class="bg-gray-50 rounded p-4 border border-gray-200">
+                                    <p class="text-sm text-gray-900 whitespace-pre-line">{{ comment.comment }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="bg-gray-50 rounded p-4 border border-gray-200">
+                            <p class="text-sm text-gray-500">No appraiser comments available.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Achievements Section -->
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Achievements</h2>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">What have you achieved in the last contract for Teaching / Research / Administrative Duties?</label>
+                        <div class="mt-1 bg-gray-50 rounded p-4 border border-gray-200">
+                            {{ contract.achievements_last_contract|linebreaks }}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">What do you propose to undertake and achieve if your contract is renewed?</label>
+                        <div class="mt-1 bg-gray-50 rounded p-4 border border-gray-200">
+                            {{ contract.achievements_proposal|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Others Section -->
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Others</h2>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Any other matters you wish to highlight?</label>
+                    <div class="mt-1 bg-gray-50 rounded p-4 border border-gray-200">
+                        {{ contract.other_matters|linebreaks }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dean's Review Form -->
+            <div class="mt-6 bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">Dean's Comments</h2>
+                
+                <form method="POST" action="{% url 'contract:submit_dean_review' contract.id %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="dean_comments" class="block text-sm font-medium text-gray-700 mb-1">Comments</label>
+                        <textarea id="dean_comments" name="dean_comments" rows="5" 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                  required>{{ dean_review.comments|default:'' }}</textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="dean_documents" class="block text-sm font-medium text-gray-700 mb-1">Supporting Documents (optional)</label>
+                        <input type="file" id="dean_documents" name="dean_documents" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        {% if dean_review.document_name %}
+                            <p class="mt-1 text-sm text-gray-500">Current document: {{ dean_review.document_name }}</p>
+                            <a href="{% url 'contract:download_dean_document' contract.id dean_review.id %}" class="text-blue-600 hover:underline">Download</a>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                            Submit Comments to HR
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Previous Reviews Section (if any) -->
+            {% if previous_dean_reviews %}
+            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                <div class="px-4 py-5 sm:px-6 bg-gray-50">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Previous Reviews</h3>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">History of reviews for this contract</p>
+                </div>
+                
+                <div class="divide-y divide-gray-200">
+                    {% for review in previous_dean_reviews %}
+                    <div class="px-4 py-5 sm:px-6">
+                        <div class="mb-2 flex justify-between">
+                            <h4 class="text-md font-medium text-gray-900">Review by {{ review.dean.get_full_name }}</h4>
+                            <span class="text-sm text-gray-500">{{ review.created_at|date:"F d, Y H:i" }}</span>
+                        </div>
+                        <div class="text-sm text-gray-600 mb-2">Recommendation: 
+                            <span class="font-medium 
+                                {% if review.recommendation == 'approve' %}text-green-600
+                                {% elif review.recommendation == 'reject' %}text-red-600
+                                {% else %}text-yellow-600{% endif %}">
+                                {{ review.get_recommendation_display }}
+                            </span>
+                        </p>
+                        <div class="text-sm text-gray-800 whitespace-pre-line">{{ review.comments }}</div>
+                        {% if review.document_name %}
+                        <div class="mt-2">
+                            <a href="{% url 'contract:download_dean_document' contract.id review.id %}" class="text-sm text-indigo-600 hover:text-indigo-900">
+                                Download attachment: {{ review.document_name }}
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Additional CSS for section styling */
+    .section-header {
+        position: relative;
+        margin-bottom: 2rem;
+    }
+
+    .section-header::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: -0.5rem;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(to right, #e5e7eb, transparent);
+    }
+
+    /* Hover effect for sections */
+    .bg-white.p-6.rounded-lg.shadow-md:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transform: translateY(-2px);
+        transition: all 0.2s ease;
+    }
+
+    /* Style for readonly inputs */
+    .bg-gray-50 {
+        background-color: #f9fafb;
+    }
+
+    /* Add subtle border to separate sections */
+    .space-y-8 > div {
+        position: relative;
+    }
+
+    .space-y-8 > div::before {
+        content: '';
+        position: absolute;
+        top: -1rem;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(to right, transparent, #e5e7eb, transparent);
+    }
+</style>
+
+<script>
+    // File upload preview
+    const fileInput = document.getElementById('dean_documents');
+    fileInput.addEventListener('change', function(e) {
+        const fileName = e.target.files[0]?.name;
+        if (fileName) {
+            const filePreview = document.createElement('p');
+            filePreview.classList.add('text-sm', 'text-gray-600', 'mt-2');
+            filePreview.textContent = `Selected file: ${fileName}`;
+            
+            const existingPreview = fileInput.parentElement.parentElement.parentElement.querySelector('p.text-sm.text-gray-600.mt-2');
+            if (existingPreview) {
+                existingPreview.textContent = `Selected file: ${fileName}`;
+            } else {
+                fileInput.parentElement.parentElement.parentElement.appendChild(filePreview);
+            }
+        }
+    });
+    
+    // Form validation
+    const form = document.getElementById('deanReviewForm');
+    form.addEventListener('submit', function(e) {
+        const comments = document.getElementById('dean_comments').value.trim();
+        const recommendation = document.querySelector('input[name="recommendation"]:checked');
+        
+        if (!comments) {
+            e.preventDefault();
+            alert('Please provide comments for your review.');
+            return;
+        }
+        
+        if (!recommendation) {
+            e.preventDefault();
+            alert('Please select a recommendation.');
+            return;
+        }
+    });
+</script>
+{% endblock %}

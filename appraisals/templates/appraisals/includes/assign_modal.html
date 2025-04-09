@@ -1,10 +1,262 @@
-<!-- Assign Modal -->
-<div id="assignModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+{% load static %}
+{% csrf_token %}
+
+{% block scripts %}
+    <script src="{% static 'appraisals/js/assign_modal.js' %}" defer></script> 
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+{% endblock %}
+
+<div id="appraiser-options-container" class="hidden"></div>
+
+<!-- Enhance modal styling -->
+<style>
+    /* Modal animation styles */
+    #assignModal .transform {
+        transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    }
+    
+    /* Employee name styling */
+    .employee-card {
+        background-color: #f0f7ff;
+        border-left: 4px solid #3b82f6;
+        padding: 12px;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .employee-avatar {
+        background-color: #dbeafe;
+        color: #1e40af;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+    }
+    
+    #selected_employee_name {
+        font-weight: 500;
+        color: #1e3a8a;
+        margin: 0;
+    }
+    
+    /* Form field styling */
+    .form-field {
+        margin-bottom: 16px;
+    }
+    
+    .form-field label {
+        margin-bottom: 4px;
+        display: block;
+    }
+    
+    .required-indicator {
+        color: #ef4444;
+        margin-left: 2px;
+    }
+    
+    .hint-text {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 4px;
+    }
+    
+    /* Select field focus styles */
+    select:focus {
+        outline: 2px solid #c7d2fe;
+        outline-offset: 2px;
+    }
+    
+    /* Enhanced button styles */
+    .btn-primary {
+        background-color: #4f46e5;
+        color: white;
+        padding: 0.5rem 1.25rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .btn-primary:hover {
+        background-color: #4338ca;
+        transform: translateY(-1px);
+    }
+    
+    .btn-primary:active {
+        transform: translateY(0);
+    }
+    
+    .btn-secondary {
+        background-color: white;
+        color: #4b5563;
+        border: 1px solid #d1d5db;
+        padding: 0.5rem 1.25rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #f9fafb;
+    }
+    
+    /* Success notification styling */
+    .success-notification {
+        background-color: #10b981;
+        color: white;
+        padding: 1rem;
+        border-radius: 0.375rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        opacity: 0;
+        transform: translateY(-20px);
+        animation: slide-in 0.3s ease-out forwards;
+    }
+    
+    @keyframes slide-in {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .error-message {
+    background-color: #fee2e2;
+    border-left: 4px solid #ef4444;
+    color: #b91c1c;
+    padding: 8px 12px;
+    margin-top: 8px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    align-items: center;
+    gap: 8px;
+    }
+
+    /* Make sure this doesn't appear unless .hidden is removed */
+    .error-message:not(.hidden) {
+        display: flex;
+    }
+    
+    .error-message svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .hidden {
+    display: none !important;
+    }
+    .datepicker-picker,
+    .datepicker-dropdown,
+    .datepicker-main,
+    .datepicker-view,
+    .datepicker-grid,
+    .datepicker-header,
+    .datepicker-footer,
+    .datepicker-controls,
+    .datepicker-cell,
+    .datepicker-title {
+        background-color: white !important;
+        color: #374151 !important;
+        border-color: #e5e7eb !important;
+    }
+    
+    .datepicker-picker .datepicker-header .datepicker-controls .button {
+        background-color: white !important;
+        color: #374151 !important;
+        border-color: #e5e7eb !important;
+    }
+    
+    .datepicker-picker .datepicker-header .datepicker-controls .button:hover {
+        background-color: #f9fafb !important;
+    }
+    
+    .datepicker-picker .datepicker-footer .datepicker-controls .button {
+        background-color: white !important;
+        color: #374151 !important;
+        border-color: #e5e7eb !important;
+    }
+    
+    .datepicker-cell:not(.selected):not(:hover) {
+        background-color: white !important;
+        color: #374151 !important;
+    }
+    
+    .datepicker-cell.selected {
+        background-color: #3b82f6 !important;
+        color: white !important;
+    }
+    
+    .datepicker-cell:hover:not(.selected):not(.disabled) {
+        background-color: #f3f4f6 !important;
+    }
+
+    div[class*="datepicker"],
+    .datepicker-dropdown * {
+        background-color: white !important;
+        color: #374151 !important;
+    }
+    
+    /* Target specific datepicker elements with higher specificity */
+    html body div.datepicker-dropdown div.datepicker-picker,
+    html body div.datepicker-dropdown div.datepicker-picker *,
+    .datepicker-picker .datepicker-header .datepicker-controls .button,
+    .datepicker-picker .datepicker-footer .datepicker-controls .button,
+    .datepicker-cell:not(.selected):not(.disabled),
+    .datepicker-view,
+    .datepicker-grid,
+    .datepicker-header,
+    .datepicker-footer,
+    .datepicker-title {
+        background-color: white !important;
+        color: #374151 !important;
+    }
+    
+    /* Target datepicker buttons */
+    .datepicker-header button,
+    .datepicker-footer button {
+        background-color: white !important;
+        color: #374151 !important;
+        border-color: #e5e7eb !important;
+    }
+    
+    /* Selected date */
+    .datepicker-cell.selected {
+        background-color: #3b82f6 !important;
+        color: white !important;
+    }
+    
+    /* Hover styles */
+    .datepicker-cell:hover:not(.selected):not(.disabled),
+    .datepicker-controls button:hover {
+        background-color: #f3f4f6 !important;
+    }
+
+    /* Ensure input field has white background */
+    input[datepicker], 
+    input[datepicker]:focus {
+        background-color: white !important;
+        color: #374151 !important;
+    }
+</style>
+    
+<!-- Assign Modal with enhanced UI -->
+<div id="assignModal" class="hidden fixed inset-0 z-50 overflow-y-auto"  aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="relative inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        
+        <!-- Modal panel -->
+        <div class="relative inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6 opacity-0 translate-y-4">
             <!-- Close Button -->
             <div class="hidden sm:block absolute top-0 right-0 pt-4 pr-4">
-                <button type="button" onclick="closeModal()" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <button type="button" onclick="closeAssignModal()" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     <span class="sr-only">Close</span>
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -12,153 +264,136 @@
                 </button>
             </div>
 
-            <!-- Modal Content -->
-            <div class="sm:flex sm:items-start">
-                <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                        Assign Appraisal
-                    </h3>
-                    
-                    <form id="assignForm" method="post" action="{% url 'appraisals:appraiser_assign' 0 %}" class="mt-4">
-                        {% csrf_token %}
-                        <input type="hidden" id="selected_employee_id" name="employee_id" value="">
-                        
-                        <div class="space-y-4">
-                            <!-- Employee Display -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">
-                                    Employee
-                                </label>
-                                <p id="selected_employee_name" class="mt-1 text-sm text-gray-900 border-b border-gray-200 pb-2">
-                                    <!-- Will be populated by JavaScript -->
-                                </p>
-                            </div>
-
-                            <!-- Appraiser Selection -->
-                            <div>
-                                <label for="appraiser" class="block text-sm font-medium text-gray-700">
-                                    Appraiser <span class="text-red-500">*</span>
-                                </label>
-                                <select id="appraiser" name="appraiser" 
-                                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                    <option value="">Select an appraiser</option>
-                                    {% for employee in appraisers %}
-                                        <option value="{{ employee.id }}">{{ employee.get_full_name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <!-- Appraisal Period Selection -->
-                            <div>
-                                <label for="period_select" class="block text-sm font-medium text-gray-700">
-                                    Appraisal Period <span class="text-red-500">*</span>
-                                </label>
-                                <select id="period_select" name="period" required
-                                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                    <option value="">Select a period</option>
-                                    {% for period in periods %}
-                                        <option value="{{ period.id }}">
-                                            {{ period.name }} ({{ period.start_date|date:"M d, Y" }} - {{ period.end_date|date:"M d, Y" }})
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Error Message Display -->
-                        <div id="errorMessage" class="mt-2 text-sm text-red-600 hidden"></div>
-
-                        <!-- Form Actions -->
-                        <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-                            <button type="submit"
-                                    class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
-                                Assign Appraisal
-                            </button>
-                            <button type="button"
-                                    onclick="closeModal()"
-                                    class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm">
-                                Cancel
-                            </button>
-                        </div>
-                    </form>
+            <!-- Modal header -->
+            <div class="mb-5">
+                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-indigo-100 sm:mx-0 sm:h-12 sm:w-12 mb-3">
+                    <svg class="h-6 w-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
                 </div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                    Assign Appraisal
+                </h3>
+                <p class="mt-1 text-sm text-gray-500">
+                    Select appraisers and review period for the employee.
+                </p>
             </div>
+            
+            <!-- Form content -->
+            <form id="assignForm" method="post" class="mt-4">
+                {% csrf_token %}
+                <input type="hidden" id="selected_employee_id" name="employee_id" value="">
+                
+                <div class="space-y-5">
+                    <!-- Employee Display -->
+                    <div class="form-field">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Employee
+                        </label>
+                        <div class="employee-card mt-1">
+                            <div class="employee-avatar">
+                                <span id="employee-initials">👤</span>
+                            </div>
+                            <div>
+                                <span id="selected_employee_name" class="text-sm">
+                                    <!-- Will be populated by JavaScript -->
+                                </span>
+                                <span id="employee-position" class="text-xs block text-gray-500">
+                                    <!-- Optional position information -->
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Primary Appraiser Selection -->
+                    <div class="form-field">
+                        <label for="appraiser" class="block text-sm font-medium text-gray-700">
+                            Primary Appraiser <span class="required-indicator">*</span>
+                        </label>
+                        <select id="appraiser" name="appraiser" required
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="">Select a primary appraiser</option>
+                            <!-- Options will be populated by HMTX -->
+                        </select>
+                    </div>
+                    
+                    <!-- Secondary Appraiser Selection (Optional) -->
+                    <div class="form-field">
+                        <label for="appraiser_secondary" class="block text-sm font-medium text-gray-700 flex items-center">
+                            Secondary Appraiser 
+                            <span class="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Optional</span>
+                        </label>
+                        <select id="appraiser_secondary" name="appraiser_secondary"
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="">Select a secondary appraiser (optional)</option>
+                            <!-- Options will be populated by HTMX -->
+                        </select>
+                        <p class="hint-text">Leave empty if no secondary appraiser is needed</p>
+                    </div>
+
+                    <!-- Appraisal Period Selection -->
+                    <div class="form-field">
+                        <label for="period_select" class="block text-sm font-medium text-gray-700">
+                            Appraisal Period/Year <span class="required-indicator">*</span>
+                        </label>
+                        <select id="period_select" name="period" required
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="">Select a period</option>
+                            {% for period in periods %}
+                                <option value="{{ period.id }}" 
+                                        data-start="{{ period.start_date|date:'Y-m-d' }}" 
+                                        data-end="{{ period.end_date|date:'Y-m-d' }}">
+                                    {{ period.name }} ({{ period.start_date|date:"M d, Y" }} - {{ period.end_date|date:"M d, Y" }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="review_period_end" class="block text-sm font-medium text-gray-700">Deadline</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                                <svg class="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
+                                </svg>
+                            </div>
+                            <input 
+                                id="review_period_end" 
+                                name="review_period_end" 
+                                type="date" 
+                                class="mt-1 block w-full pl-10 pr-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                hx-get="/appraisals/get-default-date/?offset=30"
+                                hx-trigger="load"
+                                hx-swap="outerHTML"
+                                hx-target="this"
+                            >
+                        </div>
+                    </div>
+
+                <!-- Error Message Display -->
+                <div id="errorMessage" class="error-message hidden mt-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9sv2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span></span>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="mt-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit"
+                            class="btn-primary w-full sm:w-auto">
+                        Assign Appraisal
+                    </button>
+                    <button type="button"
+                            onclick="closeAssignModal()"
+                            class="btn-secondary mt-3 sm:mt-0 sm:mr-3 w-full sm:w-auto">
+                        Cancel
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
-<script>
-function closeModal() {
-    document.getElementById('assignModal').classList.add('hidden');
-    document.getElementById('errorMessage').classList.add('hidden');
-    document.getElementById('assignForm').reset();
-}
 
-function showAssignModal(employeeId, employeeName) {
-    document.getElementById('selected_employee_id').value = employeeId;
-    document.getElementById('selected_employee_name').textContent = employeeName;
-    document.getElementById('assignModal').classList.remove('hidden');
-}
 
-document.getElementById('assignForm').addEventListener('submit', async function(event) {
-    event.preventDefault();
-    
-    // Disable the submit button to prevent double submission
-    const submitButton = this.querySelector('button[type="submit"]');
-    submitButton.disabled = true;
-    
-    // Clear previous error
-    const errorMessage = document.getElementById('errorMessage');
-    errorMessage.classList.add('hidden');
-    
-    // Validate form
-    const appraiser = document.getElementById('appraiser').value;
-    const period = document.getElementById('period_select').value;
-    
-    if (!appraiser || !period) {
-        errorMessage.textContent = 'Please select both an appraiser and an appraisal period.';
-        errorMessage.classList.remove('hidden');
-        submitButton.disabled = false;
-        return;
-    }
-    
-    try {
-        const response = await fetch(this.action, {
-            method: 'POST',
-            body: new FormData(this),
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            // Show success message
-            const successMessage = document.createElement('div');
-            successMessage.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded shadow-lg z-50';
-            successMessage.textContent = data.message;
-            document.body.appendChild(successMessage);
-            
-            // Close modal
-            closeModal();
-            
-            // Delay reload to show the success message
-            setTimeout(() => {
-                window.location.reload();
-            }, 3000); // Wait 1.5 seconds before reloading
-        } else {
-            errorMessage.textContent = data.error || 'An error occurred while assigning the appraisal.';
-            errorMessage.classList.remove('hidden');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        errorMessage.textContent = 'A network error occurred. Please try again.';
-        errorMessage.classList.remove('hidden');
-    } finally {
-        // Re-enable the submit button
-        submitButton.disabled = false;
-    }
-});
-</script>

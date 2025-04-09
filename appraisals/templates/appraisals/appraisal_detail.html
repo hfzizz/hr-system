@@ -15,12 +15,10 @@
                class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                 Back to List
             </a>
-            {% if perms.appraisals.change_appraisal %}
-            <a href="{% url 'appraisals:form_review' appraisal.pk %}" 
+            <a href="{% url 'appraisals:appraisal_fill' appraisal.appraisal_id %}" 
                class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
                 Edit Appraisal
             </a>
-            {% endif %}
         </div>
     </div>
 
@@ -61,165 +59,206 @@
         </div>
     </div>
 
-    <!-- Content Sections -->
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <!-- Left Column -->
-        <div class="space-y-6">
-            <!-- Core Information -->
-            <div class="rounded-lg bg-white shadow">
-                <div class="px-4 py-5 sm:p-6">
-                    <h3 class="text-base font-semibold leading-6 text-gray-900">Core Information</h3>
-                    <dl class="mt-4 grid grid-cols-1 gap-4">
-                        <div class="overflow-hidden rounded-lg bg-gray-50 px-4 py-3">
-                            <dt class="truncate text-sm font-medium text-gray-500">IC Details</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.get_employee_ic_details|default:"Not provided" }}</dd>
-                        </div>
-                        <div class="overflow-hidden rounded-lg bg-gray-50 px-4 py-3">
-                            <dt class="truncate text-sm font-medium text-gray-500">Appointment Type</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.get_employee_appointment_type|default:"Not specified" }}</dd>
-                        </div>
-                    </dl>
-                </div>
-            </div>
-
-            <!-- Employment Details -->
-            <div class="rounded-lg bg-white shadow">
-                <div class="px-4 py-5 sm:p-6">
-                    <h3 class="text-base font-semibold leading-6 text-gray-900">Employment Details</h3>
-                    <dl class="mt-4 grid grid-cols-1 gap-4">
-                        <div class="overflow-hidden rounded-lg bg-gray-50 px-4 py-3">
-                            <dt class="truncate text-sm font-medium text-gray-500">Present Post</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.present_post|default:"Not assigned" }}</dd>
-                        </div>
-                        <div class="overflow-hidden rounded-lg bg-gray-50 px-4 py-3">
-                            <dt class="truncate text-sm font-medium text-gray-500">Salary Scale/Division</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.salary_scale_division|default:"Not specified" }}</dd>
-                        </div>
-                        <div class="overflow-hidden rounded-lg bg-gray-50 px-4 py-3">
-                            <dt class="truncate text-sm font-medium text-gray-500">Incremental Date</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ appraisal.incremental_date|date:"M d, Y"|default:"Not set" }}</dd>
-                        </div>
-                    </dl>
-                </div>
-            </div>
-
-            <!-- Academic Qualifications -->
-            <div class="rounded-lg bg-white shadow">
-                <div class="px-4 py-5 sm:p-6">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-base font-semibold leading-6 text-gray-900">Academic Qualifications</h3>
-                        <span class="text-sm text-gray-500">{{ appraisal.academic_qualifications.count|default:"0" }} Records</span>
-                    </div>
-                    {% if appraisal.academic_qualifications.exists %}
-                    <div class="mt-4 flow-root">
-                        <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                            <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                                <table class="min-w-full divide-y divide-gray-300">
-                                    <thead>
-                                        <tr>
-                                            <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Degree/Diploma</th>
-                                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">University/College</th>
-                                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Period</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-gray-200">
-                                        {% for qual in appraisal.academic_qualifications.all %}
-                                        <tr>
-                                            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900">{{ qual.degree_diploma }}</td>
-                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ qual.university_college }}</td>
-                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                                {{ qual.from_date|date:"M Y" }} - {{ qual.to_date|date:"M Y" }}
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    {% else %}
-                    <div class="mt-4 flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8">
-                        <div class="text-center">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            <h3 class="mt-2 text-sm font-semibold text-gray-900">No qualifications</h3>
-                            <p class="mt-1 text-sm text-gray-500">No academic qualifications have been added yet.</p>
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Column -->
-        <div class="space-y-6">
-            <!-- Current Enrollment -->
-            <div class="rounded-lg bg-white shadow">
-                <div class="px-4 py-5 sm:p-6">
-                    <h3 class="text-base font-semibold leading-6 text-gray-900">Current Enrollment</h3>
-                    <div class="mt-4 rounded-md bg-gray-50 p-4">
-                        <div class="text-sm text-gray-900">
-                            {{ appraisal.current_enrollment|default:"No current enrollment information available"|linebreaks }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Research and Publications -->
-            <div class="rounded-lg bg-white shadow">
-                <div class="px-4 py-5 sm:p-6">
-                    <h3 class="text-base font-semibold leading-6 text-gray-900">Research and Publications</h3>
-                    <div class="mt-4 space-y-4">
-                        <div class="rounded-md bg-gray-50 p-4">
-                            <h4 class="text-sm font-medium text-gray-900">Current Research</h4>
-                            <p class="mt-2 text-sm text-gray-500">{{ appraisal.ongoing_research|default:"No current research projects"|linebreaks }}</p>
-                        </div>
-                        <div class="rounded-md bg-gray-50 p-4">
-                            <h4 class="text-sm font-medium text-gray-900">Publications</h4>
-                            <p class="mt-2 text-sm text-gray-500">{{ appraisal.publications|default:"No publications listed"|linebreaks }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Professional Activities -->
-            <div class="rounded-lg bg-white shadow">
-                <div class="px-4 py-5 sm:p-6">
-                    <h3 class="text-base font-semibold leading-6 text-gray-900">Professional Activities</h3>
-                    <div class="mt-4 space-y-4">
-                        <div class="rounded-md bg-gray-50 p-4">
-                            <h4 class="text-sm font-medium text-gray-900">Conference Attendance</h4>
-                            <p class="mt-2 text-sm text-gray-500">{{ appraisal.attendance|default:"No conference attendance recorded"|linebreaks }}</p>
-                        </div>
-                        <div class="rounded-md bg-gray-50 p-4">
-                            <h4 class="text-sm font-medium text-gray-900">Consultancy Work</h4>
-                            <p class="mt-2 text-sm text-gray-500">{{ appraisal.consultancy_work|default:"No consultancy work listed"|linebreaks }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Full Width Sections -->
+    <!-- Updated Content Sections -->
     <div class="space-y-6">
-        <!-- Objectives and Comments -->
+        <!-- Personal Information -->
         <div class="rounded-lg bg-white shadow">
             <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-base font-semibold leading-6 text-gray-900">Objectives and Comments</h3>
-                <div class="mt-4 space-y-4">
-                    <div class="rounded-md bg-gray-50 p-4">
-                        <h4 class="text-sm font-medium text-gray-900">Teaching and Research Objectives</h4>
-                        <p class="mt-2 text-sm text-gray-500">{{ appraisal.objectives_next_year|default:"No objectives set for next year"|linebreaks }}</p>
+                <h3 class="text-base font-semibold leading-6 text-gray-900">Personal Information</h3>
+                <dl class="mt-4 grid grid-cols-3 gap-4">
+                    <div class="overflow-hidden rounded-lg bg-gray-50 px-4 py-3">
+                        <dt class="truncate text-sm font-medium text-gray-500">IC Number</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ appraisal.employee.ic_no|default:"Not provided" }}</dd>
                     </div>
-                    <div class="rounded-md bg-gray-50 p-4">
-                        <h4 class="text-sm font-medium text-gray-900">Appraiser's Comments</h4>
-                        <p class="mt-2 text-sm text-gray-500">{{ appraisal.appraiser_comments|default:"No comments provided"|linebreaks }}</p>
+                    <div class="overflow-hidden rounded-lg bg-gray-50 px-4 py-3">
+                        <dt class="truncate text-sm font-medium text-gray-500">IC Color</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ appraisal.employee.ic_colour|default:"Not provided" }}</dd>
+                    </div>
+                    <div class="overflow-hidden rounded-lg bg-gray-50 px-4 py-3">
+                        <dt class="truncate text-sm font-medium text-gray-500">Date of Birth</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ appraisal.employee.date_of_birth|date:"M d, Y"|default:"Not provided" }}</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Appointments -->
+        <div class="rounded-lg bg-white shadow">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-base font-semibold leading-6 text-gray-900">Appointments</h3>
+                <div class="mt-4 overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-300">
+                        <thead>
+                            <tr>
+                                <th class="w-48 px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Appointment Type</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">First Post</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Faculty/Programme</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">From</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">To</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 bg-white">
+                            <!-- Government Service Row -->
+                            <tr>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
+                                    First appointment in Brunei Government service, if applicable
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                    {{ appraisal.first_post_govt|default:"-" }}
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                    {{ appraisal.faculty_programme_govt|default:"-" }}
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                    {{ appraisal.date_from_govt|date:"M Y"|default:"-" }}
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                    {{ appraisal.date_to_govt|date:"M Y"|default:"-" }}
+                                </td>
+                            </tr>
+                            <!-- UBD Row -->
+                            <tr>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
+                                    First appointment in Universiti Brunei Darussalam
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                    {{ appraisal.first_post_ubd|default:"-" }}
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                    {{ appraisal.faculty_programme_ubd|default:"-" }}
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                    {{ appraisal.date_from_ubd|date:"M Y"|default:"-" }}
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                    {{ appraisal.date_to_ubd|date:"M Y"|default:"-" }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Position Information -->
+        <div class="rounded-lg bg-white shadow">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-base font-semibold leading-6 text-gray-900">Position Information</h3>
+                <dl class="mt-4 grid grid-cols-2 gap-4">
+                    <div class="overflow-hidden rounded-lg bg-gray-50 px-4 py-3">
+                        <dt class="truncate text-sm font-medium text-gray-500">Present Post</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ appraisal.present_post|default:"Not assigned" }}</dd>
+                    </div>
+                    <div class="overflow-hidden rounded-lg bg-gray-50 px-4 py-3">
+                        <dt class="truncate text-sm font-medium text-gray-500">Salary Scale/Division</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ appraisal.salary_scale_division|default:"Not specified" }}</dd>
+                    </div>
+                    <div class="overflow-hidden rounded-lg bg-gray-50 px-4 py-3">
+                        <dt class="truncate text-sm font-medium text-gray-500">Incremental Date of Present Post</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ appraisal.incremental_date_of_present_post|date:"M d, Y"|default:"Not set" }}</dd>
+                    </div>
+                    <div class="overflow-hidden rounded-lg bg-gray-50 px-4 py-3">
+                        <dt class="truncate text-sm font-medium text-gray-500">Date of Last Appraisal</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ appraisal.date_of_last_appraisal|date:"M d, Y"|default:"Not set" }}</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Academic Qualifications -->
+        <div class="rounded-lg bg-white shadow">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-base font-semibold leading-6 text-gray-900">Academic Qualifications</h3>
+                {% include "appraisals/partials/_qualifications_table.html" with qualifications=appraisal.employee.employee_qualifications.all %}
+            </div>
+        </div>
+
+        <!-- Current Enrollment Details -->
+        <div class="rounded-lg bg-white shadow">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-base font-semibold leading-6 text-gray-900">Current Enrollment Details</h3>
+                <div class="mt-4 rounded-md bg-gray-50 p-4">
+                    <div class="text-sm text-gray-900">
+                        {{ appraisal.current_enrollment_details|default:"No current enrollment information"|linebreaks }}
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+
+        <!-- Teaching Modules -->
+        <div class="rounded-lg bg-white shadow">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-base font-semibold leading-6 text-gray-900">Teaching Modules</h3>
+                {% if appraisal.employee.modules.exists %}
+                <div class="mt-4 overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-300">
+                        <thead>
+                            <tr>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Code</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Title</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Level</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Language</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Students</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">% Taught</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Hours/Week</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 bg-white">
+                            {% for module in appraisal.employee.modules.all %}
+                            <tr>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ module.code }}</td>
+                                <td class="px-3 py-4 text-sm text-gray-900">{{ module.title }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ module.level }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ module.languageMedium }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ module.no_of_students }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ module.percentage_jointly_taught }}%</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ module.hrs_weekly }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="mt-4 text-sm text-gray-500">No teaching modules assigned.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Higher Degree Students -->
+        <div class="rounded-lg bg-white shadow">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-base font-semibold leading-6 text-gray-900">Higher Degree Students Supervised</h3>
+                <div class="mt-4 rounded-md bg-gray-50 p-4">
+                    <div class="text-sm text-gray-900">
+                        {{ appraisal.higher_degree_students_supervised|default:"No students supervised"|linebreaks }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Last Research -->
+        <div class="rounded-lg bg-white shadow">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-base font-semibold leading-6 text-gray-900">Last Research</h3>
+                <div class="mt-4 rounded-md bg-gray-50 p-4">
+                    <div class="text-sm text-gray-900">
+                        {{ appraisal.last_research|default:"No research information available"|linebreaks }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Publication -->
+         <div class="rounded-lg bg-white">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-base font-semibold leading-6 text-gray-900">Publications</h3>
+                <div class ="mt-4 rounded-md bg-gray-50 p-4">
+                    <div class="text-sm text-gray-900">
+                        {{ appraisal.publications|default:"No publication information available"|linebreaks }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
 </div>
-{% endblock %} 
+{% endblock %}

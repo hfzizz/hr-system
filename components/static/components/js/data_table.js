@@ -7,6 +7,7 @@ class DataTable {
             searchFields: options.searchFields || [], // Array of data-column values to search in
             filterConfigs: options.filterConfigs || [], // Array of filter configurations
             enableReorder: options.enableReorder || true,
+            enableRowLinks: options.enableRowLinks || false, // NEW: Enable clickable rows
             ...options
         };
         
@@ -29,6 +30,10 @@ class DataTable {
         this.loadColumnPreferences();
         if (this.options.enableReorder) {
             this.setupColumnReorder();
+        }
+        // NEW: Setup clickable rows if enabled
+        if (this.options.enableRowLinks) {
+            this.setupClickableRows();
         }
         this.initialFilter();
     }
@@ -340,44 +345,59 @@ class DataTable {
     initialFilter() {
         this.filterTable();
     }
+
+    // NEW: Add this method to handle clickable rows
+    setupClickableRows() {
+        const clickableRows = this.table.querySelectorAll('tbody tr[data-href]');
+        clickableRows.forEach(row => {
+            // Visual hover effects
+            row.addEventListener('mouseover', () => {
+                row.classList.add('row-hover');
+            });
+            
+            row.addEventListener('mouseout', () => {
+                row.classList.remove('row-hover');
+            });
+            
+            // Row click handler
+            row.addEventListener('click', (event) => {
+                // Don't navigate if clicking on action buttons/links or action column
+                if (!event.target.closest('a, button') && 
+                    !event.target.closest('td[data-column="actions"]')) {
+                    window.location.href = row.dataset.href;
+                }
+            });
+        });
+        
+        // Stop propagation for action column clicks
+        this.table.querySelectorAll('td[data-column="actions"]').forEach(cell => {
+            cell.addEventListener('click', (event) => {
+                event.stopPropagation();
+            });
+        });
+        
+        // Also stop propagation for any buttons and links inside rows
+        this.table.querySelectorAll('tr[data-href] a, tr[data-href] button').forEach(element => {
+            element.addEventListener('click', (event) => {
+                event.stopPropagation();
+            });
+        });
+    }
 }
 
 // Initialize tables when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     const tables = document.querySelectorAll('[id$="-table"]');
     tables.forEach(table => {
+        // Check if this table should have clickable rows
+        const hasRowLinks = table.querySelector('tbody tr[data-href]') !== null;
+        
         new DataTable(table.id, {
             storageKey: table.id,
-            enableReorder: true
+            enableReorder: true,
+            enableRowLinks: hasRowLinks // Enable row links based on presence of data-href
         });
     });
-
-    // Example initialization for employee table
-    if (document.getElementById('employee-table')) {
-        new DataTable('employee-table', {
-            storageKey: 'employeeTableColumns',
-            searchFields: ['employee_id', 'name', 'email'],
-            filterConfigs: [
-                {
-                    id: 'department',
-                    column: 'department'
-                },
-                {
-                    id: 'status',
-                    column: 'status',
-                    getContent: cell => cell.querySelector('span')?.textContent || ''
-                },
-                {
-                    id: 'position',
-                    column: 'post'
-                },
-                {
-                    id: 'appointment',
-                    column: 'type_of_appointment'
-                }
-            ]
-        });
-    }
 
     // Example initialization for another table
     // if (document.getElementById('another-table')) {
@@ -392,4 +412,4 @@ document.addEventListener('DOMContentLoaded', function() {
     //         ]
     //     });
     // }
-}); 
+});

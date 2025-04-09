@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from employees.models import Department, Employee, AppointmentType, Qualification
+from employees.models import Department, Employee, Qualification
 from django.utils import timezone
 from datetime import timedelta
 import random
@@ -54,23 +54,7 @@ class Command(BaseCommand):
             if created:
                 self.stdout.write(f'Created department: {dept_name}')
 
-        # Create Appointment Types
-        appointment_types = [
-            'Permanent',
-            'Contract',
-            'Month-to-Month',
-            'Daily-Rated'
-        ]
-        apt_objects = []
-        for apt_type in appointment_types:
-            apt, created = AppointmentType.objects.get_or_create(
-                name=apt_type,
-                defaults={'description': fake.text()}
-            )
-            apt_objects.append(apt)
-            if created:
-                self.stdout.write(f'Created appointment type: {apt_type}')
-
+      
         # Create Employees with Users
         for i in range(count):  # Create specified number of employees
             # Create User
@@ -90,6 +74,13 @@ class Command(BaseCommand):
             dob = fake.date_of_birth(minimum_age=22, maximum_age=65)
             hire_date = fake.date_between(start_date='-5y', end_date='today')
 
+            appointment_types = [
+                'Permanent',
+                'Contract',
+                'Month-to-Month',
+                'Daily-Rated'
+            ]
+
             employee = Employee.objects.create(
                 user=user,
                 first_name=user.first_name,
@@ -106,7 +97,7 @@ class Command(BaseCommand):
                 ic_no=fake.unique.random_number(digits=8),
                 ic_colour=random.choice(['Y', 'P', 'G', 'R']),
                 post=fake.job(),
-                appointment_type=random.choice(apt_objects)
+                appointment_type=random.choice(appointment_types)
             )
 
             # Create Qualifications

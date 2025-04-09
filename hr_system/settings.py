@@ -40,10 +40,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'employees',
     'appraisals',
+    'contract',
     'hr_system',
+    'employee_promotion',
     'widget_tweaks',
     'roles',
     'components',
+    'formtools',
+    'livereload',
 ]
 
 MIDDLEWARE = [
@@ -54,6 +58,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'livereload.middleware.LiveReloadScript',
 ]
 
 # login settings
@@ -75,6 +80,9 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'appraisals.context_processors.appraisal_context_processor',
+                'contract.context_processors.contract_status',
+                'contract.context_processors.notifications',
+                'contract.context_processors.contract_context',
             ],
         },
     },
@@ -103,6 +111,9 @@ DATABASES = {
     }
 }
 
+
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -127,7 +138,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Brunei'
 
 USE_I18N = True
 
@@ -174,3 +185,18 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
 ALLOWED_UPLOAD_PDF_TYPES = ['application/pdf']
 
 
+
+
+# Cache configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache_table',
+    }
+}
+
+# OpenAI Settings
+OPENAI_API_KEY = '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'  # Better to use environment variable
+
+# Add this near the top of the file
+SCOPUS_API_KEY = "b00d238c0e21d681e480dfec863bbb9f"

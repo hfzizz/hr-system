@@ -27,6 +27,18 @@
           </a>
         </li>
 
+        <!-- My Profile -->
+        <li>
+          <a href="{% url 'employees:profile' request.user.employee.pk  %}" class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 {% if request.path == '/' %}bg-gray-100 text-gray-900{% endif %}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+            </svg>            
+            <div>
+              <span class="whitespace-nowrap overflow-hidden">My Profile</span>
+            </div>
+          </a>
+        </li>
+
         <!-- Employees -->
         {% if perms.employees.view_employee %}
         <li>
@@ -73,58 +85,88 @@
         {% endif %}
 
         <!-- Appraisals -->
-        {% if perms.appraisals.view_appraisal %}
-        <li class="space-y-2">
-          <!-- Main Appraisal Link -->
-          <a href="{% url 'appraisals:dashboard' %}" class="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 {% if 'appraisals' in request.path %}bg-gray-100 text-gray-900{% endif %}">
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15M9 5C9 6.10457 9.89543 7 11 7H13C14.1046 7 15 6.10457 15 5M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <div>
-              <span class="whitespace-nowrap overflow-hidden">Appraisals</span>
-            </div>
-          </a>
+{#        {% if perms.appraisals.view_appraisal %}#}   
+          <li>
+            <details class="group [&_summary::-webkit-details-marker]:hidden"
+            {% if 'appraisals' in request.path %}open{% endif %}>
+              <summary
+                class="flex cursor-point items-center gap-3 rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-700"
+              > 
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15M9 5C9 6.10457 9.89543 7 11 7H13C14.1046 7 15 6.10457 15 5M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div>
+                  <span class="text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"> Appraisals </span>
+                </div>
+                
+                <span class="shrink-0 transition duration-300 group-open:-rotate-180">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="size-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                    fill-rule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clip-rule="evenodd"
+                  />
+                  </svg>
+                </span>
+              </summary>
 
-          <!-- Appraisal Submenu -->
-          <ul class="ml-6 space-y-1">
-            <!-- Appraisal Periods -->
-            <li>
-              <a href="{% url 'appraisals:period_list' %}" class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 {% if 'period' in request.path %}bg-gray-100 text-gray-900{% endif %}">
-                <span class="whitespace-nowrap overflow-hidden">Appraisal Periods</span>
-              </a>
-            </li>
+              <ul class="mt-2 space-y-1 px-4">
+                <li>
+                  <a
+                    href="{% url 'appraisals:appraiser_list' %}"
+                    class="block rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 {% if 'appraiser' in request.path %}bg-gray-100 text-gray-900{% endif %}"
+                  >
+                    Appraisers
+                  </a>
+                </li>
 
-            <!-- Appraisers -->
-            <li>
-              <a href="{% url 'appraisals:appraiser_list' %}" class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 {% if 'appraiser' in request.path %}bg-gray-100 text-gray-900{% endif %}">
-                <span class="whitespace-nowrap overflow-hidden">Appraisers</span>
-              </a>
-            </li>
+                <li>
+                  <a
+                    href="{% url 'appraisals:form_list' %}"
+                    class="block rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 {% if 'forms' in request.path %}bg-gray-100 text-gray-900{% endif %}"
+                  >
+                  Appraisal Forms
+                  </a>
+                </li>
+              </ul>
+            </details>
+          </li> 
 
-            <!-- Appraisal Forms -->
-            <li>
-              <a href="{% url 'appraisals:form_list' %}" class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 {% if 'forms' in request.path %}bg-gray-100 text-gray-900{% endif %}">
-                <span class="whitespace-nowrap overflow-hidden">Appraisal Forms</span>
-              </a>
-            </li>
-          </ul>
-        </li>
+      <!-- Promotion -->
+      <li>
+        <a href="{% url 'employee_promotion:list' %}" 
+           class="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div>
+            <span class="whitespace-nowrap overflow-hidden">Promotion</span>
+          </div>
+        </a>
+      </li>
+
+      <!-- Contract Renewal -->
+      {% if perms.contract.view_contract %}
+        {% if contract_enabled or is_hr_contract or is_dean or user.groups.all.0.name == 'SMT' %}
+          <li>
+            <a href="{% if is_hr_contract %}{% url 'contract:list' %}{% elif is_dean %}{% url 'contract:dean_department_contracts' %}{% elif user.groups.all.0.name == 'SMT' %}{% url 'contract:smt_contracts' %}{% else %}{% url 'contract:employee_contracts' %}{% endif %}" 
+               class="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 {% if 'contract' in request.path %}bg-gray-100 text-gray-900{% endif %}">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 7V15C8 16.1046 8.89543 17 10 17H16M8 7V5C8 3.89543 8.89543 3 10 3H14L20 9V15C20 16.1046 19.1046 17 18 17H16M8 7H6C4.89543 7 4 7.89543 4 9V19C4 20.1046 4.89543 21 6 21H14C15.1046 21 16 20.1046 16 19V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M14 3V9H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <div>
+                <span class="whitespace-nowrap overflow-hidden">Contract Renewal</span>
+              </div>
+            </a>
+          </li>
         {% endif %}
-
-        <!-- Contract Renewal (disabled for now) -->
-        {% if False %}
-        <li>
-          <a href="{% url 'contracts:template_list' %}" class="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 {% if 'contracts' in request.path %}bg-gray-100 text-gray-900{% endif %}">
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8 7V15C8 16.1046 8.89543 17 10 17H16M8 7V5C8 3.89543 8.89543 3 10 3H14L20 9V15C20 16.1046 19.1046 17 18 17H16M8 7H6C4.89543 7 4 7.89543 4 9V19C4 20.1046 4.89543 21 6 21H14C15.1046 21 16 20.1046 16 19V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M14 3V9H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <div>
-              <span class="whitespace-nowrap overflow-hidden">Contract Renewal</span>
-            </div>
-          </a>
-        </li>
-        {% endif %}
+      {% endif %}
 
         <!-- Settings -->
         <li>
@@ -139,5 +181,5 @@
           </a>
         </li>
       </ul>
-    </nav>
+    </nav> 
 </aside>

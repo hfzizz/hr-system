@@ -23,6 +23,8 @@ from employees import views
 from django.conf import settings
 from django.conf.urls.static import static
 
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -31,7 +33,12 @@ urlpatterns = [
     path('', views.DashboardView.as_view(), name='dashboard'),
     path('employees/', include('employees.urls')),
     path('appraisals/', include('appraisals.urls', namespace='appraisals')),
+    path('contract/', include('contract.urls', namespace='contract')),
+    path('promotion/', include('employee_promotion.urls', namespace='employee_promotion')),
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('settings/', views.SettingsView.as_view(), name='settings'),
     path('roles/', include('roles.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
