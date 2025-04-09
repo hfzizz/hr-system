@@ -27,6 +27,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import redirect
 from django.views.generic.edit import UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.models import User
 from django.db import transaction
 import string
@@ -39,12 +40,22 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Count, Q
 from appraisals.models import Appraisal, AppraisalPeriod
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.http import HttpResponse
+from employees.resume_parser import parse_resume
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.core.files.uploadedfile import UploadedFile
+import os
+from django.conf import settings
+import json
+from django.core.serializers.json import DjangoJSONEncoder
+from django.db import models
+from django.http import HttpResponse, Http404
 from django.views.decorators.http import require_http_methods
 from django.template.response import TemplateResponse
 from django.contrib.auth.decorators import login_required
 from django.template import TemplateDoesNotExist
-
 
 # Formset Configurations
 QualificationFormSet = inlineformset_factory(
@@ -324,6 +335,7 @@ class EmployeeListView(LoginRequiredMixin, HRRequiredMixin, ListView):
         return render(request, 'employees/employee_list.html', context)
 
 class DashboardView(LoginRequiredMixin, TemplateView):
+    # resume
     """
     Main dashboard displaying system analytics and recent activities.
     
@@ -355,6 +367,35 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context['total_employees'] = Employee.objects.count()
         context['total_departments'] = Department.objects.count()
         
+        # Get departments with employee counts
+        department_data = Department.objects.annotate(
+            employee_count=Count('employees')
+        ).order_by('name')
+        
+        # Get positions (posts) with employee counts
+        positions = Employee.objects.values('post').annotate(
+            employee_count=Count('id'),
+            name=models.F('post')  # Alias 'post' as 'name' to match template
+        ).exclude(
+            post__isnull=True
+        ).exclude(
+            post__exact=''
+        ).order_by('post')
+
+        # Get appointment types with employee counts
+        appointments = Employee.objects.values('appointment_type') \
+            .annotate(employee_count=Count('id')) \
+            .order_by('appointment_type')
+        
+        context.update({
+            'department_data': department_data,
+            'department_count': Department.objects.count(),
+            'positions': positions,
+            'position_count': positions.count(),
+            'appointments': appointments,
+            'appointment_count': Employee.objects.values('appointment_type').distinct().count(),
+        })
+
         # Appraisal analytics
         active_period = AppraisalPeriod.objects.filter(is_active=True).first()
         if active_period:
@@ -385,6 +426,27 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             ).select_related(
                 'employee', 'appraiser'
             ).order_by('-date_created')[:5]
+
+        # Get status counts
+        status_counts = Employee.objects.values('employee_status').annotate(
+            count=Count('id')
+        )
+
+        # Format status data as list of dictionaries
+        status_data = [
+            {'status': 'active', 'count': 0},
+            {'status': 'on_leave', 'count': 0},
+            {'status': 'inactive', 'count': 0}
+        ]
+
+        # Update with actual counts
+        for item in status_counts:
+            for status in status_data:
+                if status['status'] == item['employee_status']:
+                    status['count'] = item['count']
+
+        # Add to context
+        context['status_data'] = status_data
 
         return context
 
@@ -495,13 +557,18 @@ class EmployeeCreateView(LoginRequiredMixin, HRRequiredMixin, CreateView):
                 if not password:
                     password = self.generate_random_password()
 
-                # Create user account
+                # Create the User instance first
+                username = form.cleaned_data['username']
+                email = form.cleaned_data['email']
+                first_name = form.cleaned_data['first_name']
+                last_name = form.cleaned_data['last_name']
+
                 user = User.objects.create_user(
-                    username=form.cleaned_data['username'],
-                    email=form.cleaned_data['email'],
+                    username=username,
+                    email=email,
                     password=password,
-                    first_name=form.cleaned_data['first_name'],
-                    last_name=form.cleaned_data['last_name']
+                    first_name=first_name,
+                    last_name=last_name
                 )
 
                 # Save employee
@@ -810,5 +877,82 @@ class SettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     def handle_no_permission(self):
         messages.error(self.request, "You don't have permission to access settings.")
         return redirect('dashboard')
+
+class ResumeParserView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        print("Received POST request")  # Debug print
+        
+        if 'resume' not in request.FILES:
+            print("No file in request")  # Debug print
+            return JsonResponse({
+                'status': 'error',
+                'message': 'No resume file provided'
+            }, status=400)
+            
+        try:
+            resume_file = request.FILES['resume']
+            print(f"Processing file: {resume_file.name}")  # Debug print
+            
+            # Verify file type
+            if not resume_file.name.lower().endswith('.pdf'):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Only PDF files are allowed'
+                }, status=400)
+
+            # Create a unique filename
+            fs = FileSystemStorage(location=settings.TEMP_UPLOAD_DIR)
+            filename = fs.get_valid_name(resume_file.name)
+            
+            # Save the file temporarily
+            file_path = fs.save(filename, resume_file)
+            full_path = fs.path(file_path)
+            
+            try:
+                # Parse the resume
+                parsed_data = parse_resume(full_path)
+                print(f"Parsed data: {parsed_data}")  # Debug print
+                
+                # Ensure all values are strings and JSON serializable
+                cleaned_data = {}
+                for key, value in parsed_data.items():
+                    if value is not None:
+                        try:
+                            # Test JSON serialization
+                            json.dumps(str(value))
+                            cleaned_data[key] = str(value)
+                        except (TypeError, ValueError):
+                            cleaned_data[key] = ''
+                    else:
+                        cleaned_data[key] = ''
+                
+                response_data = {
+                    'status': 'success',
+                    'data': cleaned_data
+                }
+                
+                # Test full response serialization
+                json.dumps(response_data)
+                
+                return JsonResponse(response_data)
+                    
+            except Exception as e:
+                print(f"Error parsing resume: {str(e)}")  # Debug print
+                return JsonResponse({
+                    'status': 'error',
+                    'message': str(e)
+                }, status=400)
+            finally:
+                # Clean up: remove the temporary file
+                if os.path.exists(full_path):
+                    os.remove(full_path)
+                
+        except Exception as e:
+            print(f"Error handling file: {str(e)}")  # Debug print
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+
 
 

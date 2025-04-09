@@ -5,11 +5,11 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.db.models import Q
 from django.contrib.auth.models import Group
-from .models import Appraisal, AppraisalPeriod
+from .models import Appraisal, AppraisalPeriod, AppraisalSection
 from employees.models import Employee, Department
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse, Http404, HttpResponseRedirect
 from django.shortcuts import redirect, get_object_or_404, render
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_GET, require_POST
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 import logging
@@ -25,8 +25,12 @@ from formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
 from django.conf import settings
 import os
-from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.db import transaction
+from django.template.loader import render_to_string
+from django.shortcuts import render, redirect, get_object_or_404
+from django.db.models import Q
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -38,57 +42,6 @@ APPRAISER_GROUP_NAME = 'Appraiser'
 # Appraisal Period Management Views
 # =============================================================================
 
-
-class AppraisalPeriodListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
-    """
-    Displays a list of all appraisal periods.
-    Only HR and users with specific permissions can access this view.
-    """
-    model = AppraisalPeriod
-    template_name = 'appraisals/period_list.html'
-    context_object_name = 'periods'
-    permission_required = ('appraisals.view_appraisalperiod',)
-    
-    def has_permission(self):
-        return self.request.user.groups.filter(name=HR_GROUP_NAME).exists() or super().has_permission()
-
-@login_required
-@permission_required('appraisals.add_appraisalperiod', raise_exception=True)
-def create_period(request):
-    """
-    Creates a new appraisal period.
-    Requires POST request with start_date and end_date.
-    """
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
-
-    try:
-        start_date = request.POST.get('start_date')
-        end_date = request.POST.get('end_date')
-        
-        if not all([start_date, end_date]):
-            return JsonResponse({
-                'success': False,
-                'error': 'Both start date and end date are required'
-            }, status=400)
-
-        period = AppraisalPeriod(
-            start_date=start_date,
-            end_date=end_date,
-            is_active=False
-        )
-        
-        period.full_clean()
-        period.save()
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Appraisal period created successfully'
-        })
-            
-    except Exception as e:
-        logger.error(f"Error creating appraisal period: {str(e)}")
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @login_required
 def appraisal_delete(request):
@@ -144,7 +97,6 @@ class AppraisalListView(LoginRequiredMixin, ListView):
         
         # Common data
         context['departments'] = Department.objects.all()
-        context['periods'] = AppraisalPeriod.objects.all().order_by('-start_date')
         
         # My Appraisals tab - show only appraisals where user is the employee
         context['my_appraisals'] = Appraisal.objects.filter(
@@ -204,154 +156,448 @@ class BaseAppraisalWizard(SessionWizardView):
         appraisal = form.save(commit=False)
         appraisal.status = 'draft'
         appraisal.save()
-
-class AppraiseeWizard(BaseAppraisalWizard, UpdateView):
-
-    form_list = [
-        ('section_a', SectionAForm),
-        # ... other sections ...
-    ]
-
-    templates = {
-        'section_a': 'appraisals/wizard/section_a.html',
-        # ... other sections ...
-    }
-    
-    def get_form_instance(self, step):
-        """Initialize form instance with existing appraisal data"""
-        if self.kwargs.get('appraisal_id'):
-            try:
-                return Appraisal.objects.get(
-                   appraisal_id=self.kwargs.get('appraisal_id')
-                )
-            except Appraisal.DoesNotExist:
-                pass
-        return None
-
-    def get_context_data(self, form, **kwargs):
-        context = super().get_context_data(form=form, **kwargs)
-        
-        if self.steps.current == 'section_a':
-            instance = self.get_form_instance(self.steps.current)
-            
-            if instance and instance.employee:
-                # Add qualification formset with proper prefix
-                if self.request.POST:
-                    context['qualification_formset'] = QualificationFormSet(
-                        self.request.POST,
-                        instance=instance.employee,
-                        prefix='qualification_set'
-                    )
-                else:
-                    context['qualification_formset'] = QualificationFormSet(
-                        instance=instance.employee,
-                        prefix='qualification_set'
-                    )
-        
-        return context
-            
-            
-        #     # For appointments formset
-        #     if self.request.POST:
-        #         context['appointment_formset'] = AppointmentFormSet(
-        #             self.request.POST, 
-        #             instance=instance
-        #         )
-        #     else:
-        #         context['appointment_formset'] = AppointmentFormSet(
-        #             instance=instance
-        #         )
-        
-        # return context
-    
-    def form_valid(self, form):
-        context = self.get_context_data()
-        qualification_formset = context.get('qualification_formset')
-        
-        qualification_formset.instance = self.get_form_instance('section_a').employee
-        qualification_instances = qualification_formset.save(commit=False)
-
-        for obj in qualification_formset.deleted_objects:
-            obj.delete()
-        
-        for qualification in qualification_instances:
-            qualification.employee = self.get_form_instance('section_a').employee
-            qualification.save()
-        
-        return super().form_valid(form)
-    
-
-    def get_template_names(self):
-        """Override to ensure we're using the correct template"""
-        return [self.templates[self.steps.current]]
-
-    def process_step(self, form):
-        """Handle step processing"""
-        # Remove the save_draft check since we'll handle all saves the same way
-        return super().process_step(form)
-    
-    def post(self, *args, **kwargs):
-        form = self.get_form(data=self.request.POST, files=self.request.FILES)
-        
-        if form.is_valid():
-            instance = self.get_form_instance(self.steps.current)
-            if instance:
-                form.save()
-                
-                if self.steps.current == 'section_a':
-                    qualification_formset = QualificationFormSet(
-                        data=self.request.POST,
-                        instance=instance.employee,
-                        prefix='qualification_set'
-                    )
-                    
-                    if qualification_formset.is_valid():
-                        qualification_formset.save()
-                    else:
-                        context = self.get_context_data(form=form)
-                        context['qualification_formset'] = qualification_formset
-                        return self.render(form)
-                
-                # Handle draft save explicitly
-                if self.request.POST.get('save_draft') == 'true':
-                    messages.success(self.request, 'Form saved as draft successfully.')
-                    return HttpResponseRedirect(
-                        reverse('appraisals:form_detail', 
-                        kwargs={'pk': instance.appraisal_id})
-                    )
-                
-                # Handle normal submission
-                instance.status = 'pending'
-                instance.save()
-                messages.success(self.request, 'Form submitted successfully.')
-                return HttpResponseRedirect(
-                    reverse('appraisals:form_detail', 
-                    kwargs={'pk': instance.appraisal_id})
-                )
-        
-        # If form is invalid
-        return self.render(form)
     
 class AppraiserWizard(BaseAppraisalWizard):
     form_list = [
+        ('section_a_readonly', SectionAForm),  # Employee Information
         ('section_b', SectionBForm),  # General Traits
         # ('section_c', SectionCForm),  # Local Staff Appraisal
         # ('section_d', SectionDForm),  # Adverse Appraisal
     ]
     
     templates = {
+        'section_a_readonly': 'appraisals/wizard/section_a_readonly.html',
         'section_b': 'appraisals/wizard/section_b.html',
         # 'section_c': 'appraisals/wizard/section_c.html',
         # 'section_d': 'appraisals/wizard/section_d.html',
     }
 
+    def get_context_data(self, form, **kwargs):
+        context = super().get_context_data(form=form, **kwargs)
+        
+        # Get the appraisal instance
+        appraisal_id = self.kwargs.get('appraisal_id')
+        if appraisal_id:
+            try:
+                appraisal = Appraisal.objects.get(appraisal_id=appraisal_id)
+                context['appraisal'] = appraisal
+            except Appraisal.DoesNotExist:
+                pass
+        
+        context.update({
+            'can_save_draft': True,
+            'appraisal_id': appraisal_id,
+            'is_edit': self.kwargs.get('is_edit', False)
+        })
+        return context
+
+    def get_form_instance(self, step):
+        """Initialize form instance with existing appraisal data"""
+        appraisal_id = self.kwargs.get('appraisal_id') or self.kwargs.get('pk')
+        
+        if appraisal_id:
+            try:
+                # Only use appraisal_id field
+                appraisal = Appraisal.objects.filter(
+                    appraisal_id=appraisal_id
+                ).select_related('employee', 'appraiser').first()
+                
+                if appraisal:
+                    # Verify the appraisal has all required related objects
+                    if not hasattr(appraisal, 'employee') or appraisal.employee is None:
+                        logger.error(f"Appraisal {appraisal_id} has no associated employee")
+                        raise Http404(f"Appraisal {appraisal_id} is incomplete (missing employee)")
+                    
+                    return appraisal
+            except Exception as e:
+                logger.error(f"Error fetching appraisal: {str(e)}")
+        return None
+
     def dispatch(self, request, *args, **kwargs):
-        appraisal = get_object_or_404(Appraisal, id=kwargs['appraisal_id'])
-        if appraisal.appraiser.user != request.user:
-            raise PermissionDenied
-        return super().dispatch(request, *args, **kwargs)
+        # Check if 'appraisal_id' is in kwargs, otherwise try 'pk'
+        appraisal_id = kwargs.get('appraisal_id') or kwargs.get('pk')
+        
+        if not appraisal_id:
+            raise Http404("Appraisal ID not provided")
+        
+        try:
+            # Only use appraisal_id field, not id since it doesn't exist
+            appraisal = Appraisal.objects.filter(
+                appraisal_id=appraisal_id
+            ).select_related('employee', 'appraiser').first()
+            
+            if not appraisal:
+                raise Http404(f"Appraisal with ID {appraisal_id} not found")
+            
+            # Verify the appraisal has all required related objects
+            if not hasattr(appraisal, 'employee') or appraisal.employee is None:
+                logger.error(f"Appraisal {appraisal_id} has no associated employee")
+                raise Http404(f"Appraisal {appraisal_id} is incomplete (missing employee)")
+                
+            if appraisal.appraiser.user != request.user and not request.user.groups.filter(name=HR_GROUP_NAME).exists():
+                raise PermissionDenied("You are not authorized to review this appraisal")
+                
+            return super().dispatch(request, *args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error in dispatch: {str(e)}")
+        raise Http404(f"Error loading appraisal with ID {appraisal_id}: {str(e)}")
 
+@login_required
+def appraisal_wizard_section_a(request, appraisal_id):
+    """Render section A of the appraisal wizard"""
+    appraisal = get_object_or_404(Appraisal, appraisal_id=appraisal_id)
+    
+    # Check permissions
+    if not (appraisal.appraiser.user == request.user or request.user.groups.filter(name='HR').exists()):
+        raise PermissionDenied("You are not authorized to review this appraisal")
+        
+    return render(request, 'appraisals/wizard/section_a_readonly.html', {
+        'appraisal': appraisal,
+    })
 
+@login_required
+def appraisal_wizard_section_c(request, appraisal_id):
+    """Render section C of the appraisal wizard"""
+    appraisal = get_object_or_404(Appraisal, appraisal_id=appraisal_id)
+    
+    # Check permissions
+    if not (appraisal.appraiser.user == request.user or request.user.groups.filter(name='HR').exists()):
+        raise PermissionDenied("You are not authorized to review this appraisal")
+        
+    return render(request, 'appraisals/wizard/section_c.html', {
+        'appraisal': appraisal,
+    })
+    
+@require_POST
+@login_required
+def save_rating(request):
+    """Save a rating value from a radio button selection"""
+    try:
+        field = request.POST.get('field')
+        section = request.POST.get('section')
+        value = request.POST.get('value')
+        appraisal_id = request.POST.get('appraisal_id')
+        # Get the appraiser from the current user
+        appraiser = request.user.employee
+        
+        if not all([field, section, value, appraisal_id]):
+            return JsonResponse({'status': 'error', 'message': 'Missing required parameters'}, status=400)
+            
+        appraisal = get_object_or_404(Appraisal, appraisal_id=appraisal_id)
+        
+        # Check if user has permission to modify this appraisal
+        if not (appraisal.appraiser.user == request.user or 
+                appraisal.appraiser_secondary.user == request.user or 
+                request.user.groups.filter(name='HR').exists()):
+            return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=403)
+        
+        # Get or create the appraisal section specific to this appraiser
+        section_obj, created = AppraisalSection.objects.get_or_create(
+            appraisal=appraisal,
+            section_name=section,
+            appraiser=appraiser  # This makes the section specific to this appraiser
+        )
+        
+        # Update the field data
+        if not section_obj.data:
+            section_obj.data = {}
+            
+        section_obj.data[field] = value
+        section_obj.save()
+        
+        return JsonResponse({'status': 'success', 'message': 'Rating saved'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+@require_POST
+@login_required
+def save_text_field(request):
+    """Save content from a textarea"""
+    try:
+        field = request.POST.get('field')
+        section = request.POST.get('section')
+        value = request.POST.get('value', '')  # Empty string is a valid text value
+        appraisal_id = request.POST.get('appraisal_id')
+        
+        if not all([field, section, appraisal_id]):
+            return JsonResponse({'status': 'error', 'message': 'Missing required parameters'}, status=400)
+            
+        appraisal = get_object_or_404(Appraisal, appraisal_id=appraisal_id)
+        
+        # Check if user has permission to modify this appraisal
+        if not (appraisal.appraiser.user == request.user or request.user.groups.filter(name='HR').exists()):
+            return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=403)
+        
+        # Get or create the appraisal section
+        section_obj, created = AppraisalSection.objects.get_or_create(
+            appraisal=appraisal,
+            section_name=section
+        )
+        
+        # Update the field data
+        if not section_obj.data:
+            section_obj.data = {}
+            
+        section_obj.data[field] = value
+        section_obj.save()
+        
+        return JsonResponse({'status': 'success', 'message': 'Text saved'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+@require_POST
+@login_required
+def save_field(request):
+    """Save content from regular form fields (input, select, etc.)"""
+    try:
+        field = request.POST.get('field')
+        section = request.POST.get('section')
+        value = request.POST.get('value')
+        appraisal_id = request.POST.get('appraisal_id')
+        
+        if not all([field, appraisal_id]):  # Section might be optional for some fields
+            return JsonResponse({'status': 'error', 'message': 'Missing required parameters'}, status=400)
+            
+        appraisal = get_object_or_404(Appraisal, appraisal_id=appraisal_id)
+        
+        # Check if user has permission to modify this appraisal
+        if not (appraisal.appraiser.user == request.user or request.user.groups.filter(name='HR').exists()):
+            return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=403)
+        
+        # Some fields might be directly on the appraisal model
+        if field == 'appraiser_review_date':
+            appraisal.appraiser_review_date = value
+            appraisal.save()
+            return JsonResponse({'status': 'success', 'message': 'Date saved'})
+        
+        # Otherwise store in section data
+        if section:
+            # Get or create the appraisal section
+            section_obj, created = AppraisalSection.objects.get_or_create(
+                appraisal=appraisal,
+                section_name=section
+            )
+            
+            # Update the field data
+            if not section_obj.data:
+                section_obj.data = {}
+                
+            section_obj.data[field] = value
+            section_obj.save()
+        
+        return JsonResponse({'status': 'success', 'message': 'Field saved'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+# @require_GET
+# @login_required
+# def toggle_leadership_section(request):
+#     """Toggle the leadership section visibility"""
+#     try:
+#         show = 'is_leadership_role' in request.GET
+#         appraisal_id = request.GET.get('appraisal_id')
+        
+#         if not appraisal_id:
+#             return JsonResponse({'status': 'error', 'message': 'Missing appraisal_id'}, status=400)
+            
+#         appraisal = get_object_or_404(Appraisal, appraisal_id=appraisal_id)
+        
+#         # Check if user has permission to view this appraisal
+#         if not (appraisal.appraiser.user == request.user or request.user.groups.filter(name='HR').exists()):
+#             return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=403)
+        
+#         # Get or create the section object to store leadership role flag
+#         section_obj, created = AppraisalSection.objects.get_or_create(
+#             appraisal=appraisal,
+#             section_name='B10'
+#         )
+        
+#         if not section_obj.data:
+#             section_obj.data = {}
+            
+#         # Update the section data to reflect leadership role status
+#         section_obj.data['is_leadership_role'] = show
+#         section_obj.save()
+        
+#         # Return HTML for leadership fields if showing
+#         if show:
+#             # HTML for leadership rating form elements
+#             html = f"""
+#             <div class="bg-white rounded p-4">
+#                 <div class="mb-6">
+#                     <label class="block text-gray-700 mb-2">Leadership qualities</label>
+#                     <div class="flex items-center gap-4">
+#                         <div class="flex items-center">
+#                             <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+#                                 type="radio" name="b10_leadership" id="b10_leadership_1" value="1"
+#                                 hx-post="/appraisals/save-rating/"
+#                                 hx-trigger="change"
+#                                 hx-vals='{"field": "b10_leadership", "section": "B10", "value": "1", "appraisal_id": "%s"}'
+#                                 hx-swap="none"
+#                                 hx-indicator="#save-indicator">
+#                             <label class="ml-1 text-gray-700" for="b10_leadership_1">1</label>
+#                         </div>
+#                         <div class="flex items-center">
+#                             <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+#                                 type="radio" name="b10_leadership" id="b10_leadership_2" value="2"
+#                                 hx-post="/appraisals/save-rating/"
+#                                 hx-trigger="change"
+#                                 hx-vals='{"field": "b10_leadership", "section": "B10", "value": "2", "appraisal_id": "%s"}'
+#                                 hx-swap="none"
+#                                 hx-indicator="#save-indicator">
+#                             <label class="ml-1 text-gray-700" for="b10_leadership_2">2</label>
+#                         </div>
+#                         <div class="flex items-center">
+#                             <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+#                                 type="radio" name="b10_leadership" id="b10_leadership_3" value="3"
+#                                 hx-post="/appraisals/save-rating/"
+#                                 hx-trigger="change"
+#                                 hx-vals='{"field": "b10_leadership", "section": "B10", "value": "3", "appraisal_id": "%s"}'
+#                                 hx-swap="none"
+#                                 hx-indicator="#save-indicator">
+#                             <label class="ml-1 text-gray-700" for="b10_leadership_3">3</label>
+#                         </div>
+#                         <div class="flex items-center">
+#                             <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+#                                 type="radio" name="b10_leadership" id="b10_leadership_4" value="4"
+#                                 hx-post="/appraisals/save-rating/"
+#                                 hx-trigger="change"
+#                                 hx-vals='{"field": "b10_leadership", "section": "B10", "value": "4", "appraisal_id": "%s"}'
+#                                 hx-swap="none"
+#                                 hx-indicator="#save-indicator">
+#                             <label class="ml-1 text-gray-700" for="b10_leadership_4">4</label>
+#                         </div>
+#                     </div>
+#                 </div>
+                
+#                 <div class="mb-6">
+#                     <label class="block text-gray-700 mb-2">Decision-making abilities</label>
+#                     <div class="flex items-center gap-4">
+#                         <div class="flex items-center">
+#                             <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+#                                 type="radio" name="b10_decision_making" id="b10_decision_making_1" value="1"
+#                                 hx-post="/appraisals/save-rating/"
+#                                 hx-trigger="change"
+#                                 hx-vals='{"field": "b10_decision_making", "section": "B10", "value": "1", "appraisal_id": "%s"}'
+#                                 hx-swap="none"
+#                                 hx-indicator="#save-indicator">
+#                             <label class="ml-1 text-gray-700" for="b10_decision_making_1">1</label>
+#                         </div>
+#                         <div class="flex items-center">
+#                             <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+#                                 type="radio" name="b10_decision_making" id="b10_decision_making_2" value="2"
+#                                 hx-post="/appraisals/save-rating/"
+#                                 hx-trigger="change"
+#                                 hx-vals='{"field": "b10_decision_making", "section": "B10", "value": "2", "appraisal_id": "%s"}'
+#                                 hx-swap="none"
+#                                 hx-indicator="#save-indicator">
+#                             <label class="ml-1 text-gray-700" for="b10_decision_making_2">2</label>
+#                         </div>
+#                         <div class="flex items-center">
+#                             <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+#                                 type="radio" name="b10_decision_making" id="b10_decision_making_3" value="3"
+#                                 hx-post="/appraisals/save-rating/"
+#                                 hx-trigger="change"
+#                                 hx-vals='{"field": "b10_decision_making", "section": "B10", "value": "3", "appraisal_id": "%s"}'
+#                                 hx-swap="none"
+#                                 hx-indicator="#save-indicator">
+#                             <label class="ml-1 text-gray-700" for="b10_decision_making_3">3</label>
+#                         </div>
+#                         <div class="flex items-center">
+#                             <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+#                                 type="radio" name="b10_decision_making" id="b10_decision_making_4" value="4"
+#                                 hx-post="/appraisals/save-rating/"
+#                                 hx-trigger="change"
+#                                 hx-vals='{"field": "b10_decision_making", "section": "B10", "value": "4", "appraisal_id": "%s"}'
+#                                 hx-swap="none"
+#                                 hx-indicator="#save-indicator">
+#                             <label class="ml-1 text-gray-700" for="b10_decision_making_4">4</label>
+#                         </div>
+#                     </div>
+#                 </div>
+#             </div>
+#             """ (appraisal_id, appraisal_id, appraisal_id, appraisal_id, appraisal_id, appraisal_id, appraisal_id, appraisal_id)
+            
+#             return JsonResponse({'status': 'success', 'html': html})
+#         else:
+#             # If not showing leadership section, return empty HTML
+#             return JsonResponse({'status': 'success', 'html': ''})
+    
+#     except Exception as e:
+#         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+@require_GET
+@login_required
+def toggle_leadership_section(request):
+    """Toggle the leadership section visibility"""
+    try:
+        show = 'is_leadership_role' in request.GET
+        appraisal_id = request.GET.get('appraisal_id')
+        
+        if not appraisal_id:
+            return JsonResponse({'status': 'error', 'message': 'Missing appraisal_id'}, status=400)
+            
+        appraisal = get_object_or_404(Appraisal, appraisal_id=appraisal_id)
+        
+        # Check if user has permission to view this appraisal
+        if not (appraisal.appraiser.user == request.user or request.user.groups.filter(name='HR').exists()):
+            return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=403)
+        
+        # Get or create the section object to store leadership role flag
+        section_obj, created = AppraisalSection.objects.get_or_create(
+            appraisal=appraisal,
+            section_name='B10'
+        )
+        
+        if not section_obj.data:
+            section_obj.data = {}
+            
+        # Update the section data to reflect leadership role status
+        section_obj.data['is_leadership_role'] = show
+        section_obj.save()
+        
+        # Return a simplified response for debugging
+        if show:
+            # Just return a simple div for now to test if it works
+            html = f"""
+            <div class="bg-white rounded p-4">
+                <p>Leadership section is now visible. Appraisal ID: {appraisal_id}</p>
+            </div>
+            """
+            return JsonResponse({'status': 'success', 'html': html})
+        else:
+            return JsonResponse({'status': 'success', 'html': ''})
+    
+    except Exception as e:
+        # Add more detailed error logging
+        import traceback
+        error_msg = f"Error in toggle_leadership_section: {str(e)}\n{traceback.format_exc()}"
+        return JsonResponse({'status': 'error', 'message': error_msg}, status=500)
+    
+@require_GET
+@login_required
+def toggle_other_relationship(request):
+    """Show/hide the 'other relationship' input field"""
+    try:
+        relationship = request.GET.get('value', '')
+        appraisal_id = request.GET.get('appraisal_id')
+        
+        if not appraisal_id:
+            return JsonResponse({'status': 'error', 'message': 'Missing appraisal_id'}, status=400)
+            
+        appraisal = get_object_or_404(Appraisal, appraisal_id=appraisal_id)
+        
+        # Check if user has permission to view this appraisal
+        if not (appraisal.appraiser.user == request.user or request.user.groups.filter(name='HR').exists()):
+            return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=403)
+        
+        # This just returns CSS to show/hide the other field
+        if relationship == 'Other':
+            return HttpResponse("display: block;")
+        else:
+            return HttpResponse("display: none;")
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 class AppraisalAssignView(LoginRequiredMixin, PermissionRequiredMixin, View):
     """
@@ -371,15 +617,23 @@ class AppraisalAssignView(LoginRequiredMixin, PermissionRequiredMixin, View):
         
         return context
     
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
         try:
-            # Get the basic required fields
+            # Get the basic required fields from the POST data
             employee_id = request.POST.get('employee_id')
             appraiser_id = request.POST.get('appraiser')
+            appraiser_secondary_id = request.POST.get('appraiser_secondary')  
             period_id = request.POST.get('period')
 
+            # Get the period dates
+            appraisal_period_start = request.POST.get('appraisal_period_start')
+            appraisal_period_end = request.POST.get('appraisal_period_end')
+            review_period_start = request.POST.get('review_period_start')
+            review_period_end = request.POST.get('review_period_end')
+
             # Validate required fields
-            if not all([employee_id, appraiser_id, period_id]):
+            if not all([employee_id, appraiser_id, period_id, appraisal_period_start, appraisal_period_end, review_period_start, review_period_end]):
                 return JsonResponse({
                     'success': False,
                     'error': 'Please fill in all required fields'
@@ -387,30 +641,28 @@ class AppraisalAssignView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
             try:
                 # Get the required objects
-                employee = Employee.objects.get(id=employee_id)
-                appraiser = Employee.objects.get(id=appraiser_id)
+                employee = Employee.objects.get(employee_id=employee_id)
+                appraiser = Employee.objects.get(employee_id=appraiser_id)
                 period = AppraisalPeriod.objects.get(id=period_id)
-                
-                # Check for existing appraisal
-                existing_appraisal = Appraisal.objects.filter(
-                    employee=employee,
-                    appraiser=appraiser,
-                    review_period_start=period.start_date,
-                    review_period_end=period.end_date
-                ).exists()
-                
-                if existing_appraisal:
-                    return JsonResponse({
-                        'success': False,
-                        'error': 'An appraisal already exists for this employee, appraiser and period'
-                    }, status=400)
-                
+
+                # Handle optional secondary appraiser
+                appraiser_secondary = None
+                if appraiser_secondary_id:
+                    try:
+                        appraiser_secondary = Employee.objects.get(employee_id=appraiser_secondary_id)
+                    except Employee.DoesNotExist:
+                        # Optional field, so we can just log this
+                        logger.warning(f"Secondary appraiser not found: {appraiser_secondary_id}")
+        
                 # Create appraisal with period dates
                 appraisal = Appraisal.objects.create(
                     employee=employee,
                     appraiser=appraiser,
-                    review_period_start=period.start_date,
-                    review_period_end=period.end_date,
+                    appraiser_secondary=appraiser_secondary,
+                    appraisal_period_start=period.start_date,
+                    appraisal_period_end=period.end_date,
+                    review_period_start=review_period_start,
+                    review_period_end=review_period_end,
                     status='pending',
                     last_modified_by=request.user
                 )
@@ -435,90 +687,6 @@ class AppraisalAssignView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'error': 'An error occurred while assigning the appraisal'
             }, status=500)
 
-@login_required
-@require_http_methods(["POST"])
-def toggle_appraisal_period(request, pk):
-    period = get_object_or_404(AppraisalPeriod, pk=pk)
-    period.is_active = not period.is_active
-    try:
-        period.full_clean()
-        period.save()
-        message = 'Appraisal period activated' if period.is_active else 'Appraisal period deactivated'
-        status = 'success'
-    except ValidationError as e:
-        message = str(e)
-        status = 'error'
-    
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({'status': status, 'message': message})
-    messages.add_message(request, messages.INFO if status == 'success' else messages.ERROR, message)
-    return redirect('appraisals:period_list')
-
-@login_required
-@permission_required('appraisals.change_appraisalperiod')
-def toggle_period(request, pk):
-    """
-    Toggles the active status of an appraisal period.
-    
-    Args:
-        request: HTTP request
-        pk: Primary key of the AppraisalPeriod
-        
-    Returns:
-        JsonResponse with updated status
-    """
-    try:
-        period = get_object_or_404(AppraisalPeriod, pk=pk)
-        period.is_active = not period.is_active
-        period.full_clean()
-        period.save()
-        
-        message = 'Period activated' if period.is_active else 'Period deactivated'
-        return JsonResponse({
-            'status': 'success',
-            'message': f'Appraisal {message} successfully',
-            'is_active': period.is_active
-        })
-    except ValidationError as e:
-        return JsonResponse({
-            'status': 'error',
-            'message': str(e)
-        }, status=400)
-    except Exception as e:
-        logger.error(f"Error toggling period status: {str(e)}")
-        return JsonResponse({
-            'status': 'error',
-            'message': 'An error occurred while updating the period'
-        }, status=500)
-
-def get_appraisal_context(request):
-    """
-    Common context processor for appraisal-related views.
-    Provides consistent context data across multiple views.
-    """
-    return {
-        'active_periods': AppraisalPeriod.objects.filter(is_active=True),
-        'is_hr': request.user.groups.filter(name=HR_GROUP_NAME).exists(),
-        'is_appraiser': request.user.groups.filter(name=APPRAISER_GROUP_NAME).exists(),
-        'can_manage_appraisals': request.user.has_perm('appraisals.can_manage_appraisals'),
-    }
-
-class AppraisalDashboardView(LoginRequiredMixin, TemplateView):
-    """
-    Overview dashboard showing key metrics and summaries
-    """
-    template_name = 'appraisals/dashboard.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({
-            'active_periods': AppraisalPeriod.objects.filter(is_active=True).count(),
-            'pending_appraisals': Appraisal.objects.filter(status='pending').count(),
-            'completed_appraisals': Appraisal.objects.filter(status='completed').count(),
-            'recent_activities': Appraisal.objects.order_by('-last_modified_date')[:5],
-        })
-        return context
-
 class AppraiserListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     """
     Display and manage list of appraisers with traditional HTML table
@@ -527,6 +695,9 @@ class AppraiserListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     template_name = 'appraisals/appraiser_list.html'
     permission_required = 'appraisals.view_appraisal'
     context_object_name = 'appraisers'  # Changed to match the template context variable
+
+    current_year = datetime.now().year
+    year_range = list(range(current_year - 2, current_year + 4))
 
     def get_queryset(self):
         """
@@ -553,6 +724,8 @@ class AppraiserListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
             'user',
             'department'
         )
+
+        context['employee_roles'] = Employee.objects.all()
         
         # Common data
         context['departments'] = Department.objects.all()
@@ -576,66 +749,225 @@ class AppraiserListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         
         return context
     
-@login_required
-def get_appraisers_api(request):
-    """API endpoint to fetch appraisers for the modal"""
-    from employees.models import Employee  # Import here to avoid circular imports
+@require_http_methods(["GET"])
+def get_appraisers(request):
+    exclude_employee_id = request.GET.get('exclude_employee_id')
     
-    # Get all employees who can be appraisers
-    appraisers = Employee.objects.filter(roles__name='Appraiser').select_related('department')
+    # Get all employees that can be appraisers
+    appraisers_queryset = Employee.objects.all()
     
-    # Format the data for the frontend
+    # Exclude the current employee if ID is provided
+    if exclude_employee_id:
+        appraisers_queryset = appraisers_queryset.exclude(employee_id=exclude_employee_id)
+    
+    # Format for template
     appraisers_data = [
         {
-            'id': str(appraiser.id), 
+            'id': appraiser.employee_id,
             'name': appraiser.get_full_name(),
-            'position': appraiser.post,
-            'department': appraiser.department.name if appraiser.department else ''
+            'post': appraiser.post,
+            'department': appraiser.department.name if appraiser.department else 'Other'
         }
-        for appraiser in appraisers
+        for appraiser in appraisers_queryset
     ]
     
-    return JsonResponse({'appraisers': appraisers_data})
+    # Render the template
+    content = render_to_string('appraisals/includes/appraiser_options.html', 
+                              {'appraisers': appraisers_data})
+    
+    return HttpResponse(content, content_type='application/json')
 
+@login_required
+@permission_required('appraisals.add_appraisalperiod', raise_exception=True)
+def create_period(request):
+    """
+    Creates a new appraisal period.
+    Requires POST request with start_date and end_date.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+    try:
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        
+        if not all([start_date, end_date]):
+            return JsonResponse({
+                'success': False,
+                'error': 'Both start date and end date are required'
+            }, status=400)
+
+        period = AppraisalPeriod(
+            start_date=start_date,
+            end_date=end_date,
+            is_active=False
+        )
+        
+        period.full_clean()
+        period.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Appraisal period created successfully'
+        })
+            
+    except Exception as e:
+        logger.error(f"Error creating appraisal period: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+@require_POST
+def set_default_period(request, period_id):
+    """Set an appraisal period as the default."""
+    try:
+        # Make sure the user has HR permissions
+        if not request.user.is_staff and not request.user.groups.filter(name='HR').exists():
+            return HttpResponse('Permission denied', status=403)
+        
+        # First, unset any existing default periods
+        AppraisalPeriod.objects.filter(is_default=True).update(is_default=False)
+        
+        # Get the period and set it as default
+        period = AppraisalPeriod.objects.get(id=period_id)
+        period.is_default = True
+        # Also set it as active (if this behavior is desired)
+        period.is_active = True
+        period.save()
+        
+        # Get all periods to refresh the list
+        periods = AppraisalPeriod.objects.all().order_by('-start_date')
+        
+        # Return the updated period list
+        return render(request, 'appraisals/includes/period_list.html', {'periods': periods})
+    
+    except AppraisalPeriod.DoesNotExist:
+        return HttpResponse('Period not found', status=404)
+    
+    except Exception as e:
+        return HttpResponse(str(e), status=500)
+
+def get_appraisal_context(request):
+    """
+    Common context processor for appraisal-related views.
+    Provides consistent context data across multiple views.
+    """
+    return {
+        'active_periods': AppraisalPeriod.objects.filter(is_active=True),
+        'is_hr': request.user.groups.filter(name=HR_GROUP_NAME).exists(),
+        'is_appraiser': request.user.groups.filter(name=APPRAISER_GROUP_NAME).exists(),
+        'can_manage_appraisals': request.user.has_perm('appraisals.can_manage_appraisals'),
+    }
+
+def get_default_date(request):
+    # Get offset days from query parameter (default to 30 days)
+    offset_days = int(request.GET.get('offset', 30))
+    
+    # Calculate the date
+    default_date = timezone.now().date() + timedelta(days=offset_days)
+    
+    # Format the date as YYYY-MM-DD
+    formatted_date = default_date.strftime('%Y-%m-%d')
+    
+    # Return the input with value already set
+    return HttpResponse(f'''
+        <input 
+            id="review_period_end" 
+            name="review_period_end" 
+            type="date" 
+            value="{formatted_date}"
+            class="mt-1 block w-full pl-10 pr-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+        >
+    ''')
+
+from django.views.decorators.http import require_http_methods
+
+@login_required
+def edit_period(request, period_id):
+    """Return the form for editing an appraisal period."""
+    try:
+        # Make sure user has permissions
+        if not request.user.is_staff and not request.user.groups.filter(name='HR').exists():
+            return HttpResponse('Permission denied', status=403)
+        
+        # Get the period
+        period = get_object_or_404(AppraisalPeriod, id=period_id)
+        
+        # Return the form template
+        return render(request, 'appraisals/includes/edit_period_form.html', {'period': period})
+        
+    except Exception as e:
+        return HttpResponse(f"Error: {str(e)}", status=500)
+
+@login_required
+@require_http_methods(["POST"])
+def update_period(request, period_id):
+    """Update an existing appraisal period."""
+    try:
+        # Make sure user has permissions
+        if not request.user.is_staff and not request.user.groups.filter(name='HR').exists():
+            return HttpResponse('Permission denied', status=403)
+        
+        # Get the period
+        period = get_object_or_404(AppraisalPeriod, id=period_id)
+        
+        # Update period data
+        period.start_date = request.POST.get('start_date')
+        period.end_date = request.POST.get('end_date')
+        period.save()
+        
+        # Get all periods to refresh the list
+        periods = AppraisalPeriod.objects.all().order_by('-start_date')
+        
+        # Return updated list
+        return render(request, 'appraisals/includes/period_list.html', {'periods': periods})
+        
+    except Exception as e:
+        return HttpResponse(f"Error: {str(e)}", status=500)
+
+@login_required
+@require_http_methods(["DELETE"])
+def delete_period(request, period_id):
+    """Delete an appraisal period."""
+    try:
+        # Make sure user has permissions
+        if not request.user.is_staff and not request.user.groups.filter(name='HR').exists():
+            return HttpResponse('Permission denied', status=403)
+        
+        # Get the period
+        period = get_object_or_404(AppraisalPeriod, id=period_id)
+        
+        # Check if period is being used - IMPORTANT: Use the correct field name
+        # If your Appraisal model has a field named 'period', use:
+        if Appraisal.objects.filter(period=period).exists():
+            return HttpResponse('Cannot delete: Period is being used by existing appraisals', status=400)
+        
+        # If your Appraisal model has a field named 'appraisal_period', use:
+        # if Appraisal.objects.filter(appraisal_period=period).exists():
+        #     return HttpResponse('Cannot delete: Period is being used by existing appraisals', status=400)
+        
+        # Delete the period
+        period.delete()
+        
+        # Get all periods to refresh the list
+        periods = AppraisalPeriod.objects.all().order_by('-start_date')
+        
+        # Return updated list
+        return render(request, 'appraisals/includes/period_list.html', {'periods': periods})
+        
+    except Exception as e:
+        # Print the exception for debugging
+        import traceback
+        print(f"Error deleting period: {str(e)}")
+        print(traceback.format_exc())
+        
+        return HttpResponse(f"Error: {str(e)}", status=500)
+    
 class AppraiserRoleView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
     """
     Manage appraiser roles and permissions
     """
     template_name = 'appraisals/appraiser_roles.html'
     permission_required = 'auth.change_group'
-
-class PendingAppraisalsView(LoginRequiredMixin, ListView):
-    """
-    Display pending appraisals
-    """
-    model = Appraisal
-    template_name = 'appraisals/pending_list.html'
-    context_object_name = 'appraisals'
-    
-    def get_queryset(self):
-        return Appraisal.objects.filter(status='pending')
-
-class ReviewAppraisalsView(LoginRequiredMixin, ListView):
-    """
-    Display appraisals under review
-    """
-    model = Appraisal
-    template_name = 'appraisals/review_list.html'
-    context_object_name = 'appraisals'
-    
-    def get_queryset(self):
-        return Appraisal.objects.filter(status='in_review')
-
-class CompletedAppraisalsView(LoginRequiredMixin, ListView):
-    """
-    Display completed appraisals
-    """
-    model = Appraisal
-    template_name = 'appraisals/completed_list.html'
-    context_object_name = 'appraisals'
-    
-    def get_queryset(self):
-        return Appraisal.objects.filter(status='completed')
 
 @require_http_methods(["POST"])
 def role_update(request, employee_id):
@@ -678,62 +1010,6 @@ def role_update(request, employee_id):
             'success': False,
             'error': str(e)
         }, status=400)
-
-class AppraisalReviewView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
-    model = Appraisal
-    template_name = 'appraisals/appraisal_form.html'
-    permission_required = 'appraisals.change_appraisal'
-    fields = [
-        # Core Information
-        'employee',
-        'appraiser',
-        'review_period_start',
-        'review_period_end',
-        'status',
-        
-        # Employment Details
-        'present_post',
-        'salary_scale_division',
-        'incremental_date',
-        'date_of_last_appraisal',
-        
-        # Academic Information
-        'current_enrollment',
-        'higher_degree_students_supervised',
-        
-        # Research and Publications
-        'last_research',
-        'ongoing_research',
-        'publications',
-        'conference_papers',
-        
-        # Professional Activities
-        'attendance',
-        'consultancy_work',
-        'administrative_posts',
-        
-        # Participation
-        'participation_within_university',
-        'participation_outside_university',
-        
-        # Objectives and Comments
-        'objectives_next_year',
-        'appraiser_comments',
-    ]
-
-    def get_success_url(self):
-        return reverse_lazy('appraisals:form_detail', kwargs={'pk': self.object.pk})
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Review Appraisal'
-        context['submit_text'] = 'Save Review'
-        return context
-
-    def form_valid(self, form):
-        # Add any additional processing before saving
-        form.instance.last_modified_by = self.request.user
-        return super().form_valid(form)
 
 class AppraiseeUpdateView(LoginRequiredMixin, UpdateView):
     model = Appraisal

@@ -1,0 +1,106 @@
+<!-- Department Chart using Tailwind CSS - Simple Vertical Bars with Accurate Scale -->
+<div class="bg-white rounded-lg shadow p-4 md:p-6">
+    <div class="flex justify-between mb-4">
+        <div>
+            <h5 class="text-xl font-bold text-gray-900 pb-2">Employee Distribution by Department</h5>
+            <p class="text-sm text-gray-600">Number of departments: {{ department_count }}</p>
+        </div>
+    </div>
+    <div class="py-6" style="height: 400px;">
+        <div id="department-chart" style="min-height: 365px;"></div>
+    </div>
+</div>
+
+<script>
+    const getDepartmentChartOptions = () => {
+        return {
+            series: [{
+                name: 'Employees',
+                data: [
+                    {% for dept in department_data %}
+                        {{ dept.employee_count }}{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ]
+            }],
+            chart: {
+                type: 'bar',
+                height: 350,
+                toolbar: {
+                    show: false
+                },
+                animations: {
+                    enabled: true,
+                    easing: 'easeinout',
+                    speed: 800,
+                    animateGradually: {
+                        enabled: true,
+                        delay: 150
+                    }
+                }
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    columnWidth: '70%',
+                    borderRadius: 4,
+                    dataLabels: {
+                        position: 'top'
+                    }
+                },
+            },
+            dataLabels: {
+                enabled: true,
+                formatter: function (val) {
+                    return val
+                },
+                offsetY: -20,
+                style: {
+                    fontSize: '12px',
+                    colors: ["#304758"]
+                }
+            },
+            xaxis: {
+                categories: [
+                    {% for dept in department_data %}
+                        "{{ dept.name }}"{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                labels: {
+                    style: {
+                        fontSize: '12px'
+                    }
+                }
+            },
+            yaxis: {
+                title: {
+                    text: 'Number of Employees'
+                },
+                min: 0,
+                labels: {
+                    show: false  // Hide y-axis labels
+                }
+            },
+            grid: {
+                show: false  // Hide grid lines
+            },
+            fill: {
+                opacity: 1,
+                colors: ['#1C64F2']
+            },
+            tooltip: {
+                y: {
+                    formatter: function (val) {
+                        return val + " employees"
+                    }
+                }
+            }
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById("department-chart") && typeof ApexCharts !== 'undefined') {
+            const departmentChart = new ApexCharts(document.getElementById("department-chart"), getDepartmentChartOptions());
+            departmentChart.render();
+        }
+    });
+</script>

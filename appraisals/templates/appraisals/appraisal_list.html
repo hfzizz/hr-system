@@ -2,7 +2,33 @@
 {% load static %}
 {% load table_tags %}
 
+
 {% block title %}Appraisal Forms - HR System{% endblock %}
+
+{% block styles %}
+{{ block.super }}
+<style>
+    .sort-icon {
+        transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
+        display: inline-block;
+        opacity: 0.5;
+        transform-origin: center;
+    }
+    [data-sort] {x
+        cursor: pointer;
+    }
+    [data-sort]:hover .sort-icon {
+        opacity: 0.8;
+    }
+    .cursor-not-allowed {
+        cursor: not-allowed;
+    }
+    .tab-button.active {
+        border-bottom-color: #4f46e5;
+        color: #4f46e5;
+    }
+</style>
+{% endblock %}
 
 {% block javascript %}
 {{ block.super }}
@@ -448,3 +474,4 @@
 </div>
 
 {% endblock %}
+

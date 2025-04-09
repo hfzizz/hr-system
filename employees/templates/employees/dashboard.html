@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Dashboard - HR System{% endblock %}
 
@@ -48,6 +49,18 @@
                 <dt class="truncate text-sm font-medium text-gray-500">Pending Reviews</dt>
                 <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ pending_reviews }}</dd>
             </div>
+        </div>
+
+        <!-- First row of charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {% include "employees/department_chart.html" %}
+            {% include "employees/status_chart.html" %}
+        </div>
+
+        <!-- Second row of charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {% include "employees/position_chart.html" %}
+            {% include "employees/appointment_chart.html" %}
         </div>
 
         <!-- Recent Activity -->

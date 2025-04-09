@@ -1,0 +1,74 @@
+<div class="bg-white rounded-lg shadow p-4 md:p-6">
+    <div class="flex justify-between mb-4">
+        <div>
+            <h5 class="text-xl font-bold text-gray-900 pb-2">Employee Distribution by Appointment</h5>
+            <p class="text-sm text-gray-600">Number of appointment types: {{ appointment_count }}</p>
+        </div>
+    </div>
+    <div class="py-6" style="height: 400px;">
+        <div id="appointment-chart" style="min-height: 365px;"></div>
+    </div>
+</div>
+
+<script>
+    const getAppointmentChartOptions = () => {
+        return {
+            series: [
+                {% for appointment in appointments %}
+                    {{ appointment.employee_count }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            chart: {
+                type: 'pie',
+                height: 350,
+                toolbar: {
+                    show: false
+                },
+                animations: {
+                    enabled: true,
+                    easing: 'easeinout',
+                    speed: 800,
+                    animateGradually: {
+                        enabled: true,
+                        delay: 150
+                    }
+                }
+            },
+            labels: [
+                {% for appointment in appointments %}
+                    "{{ appointment.name }}"{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            dataLabels: {
+                enabled: true,
+                formatter: function (val, opts) {
+                    return opts.w.config.series[opts.seriesIndex]
+                }
+            },
+            legend: {
+                position: 'bottom',
+                horizontalAlign: 'center'
+            },
+            colors: [
+                '#F48024',  // Stack Overflow orange for Contract
+                '#2563EB',  // Blue for Daily-Rated
+                '#16A34A',  // Green for Month-to-Month
+                '#7E22CE'   // Purple for Permanent
+            ],
+            tooltip: {
+                y: {
+                    formatter: function (val) {
+                        return val + " employees"
+                    }
+                }
+            }
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById("appointment-chart") && typeof ApexCharts !== 'undefined') {
+            const appointmentChart = new ApexCharts(document.getElementById("appointment-chart"), getAppointmentChartOptions());
+            appointmentChart.render();
+        }
+    });
+</script> 

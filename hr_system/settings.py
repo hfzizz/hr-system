@@ -174,6 +174,16 @@ AUTHENTICATION_BACKENDS = [
 #File upload configuration
 FILE_UPLOAD_PERMISSIONS = 0o644
 
+# Directory for temporary resume uploads
+TEMP_UPLOAD_DIR = os.path.join(MEDIA_ROOT, 'temp_resumes')
+
+# Create the directory if it doesn't exist
+os.makedirs(TEMP_UPLOAD_DIR, exist_ok=True)
+
+# File upload configurations
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
+ALLOWED_UPLOAD_PDF_TYPES = ['application/pdf']
+
 
 
 

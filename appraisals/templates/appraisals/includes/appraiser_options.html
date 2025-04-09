@@ -1,0 +1,12 @@
+{
+    "appraisers": [
+        {% for appraiser in appraisers %}
+            {
+                "id": "{{ appraiser.id }}",
+                "name": "{{ appraiser.name }}",
+                "post": "{{ appraiser.post }}",
+                "department": "{{ appraiser.department|default:'Other' }}"
+            }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]
+}

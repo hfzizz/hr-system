@@ -1,0 +1,82 @@
+{% load chart_filters %}
+
+<!-- Status Donut Chart -->
+<div class="bg-white rounded-lg shadow p-4 md:p-6">
+    <div class="flex justify-between mb-4">
+        <div>
+            <h5 class="text-xl font-bold text-gray-900 pb-2">Employee Status</h5>
+            <p class="text-base font-normal text-gray-500">Distribution of employee statuses</p>
+        </div>
+    </div>
+    <div class="py-6" style="height: 400px;">
+        <div id="status-donut-chart"></div>
+    </div>
+</div>
+
+<!-- Add this before closing body tag -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+const getChartOptions = () => {
+    return {
+        series: [
+            {% for item in status_data %}
+                {{ item.count }}{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        colors: ['#4ade80', '#fbbf24', '#f87171'],
+        chart: {
+            height: 360,    
+            width: "100%",
+            type: "donut",
+        },
+        plotOptions: {
+            pie: {
+                donut: {
+                    labels: {
+                        show: true,
+                        total: {
+                            show: true,
+                            label: 'Total',
+                            formatter: function (w) {
+                                return '{{ total_employees }}'
+                            },
+                        }
+                    },
+                    size: "65%",
+                }
+            }
+        },
+        labels: ['Active', 'On Leave', 'Inactive'],
+        legend: {
+            position: "bottom",
+            fontFamily: "Inter, sans-serif",
+        }
+    }
+}
+
+if (document.getElementById("status-donut-chart") && typeof ApexCharts !== 'undefined') {
+    const chart = new ApexCharts(document.getElementById("status-donut-chart"), getChartOptions());
+    chart.render();
+
+    // Handle status toggles
+    const checkboxes = document.querySelectorAll('#status-toggles input[type="checkbox"]');
+    
+    function handleCheckboxChange(event, chart) {
+        const checkedStatuses = Array.from(checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+            
+        const newSeries = [
+            {% for item in status_data %}
+                checkedStatuses.includes('{{ item.status }}') ? {{ item.count }} : 0{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+        
+        chart.updateSeries(newSeries);
+    }
+
+    checkboxes.forEach((checkbox) => {
+        checkbox.addEventListener('change', (event) => handleCheckboxChange(event, chart));
+    });
+}
+</script> 

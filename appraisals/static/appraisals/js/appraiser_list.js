@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ----- Initialize Tables -----
     initMainTable();
     initRolesTable();
+    initTableSorting();
     
     // ----- Initialize Form Handlers -----
     initAssignForm();
@@ -162,9 +163,9 @@ function saveColumnPreferences() {
 // ----- Table Sorting Functions -----
 
 function initTableSorting() {
-    // Initialize sort states for sortable columns
+    // Initialize sort states for sortable columns - make sure keys match data-sort values
     const sortStates = {
-        'id': { ascending: true },
+        'employee-id': { ascending: true },         // Changed from 'employee-id' to 'id'
         'employee': { ascending: true },
         'department': { ascending: true }
     };
@@ -173,19 +174,25 @@ function initTableSorting() {
     document.querySelectorAll('[data-sort]').forEach(header => {
         header.addEventListener('click', () => {
             const column = header.dataset.sort;
-            sortTable(column);
+            sortTable(column, sortStates); // Pass sortStates to the function
         });
     });
     
     // Initial sort by ID
-    if (document.querySelector('#sort-id')) {
-        sortTable('id');
+    if (document.querySelector('[data-sort="employee-id"]')) {
+        sortTable('id', sortStates);
     }
     
-    // Table sorting function
-    function sortTable(column) {
+    // Table sorting function with sortStates parameter
+    function sortTable(column, sortStates) {
         const tbody = document.querySelector('#appraisers-table tbody');
         if (!tbody) return;
+        
+        // Make sure the column exists in sortStates
+        if (!sortStates[column]) {
+            console.warn(`No sort state found for column "${column}". Adding it now.`);
+            sortStates[column] = { ascending: true };
+        }
         
         const rows = Array.from(tbody.querySelectorAll('tr:not(:last-child)'));
         
@@ -207,9 +214,10 @@ function initTableSorting() {
         // Clear and repopulate table
         rows.forEach(row => tbody.appendChild(row));
 
-        // Update sort icons
+        // Update sort icons for all columns
         document.querySelectorAll('[data-sort]').forEach(header => {
             const icon = header.querySelector('.sort-icon');
+            console.log(`Column: ${header.dataset.sort}, Icon found: ${!!icon}`);
             if (!icon) return;
             
             if (header.dataset.sort === column) {
@@ -444,8 +452,8 @@ function updatePeriodDates() {
     if (!periodSelect) return;
     
     const selectedOption = periodSelect.options[periodSelect.selectedIndex];
-    const startField = document.getElementById('review_period_start');
-    const endField = document.getElementById('review_period_end');
+    const startField = document.getElementById('appraisal_period_start');
+    const endField = document.getElementById('appraisal_period_end');
     
     if (!startField || !endField) return;
     
@@ -493,3 +501,84 @@ function openRoleModal(employeeId) {
     // To be implemented
     console.log('Opening role modal for employee:', employeeId);
 }
+
+document.getElementById('createPeriodForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    
+    const form = this;
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Server error');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            document.getElementById('createPeriodModal').classList.add('hidden');
+            window.location.reload();
+        } else {
+            alert(data.error || 'An error occurred while creating the period.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(error.message || 'An error occurred while creating the period.');
+    });
+});
+
+// Initialize date inputs with today's date
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('period_start').value = today;
+    document.getElementById('period_end').value = today;
+});
+
+// Add date validation
+document.getElementById('period_start').addEventListener('change', function() {
+    document.getElementById('period_end').min = this.value;
+});
+
+document.getElementById('period_end').addEventListener('change', function() {
+    document.getElementById('period_start').max = this.value;
+});
+
+  // Show edit modal when edit button is clicked
+  document.body.addEventListener('click', function(event) {
+    if (event.target.matches('button[hx-get*="/appraisals/periods/"][hx-target="#edit-period-form-container"]')) {
+        document.getElementById('editPeriodModal').classList.remove('hidden');
+    }
+});
+
+// Validate date fields
+document.body.addEventListener('htmx:afterSwap', function(event) {
+    if (event.detail.target.id === 'edit-period-form-container') {
+        const startField = document.getElementById('edit_period_start');
+        const endField = document.getElementById('edit_period_end');
+        
+        if (startField && endField) {
+            startField.addEventListener('change', function() {
+                endField.min = this.value;
+            });
+            
+            endField.addEventListener('change', function() {
+                startField.max = this.value;
+            });
+            
+            // Set initial constraints
+            endField.min = startField.value;
+            startField.max = endField.value;
+        }
+    }
+});
