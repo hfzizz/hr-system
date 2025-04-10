@@ -336,17 +336,30 @@
                         <label for="period_select" class="block text-sm font-medium text-gray-700">
                             Appraisal Period/Year <span class="required-indicator">*</span>
                         </label>
-                        <select id="period_select" name="period" required
-                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                            <option value="">Select a period</option>
-                            {% for period in periods %}
-                                <option value="{{ period.id }}" 
-                                        data-start="{{ period.start_date|date:'Y-m-d' }}" 
-                                        data-end="{{ period.end_date|date:'Y-m-d' }}">
-                                    {{ period.name }} ({{ period.start_date|date:"M d, Y" }} - {{ period.end_date|date:"M d, Y" }})
-                                </option>
-                            {% endfor %}
-                        </select>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                                <svg class="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Z"/>
+                                </svg>
+                            </div>
+                            <select 
+                                id="period_select" 
+                                name="period" 
+                                required
+                                class="mt-1 block w-full pl-10 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                                hx-swap="none">
+                                <option value="">Select a period</option>
+                                {% for period in periods %}
+                                    <option value="{{ period.id }}" 
+                                            data-start="{{ period.start_date|date:'Y-m-d' }}" 
+                                            data-end="{{ period.end_date|date:'Y-m-d' }}"
+                                            {% if period.is_default %}selected{% endif %}>
+                                      {{ period.start_date|date:"M d, Y" }} - {{ period.end_date|date:"M d, Y" }}
+                                        {% if period.is_default %} (Default){% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
 
                     <div class="form-field">

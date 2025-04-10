@@ -7,10 +7,8 @@ urlpatterns = [
 
     # Appraisal Periods
     path('periods/create/', views.create_period, name='period_create'),
-    path('periods/<int:period_id>/set-default/', views.set_default_period, name='set_default_period'),
-    path('periods/<int:period_id>/edit/', views.edit_period, name='edit_period'),
-    path('periods/<int:period_id>/update/', views.update_period, name='update_period'),
-    path('periods/<int:period_id>/delete/', views.delete_period, name='delete_period'),
+    path('periods/<int:period_id>/', views.set_default_period, name='set_default_period'),
+    path('periods/<int:period_id>/create/', views.create_period, name='period_create'),
 
 
     # Appraisers
@@ -30,6 +28,7 @@ urlpatterns = [
 
     path('api/appraisers/', views.get_appraisers, name='get_appraisers'),
     path('get-default-date/', views.get_default_date, name='get_default_date'),
+    path('get-default-period/', views.get_default_period, name='get_default_period'),
 
     # HTMX endpoints for Section B
     path('save-rating/', views.save_rating, name='save_rating'),

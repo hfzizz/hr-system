@@ -746,6 +746,8 @@ class AppraiserListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
                 }
         
         context['employee_appraisers'] = employee_appraiser_assignments
+
+        context['default_period'] = AppraisalPeriod.objects.filter(is_default=True).first()
         
         return context
     
@@ -800,11 +802,22 @@ def create_period(request):
         period = AppraisalPeriod(
             start_date=start_date,
             end_date=end_date,
-            is_active=False
+            is_active=True,
+            is_default=True  # Make this the default period
         )
         
+        # If this is the default period, unset any existing default periods
+        if period.is_default:
+            AppraisalPeriod.objects.filter(is_default=True).update(is_default=False)
+            
         period.full_clean()
         period.save()
+        
+        # If it's an HTMX request, return just the updated message component
+        if 'HX-Request' in request.headers:
+            return render(request, 'appraisals/includes/period_success_message.html', {
+                'default_period': period
+            })
         
         return JsonResponse({
             'success': True,
@@ -814,38 +827,31 @@ def create_period(request):
     except Exception as e:
         logger.error(f"Error creating appraisal period: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
-@login_required
-@require_POST
+    
 def set_default_period(request, period_id):
-    """Set an appraisal period as the default."""
-    try:
-        # Make sure the user has HR permissions
-        if not request.user.is_staff and not request.user.groups.filter(name='HR').exists():
-            return HttpResponse('Permission denied', status=403)
+    """Set the default appraisal period using the given period_id"""
+    if request.method == 'POST':
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
         
-        # First, unset any existing default periods
+        # Update the existing period
+        period = get_object_or_404(AppraisalPeriod, id=period_id)
+        period.start_date = start_date
+        period.end_date = end_date
+        
+        # Make sure this is the default period
         AppraisalPeriod.objects.filter(is_default=True).update(is_default=False)
-        
-        # Get the period and set it as default
-        period = AppraisalPeriod.objects.get(id=period_id)
         period.is_default = True
-        # Also set it as active (if this behavior is desired)
-        period.is_active = True
         period.save()
         
-        # Get all periods to refresh the list
-        periods = AppraisalPeriod.objects.all().order_by('-start_date')
+        messages.success(request, f"Period successfully updated! The current default period is: {period.start_date.strftime('%b %d, %Y')} to {period.end_date.strftime('%b %d, %Y')}")
         
-        # Return the updated period list
-        return render(request, 'appraisals/includes/period_list.html', {'periods': periods})
+        # Always redirect to the list page - this forces a full page reload
+        return redirect('appraisals:appraiser_list')
     
-    except AppraisalPeriod.DoesNotExist:
-        return HttpResponse('Period not found', status=404)
+    # Handle GET request (likely redirect or return a 405 Method Not Allowed)
+    return redirect('appraisals:appraiser_list')
     
-    except Exception as e:
-        return HttpResponse(str(e), status=500)
-
 def get_appraisal_context(request):
     """
     Common context processor for appraisal-related views.
@@ -879,88 +885,36 @@ def get_default_date(request):
         >
     ''')
 
-from django.views.decorators.http import require_http_methods
+def get_default_period(request):
+    # Get the default appraisal period
+    default_period = AppraisalPeriod.objects.filter(is_default=True).first()
+    
+    if default_period:
+        # Return JavaScript to select the default period in the dropdown
+        script = f"""
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {{
+            const periodSelect = document.getElementById('period_select');
+            if (periodSelect) {{
+                // Look for the option with this period ID
+                const options = periodSelect.querySelectorAll('option');
+                for (const option of options) {{
+                    if (option.value === '{default_period.id}') {{
+                        option.selected = true;
+                        // Trigger a change event to update any dependent fields
+                        const event = new Event('change');
+                        periodSelect.dispatchEvent(event);
+                        break;
+                    }}
+                }}
+            }}
+        }});
+        </script>
+        """
+        return HttpResponse(script)
+    
+    return HttpResponse('')  # Return empty if no default period
 
-@login_required
-def edit_period(request, period_id):
-    """Return the form for editing an appraisal period."""
-    try:
-        # Make sure user has permissions
-        if not request.user.is_staff and not request.user.groups.filter(name='HR').exists():
-            return HttpResponse('Permission denied', status=403)
-        
-        # Get the period
-        period = get_object_or_404(AppraisalPeriod, id=period_id)
-        
-        # Return the form template
-        return render(request, 'appraisals/includes/edit_period_form.html', {'period': period})
-        
-    except Exception as e:
-        return HttpResponse(f"Error: {str(e)}", status=500)
-
-@login_required
-@require_http_methods(["POST"])
-def update_period(request, period_id):
-    """Update an existing appraisal period."""
-    try:
-        # Make sure user has permissions
-        if not request.user.is_staff and not request.user.groups.filter(name='HR').exists():
-            return HttpResponse('Permission denied', status=403)
-        
-        # Get the period
-        period = get_object_or_404(AppraisalPeriod, id=period_id)
-        
-        # Update period data
-        period.start_date = request.POST.get('start_date')
-        period.end_date = request.POST.get('end_date')
-        period.save()
-        
-        # Get all periods to refresh the list
-        periods = AppraisalPeriod.objects.all().order_by('-start_date')
-        
-        # Return updated list
-        return render(request, 'appraisals/includes/period_list.html', {'periods': periods})
-        
-    except Exception as e:
-        return HttpResponse(f"Error: {str(e)}", status=500)
-
-@login_required
-@require_http_methods(["DELETE"])
-def delete_period(request, period_id):
-    """Delete an appraisal period."""
-    try:
-        # Make sure user has permissions
-        if not request.user.is_staff and not request.user.groups.filter(name='HR').exists():
-            return HttpResponse('Permission denied', status=403)
-        
-        # Get the period
-        period = get_object_or_404(AppraisalPeriod, id=period_id)
-        
-        # Check if period is being used - IMPORTANT: Use the correct field name
-        # If your Appraisal model has a field named 'period', use:
-        if Appraisal.objects.filter(period=period).exists():
-            return HttpResponse('Cannot delete: Period is being used by existing appraisals', status=400)
-        
-        # If your Appraisal model has a field named 'appraisal_period', use:
-        # if Appraisal.objects.filter(appraisal_period=period).exists():
-        #     return HttpResponse('Cannot delete: Period is being used by existing appraisals', status=400)
-        
-        # Delete the period
-        period.delete()
-        
-        # Get all periods to refresh the list
-        periods = AppraisalPeriod.objects.all().order_by('-start_date')
-        
-        # Return updated list
-        return render(request, 'appraisals/includes/period_list.html', {'periods': periods})
-        
-    except Exception as e:
-        # Print the exception for debugging
-        import traceback
-        print(f"Error deleting period: {str(e)}")
-        print(traceback.format_exc())
-        
-        return HttpResponse(f"Error: {str(e)}", status=500)
     
 class AppraiserRoleView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
     """
