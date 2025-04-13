@@ -27,7 +27,8 @@ urlpatterns = [
     # path('forms/<int:pk>/review/', views.AppraisalReviewView.as_view(), name='form_review'),
 
     path('api/appraisers/', views.get_appraisers, name='get_appraisers'),
-    path('get-default-date/', views.get_default_date, name='get_default_date'),
+    path('set-default-deadline/', views.set_default_deadline, name='set_default_deadline'),
+    path('get-default-deadline/', views.get_default_deadline, name='get_default_deadline'),
     path('get-default-period/', views.get_default_period, name='get_default_period'),
 
     # HTMX endpoints for Section B

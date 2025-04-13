@@ -504,3 +504,33 @@ function closeAssignModal() {
     document.getElementById('review_period_end').value = '';
     document.getElementById('errorMessage').classList.add('hidden');
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the period select element
+    const periodSelect = document.getElementById('period_select');
+    
+    if (periodSelect) {
+        // Listen for changes to the period selection
+        periodSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption && selectedOption.value) {
+                // Get the end date attribute if it exists
+                const periodEnd = selectedOption.getAttribute('data-end');
+                
+                if (periodEnd) {
+                    // Make an AJAX request to get the default deadline
+                    fetch(`/appraisals/get-default-deadline/?period_end=${periodEnd}`)
+                        .then(response => response.text())
+                        .then(html => {
+                            // Replace the deadline input
+                            const deadlineContainer = document.querySelector('#review_period_end').parentNode;
+                            deadlineContainer.innerHTML = html;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching default deadline:', error);
+                        });
+                }
+            }
+        });
+    }
+});

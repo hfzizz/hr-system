@@ -31,6 +31,7 @@ from django.template.loader import render_to_string
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from datetime import datetime, timedelta
+from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
@@ -748,6 +749,8 @@ class AppraiserListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         context['employee_appraisers'] = employee_appraiser_assignments
 
         context['default_period'] = AppraisalPeriod.objects.filter(is_default=True).first()
+        context['default_deadline'] = self.request.session.get('default_appraisal_deadline')
+
         
         return context
     
@@ -864,26 +867,69 @@ def get_appraisal_context(request):
         'can_manage_appraisals': request.user.has_perm('appraisals.can_manage_appraisals'),
     }
 
-def get_default_date(request):
-    # Get offset days from query parameter (default to 30 days)
-    offset_days = int(request.GET.get('offset', 30))
+
+def get_default_deadline(request):
+    """
+    Returns the default deadline date based on:
+    1. Custom HR-set default deadline date (if set)
+    2. Otherwise, uses the end date of the selected appraisal period
+    """
+    # Get period end date from request (if provided)
+    period_end = AppraisalPeriod.objects.first().end_date 
     
-    # Calculate the date
-    default_date = timezone.now().date() + timedelta(days=offset_days)
+    # Get the custom default deadline from session (if set)
+    custom_deadline = request.session.get('default_appraisal_deadline')
     
-    # Format the date as YYYY-MM-DD
-    formatted_date = default_date.strftime('%Y-%m-%d')
+    # Determine which date to use
+    if custom_deadline:
+        # Use the custom deadline set by HR
+        deadline_date = custom_deadline
+    elif period_end:
+        # Use the end date of the selected period
+        deadline_date = period_end
+    else:
+        # If no custom deadline or period end, use today's date plus 30 days
+        from datetime import datetime, timedelta
+        deadline_date = (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d')
     
-    # Return the input with value already set
+    # Return the input with the deadline date
     return HttpResponse(f'''
         <input 
             id="review_period_end" 
             name="review_period_end" 
             type="date" 
-            value="{formatted_date}"
+            value="{deadline_date}"
             class="mt-1 block w-full pl-10 pr-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
         >
     ''')
+
+@login_required
+@permission_required('appraisals.can_manage_appraisals', raise_exception=True)
+def set_default_deadline(request):
+    """Set a custom default deadline for appraisals"""
+    if request.method == 'POST':
+        deadline_date = request.POST.get('deadline_date')
+        
+        # Store the deadline in Django's session
+        if deadline_date:
+            # If a date was provided, store it in the session
+            try:
+                request.session['default_appraisal_deadline'] = deadline_date
+                messages.success(request, f"Custom deadline successfully set for {deadline_date}")
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error setting default deadline: {str(e)}")
+                messages.error(request, "Error setting deadline")
+        else:
+            # If no date was provided, clear any existing deadline
+            if 'default_appraisal_deadline' in request.session:
+                del request.session['default_appraisal_deadline']
+            messages.success(request, "Custom deadline cleared. System will use the end date of the appraisal period.")
+    
+    # Always redirect to the list page
+    return redirect('appraisals:appraiser_list')
+
 
 def get_default_period(request):
     # Get the default appraisal period
