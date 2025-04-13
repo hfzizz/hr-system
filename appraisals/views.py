@@ -934,6 +934,24 @@ def set_default_deadline(request):
 def get_default_period(request):
     # Get the default appraisal period
     default_period = AppraisalPeriod.objects.filter(is_default=True).first()
+
+    if default_period:
+        # Check if the period is in the past (end year iss less than current year)
+        current_year = datetime.now().year
+
+        if default_period.end_date.year < current_year:
+            # Create a new datetime object with the current year
+
+            # Update start date with +1 year
+            start_date = default_period.start_date.replace(year=default_period.start_date.year + 1)
+
+            # Update the end date with the current year
+            end_date = default_period.end_date.replace(year=current_year)
+
+            # update the period with the new dates
+            default_period.start_date = start_date
+            default_period.end_date = end_date
+            default_period.save()
     
     if default_period:
         # Return JavaScript to select the default period in the dropdown
