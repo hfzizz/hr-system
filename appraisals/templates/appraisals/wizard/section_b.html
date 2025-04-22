@@ -1,8 +1,145 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Appraisal Wizard - Section B{% endblock %}
 
 {% block content %}
+
+<!-- Replace your current script block with this -->
+<script>
+    document.addEventListener('htmx:configRequest', function(event) {
+        const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content') || 
+                     document.querySelector('[name=csrfmiddlewaretoken]').value;
+        event.detail.headers['X-CSRFToken'] = token;
+    });
+
+    document.addEventListener('DOMContentLoaded', function(){
+        // Load saved data for the form
+        loadSavedData();
+    });
+
+
+    // Add a global error handler to see AJAX errors
+    window.addEventListener('error', function(e) {
+        console.error('Global error:', e.error);
+    });
+
+    function loadSavedData() {
+        console.log("Loading saved data...");
+        fetch('{% url "appraisals:get_section_data" %}?section=B&appraisal_id={{ appraisal.appraisal_id }}')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Received data:", data);
+                if (data && data.data) {
+                    const formData = data.data;
+                    
+                    // Populate radio buttons
+                    for (const [key, value] of Object.entries(formData)) {
+                        const radioButtons = document.querySelectorAll(`input[type="radio"][name="${key}"]`);
+                        if (radioButtons && radioButtons.length > 0) {
+                            radioButtons.forEach(radio => {
+                                if (radio.value === value) {
+                                    radio.checked = true;
+                                }
+                            });
+                        }
+                        
+                        // Also handle text inputs, textareas and selects
+                        const field = document.querySelector(`input[type="text"][name="${key}"], input[type="number"][name="${key}"], input[type="date"][name="${key}"], textarea[name="${key}"], select[name="${key}"]`);
+                        if (field && value) {
+                            field.value = value;
+                        }
+                        
+                        // Handle checkboxes separately
+                        const checkbox = document.querySelector(`input[type="checkbox"][name="${key}"]`);
+                        if (checkbox && (value === true || value === "true")) {
+                            checkbox.checked = true;
+                        }
+                    }
+                    
+                    // Special case for relationship other field
+                    if (formData.b11_relationship === "Other" && formData.b11_relationship_other) {
+                        const relationshipOtherDiv = document.getElementById('relationshipOtherDiv');
+                        if (relationshipOtherDiv) {
+                            relationshipOtherDiv.classList.remove('hidden');
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading saved data:', error);
+            });
+    }
+
+    function saveDraft() {
+        // Create a FormData object
+        const form = document.getElementById('section-b-form');
+        const formData = new FormData(form);
+        formData.append('is_draft', 'true');
+        
+        // Show the saving indicator
+        const saveIndicator = document.getElementById('save-indicator');
+        saveIndicator.classList.remove('htmx-indicator');
+        saveIndicator.style.display = 'flex';
+        
+        // Use fetch API for more control
+        fetch('{% url "appraisals:save_section_data" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.text();
+            }
+            throw new Error('Network response was not ok');
+        })
+        .then(data => {
+            console.log('Draft saved successfully');
+            showSaveMessage('Draft saved successfully!');
+        })
+        .catch(error => {
+            console.error('Error saving draft:', error);
+            showSaveMessage('Error saving draft: ' + error.message, 'error');
+        })
+        .finally(() => {
+            // Hide the saving indicator
+            saveIndicator.style.display = 'none';
+            saveIndicator.classList.add('htmx-indicator');
+        });
+    }
+
+    function showSaveMessage(message, type = 'success') {
+        const toast = document.createElement('div');
+        const bgColor = type === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700';
+        toast.className = `fixed bottom-4 left-4 ${bgColor} px-4 py-3 rounded z-50 border`;
+        toast.innerHTML = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
+</script>
+
+<meta name="csrf-token" content="{{ csrf_token }}">
+
+<script src="{% static 'appraisals/js/appraisal-batch-save.js' %}"></script>
+
+{% csrf_token  %}
+<input type="hidden" id="csrf_token" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+<form id="section-b-form" hx-post="{% url 'appraisals:save_section_data' %}" hx-swap="none" hx-indicator="#save-indicator">
+    <input type="hidden" name="appraisal_id" value="{{ appraisal.appraisal_id }}">
+    <input type="hidden" name="section" value="B">
+
 <!-- Appraisal Wizard Section B -->
 <div class="max-w-5xl mx-auto bg-white shadow-md rounded-lg p-6 mb-8">
     <h2 class="text-2xl font-bold text-gray-800 mb-2">Section B: Appraisal of General Traits</h2>
@@ -20,42 +157,22 @@
                 <div class="flex items-center gap-4 flex-wrap">
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b1_effective_work" id="b1_effective_work_1" value="1" required
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b1_effective_work", "section": "B1", "value": "1", "appraisal_id": "{{ appraisal.appraisal_id }}" }'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b1_effective_work" id="b1_effective_work_1" value="1" required>
                         <label class="ml-2 text-gray-700" for="b1_effective_work_1">1</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b1_effective_work" id="b1_effective_work_2" value="2"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b1_effective_work", "section": "B1", "value": "2", "appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b1_effective_work" id="b1_effective_work_2" value="2">
                         <label class="ml-2 text-gray-700" for="b1_effective_work_2">2</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b1_effective_work" id="b1_effective_work_3" value="3"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b1_effective_work", "section": "B1", "value": "3", "appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b1_effective_work" id="b1_effective_work_3" value="3">
                         <label class="ml-2 text-gray-700" for="b1_effective_work_3">3</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b1_effective_work" id="b1_effective_work_4" value="4"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change" 
-                            hx-vals='{"field": "b1_effective_work", "section": "B1", "value": "4", "appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b1_effective_work" id="b1_effective_work_4" value="4">
                         <label class="ml-2 text-gray-700" for="b1_effective_work_4">4</label>
                     </div>
                 </div>
@@ -66,42 +183,22 @@
                 <div class="flex items-center gap-4">
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                               type="radio" name="b1_reliability" id="b1_reliability_1" value="1" required
-                               hx-post="{% url 'appraisals:save_rating' %}"
-                               hx-trigger="change"
-                               hx-vals='{"field": "b1_reliability", "section": "B1", "value": "1" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                               hx-swap="none"
-                               hx-indicator="#save-indicator">
+                               type="radio" name="b1_reliability" id="b1_reliability_1" value="1" required>
                         <label class="ml-1 text-gray-700" for="b1_reliability_1">1</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                               type="radio" name="b1_reliability" id="b1_reliability_2" value="2"
-                               hx-post="{% url 'appraisals:save_rating' %}"
-                               hx-trigger="change"
-                               hx-vals='{"field": "b1_reliability", "section": "B1", "value": "2" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                               hx-swap="none"
-                               hx-indicator="#save-indicator">
+                               type="radio" name="b1_reliability" id="b1_reliability_2" value="2">
                         <label class="ml-1 text-gray-700" for="b1_reliability_2">2</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                               type="radio" name="b1_reliability" id="b1_reliability_3" value="3"
-                               hx-post="{% url 'appraisals:save_rating' %}"
-                               hx-trigger="change"
-                               hx-vals='{"field": "b1_reliability", "section": "B1", "value": "3" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                               hx-swap="none"
-                               hx-indicator="#save-indicator">
+                               type="radio" name="b1_reliability" id="b1_reliability_3" value="3">
                         <label class="ml-1 text-gray-700" for="b1_reliability_3">3</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                               type="radio" name="b1_reliability" id="b1_reliability_4" value="4"
-                               hx-post="{% url 'appraisals:save_rating' %}"
-                               hx-trigger="change"
-                               hx-vals='{"field": "b1_reliability", "section": "B1", "value": "4" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                               hx-swap="none"
-                               hx-indicator="#save-indicator">
+                               type="radio" name="b1_reliability" id="b1_reliability_4" value="4">
                         <label class="ml-1 text-gray-700" for="b1_reliability_4">4</label>
                     </div>
                 </div>
@@ -112,42 +209,22 @@
                 <div class="flex items-center gap-4">
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                               type="radio" name="b1_punctuality" id="b1_punctuality_1" value="1" required
-                               hx-post="{% url 'appraisals:save_rating' %}"
-                               hx-trigger="change"
-                               hx-vals='{"field": "b1_punctuality", "section": "B1", "value": "1" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                               hx-swap="none"
-                               hx-indicator="#save-indicator">
+                               type="radio" name="b1_punctuality" id="b1_punctuality_1" value="1" required>
                         <label class="ml-1 text-gray-700" for="b1_punctuality_1">1</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                               type="radio" name="b1_punctuality" id="b1_punctuality_2" value="2" required
-                               hx-post="{% url 'appraisals:save_rating' %}"
-                               hx-trigger="change"
-                               hx-vals='{"field": "b1_punctuality", "section": "B1", "value": "2" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                               hx-swap="none"
-                               hx-indicator="#save-indicator">
+                               type="radio" name="b1_punctuality" id="b1_punctuality_2" value="2" required>
                         <label class="ml-1 text-gray-700" for="b1_punctuality_2">2</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                               type="radio" name="b1_punctuality" id="b1_punctuality_3" value="3" required
-                               hx-post="{% url 'appraisals:save_rating' %}"
-                               hx-trigger="change"
-                               hx-vals='{"field": "b1_punctuality", "section": "B1", "value": "3" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                               hx-swap="none"
-                               hx-indicator="#save-indicator">
+                               type="radio" name="b1_punctuality" id="b1_punctuality_3" value="3" required>
                         <label class="ml-1 text-gray-700" for="b1_punctuality_3">3</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                               type="radio" name="b1_punctuality" id="b1_punctuality_4" value="4" required
-                               hx-post="{% url 'appraisals:save_rating' %}"
-                               hx-trigger="change"
-                               hx-vals='{"field": "b1_punctuality", "section": "B1", "value": "4" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                               hx-swap="none"
-                               hx-indicator="#save-indicator">
+                               type="radio" name="b1_punctuality" id="b1_punctuality_4" value="4" required>
                         <label class="ml-1 text-gray-700" for="b1_punctuality_4">4</label>
                     </div>
                 </div>
@@ -158,42 +235,22 @@
                 <div class="flex items-center gap-4">
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                               type="radio" name="b1_organisation" id="b1_organisation_1" value="1" required
-                               hx-post="{% url 'appraisals:save_rating' %}"
-                               hx-trigger="change"
-                               hx-vals='{"field": "b1_organisation", "section": "B1", "value": "1" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                               hx-swap="none"
-                               hx-indicator="#save-indicator">
+                               type="radio" name="b1_organisation" id="b1_organisation_1" value="1" required>
                         <label class="ml-1 text-gray-700" for="b1_organisation_1">1</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                               type="radio" name="b1_organisation" id="b1_organisation_2" value="2" required
-                               hx-post="{% url 'appraisals:save_rating' %}"
-                               hx-trigger="change"
-                               hx-vals='{"field": "b1_organisation", "section": "B1", "value": "2" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                               hx-swap="none"
-                               hx-indicator="#save-indicator">
+                               type="radio" name="b1_organisation" id="b1_organisation_2" value="2" required>
                         <label class="ml-1 text-gray-700" for="b1_organisation_2">2</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                               type="radio" name="b1_organisation" id="b1_organisation_3" value="3" required
-                               hx-post="{% url 'appraisals:save_rating' %}"
-                               hx-trigger="change"
-                               hx-vals='{"field": "b1_organisation", "section": "B1", "value": "3" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                               hx-swap="none"
-                               hx-indicator="#save-indicator">
+                               type="radio" name="b1_organisation" id="b1_organisation_3" value="3" required>
                         <label class="ml-1 text-gray-700" for="b1_organisation_3">3</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                               type="radio" name="b1_organisation" id="b1_organisation_4" value="4" required
-                               hx-post="{% url 'appraisals:save_rating' %}"
-                               hx-trigger="change"
-                               hx-vals='{"field": "b1_organisation", "section": "B1", "value": "4" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                               hx-swap="none"
-                               hx-indicator="#save-indicator">
+                               type="radio" name="b1_organisation" id="b1_organisation_4" value="4" required>
                         <label class="ml-1 text-gray-700" for="b1_organisation_4">4</label>
                     </div>
                 </div>
@@ -210,52 +267,27 @@
                 <div class="flex items-center gap-4 flex-wrap">
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b2_supervisor" id="b2_supervisor_1" value="1"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_supervisor", "section": "B2", "value": "1" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_supervisor" id="b2_supervisor_1" value="1">
                         <label class="ml-1 text-gray-700" for="b2_supervisor_1">1</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b2_supervisor" id="b2_supervisor_2" value="2"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_supervisor", "section": "B2", "value": "2" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_supervisor" id="b2_supervisor_2" value="2">
                         <label class="ml-1 text-gray-700" for="b2_supervisor_2">2</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b2_supervisor" id="b2_supervisor_3" value="3"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_supervisor", "section": "B2", "value": "3" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_supervisor" id="b2_supervisor_3" value="3">
                         <label class="ml-1 text-gray-700" for="b2_supervisor_3">3</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b2_supervisor" id="b2_supervisor_2" value="4"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_supervisor", "section": "B2", "value": "4" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_supervisor" id="b2_supervisor_4" value="4">
                         <label class="ml-1 text-gray-700" for="b2_supervisor_4">4</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b2_supervisor" id="b2_supervisor_na" value="NA"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_supervisor", "section": "B2", "value": "NA" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_supervisor" id="b2_supervisor_na" value="NA">
                         <label class="ml-1 text-gray-700" for="b2_supervisor_na">NA</label>
                     </div>
                 </div>
@@ -266,52 +298,27 @@
                 <div class="flex items-center gap-4 flex-wrap">
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b2_colleagues" id="b2_colleagues_1" value="1"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_colleagues", "section": "B2", "value": "1" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_colleagues" id="b2_colleagues_1" value="1">
                         <label class="ml-1 text-gray-700" for="b2_colleagues_1">1</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b2_colleagues" id="b2_colleagues_2" value="2"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_colleagues", "section": "B2", "value": "2" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_colleagues" id="b2_colleagues_2" value="2">
                         <label class="ml-1 text-gray-700" for="b2_colleagues_2">2</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b2_colleagues" id="b2_colleagues_3" value="3"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_colleagues", "section": "B2", "value": "3" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_colleagues" id="b2_colleagues_3" value="3">
                         <label class="ml-1 text-gray-700" for="b2_colleagues_3">3</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b2_colleagues" id="b2_colleagues_4" value="4"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_colleagues", "section": "B2", "value": "4" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_colleagues" id="b2_colleagues_4" value="4">
                         <label class="ml-1 text-gray-700" for="b2_colleagues_4">4</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b2_colleagues" id="b2_colleagues_na" value="NA"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_colleagues", "section": "B2", "value": "NA" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_colleagues" id="b2_colleagues_na" value="NA">
                         <label class="ml-1 text-gray-700" for="b2_colleagues_na">NA</label>
                     </div>
                 </div>
@@ -322,52 +329,27 @@
                 <div class="flex items-center gap-4 flex-wrap">
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="" id="b2_subordinates_1" value="1"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_subordinates", "section": "B2", "value": "1" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_subordinates" id="b2_subordinates_1" value="1">
                         <label class="ml-1 text-gray-700" for="b2_subordinates_1">1</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b2_subordinates" id="b2_subordinates_2" value="2"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_subordinates", "section": "B2", "value": "2" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_subordinates" id="b2_subordinates_2" value="2">
                         <label class="ml-1 text-gray-700" for="b2_subordinates_2">2</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b2_subordinates" id="b2_subordinates_3" value="3"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_subordinates", "section": "B2", "value": "3" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_subordinates" id="b2_subordinates_3" value="3">
                         <label class="ml-1 text-gray-700" for="b2_subordinates_3">3</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b2_subordinates" id="b2_subordinates_4" value="4"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_subordinates", "section": "B2", "value": "4" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_subordinates" id="b2_subordinates_4" value="4">
                         <label class="ml-1 text-gray-700" for="b2_subordinates_4">4</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b2_subordinates" id="b2_subordinates_na" value="NA"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_subordinates", "section": "B2", "value": "NA" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_subordinates" id="b2_subordinates_na" value="NA">
                         <label class="ml-1 text-gray-700" for="b2_subordinates_na">NA</label>
                     </div>
                 </div>
@@ -378,52 +360,27 @@
                 <div class="flex items-center gap-4 flex-wrap">
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="" id="b2_subordinates_1" value="1"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_students", "section": "B2", "value": "1" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_students" id="b2_students_1" value="1">
                         <label class="ml-1 text-gray-700" for="b2_students_1">1</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b2_students" id="b2_students_2" value="2"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_students", "section": "B2", "value": "2" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_students" id="b2_students_2" value="2">
                         <label class="ml-1 text-gray-700" for="b2_students_2">2</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b2_students" id="b2_students_3" value="3"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_students", "section": "B2", "value": "3" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_students" id="b2_students_3" value="3">
                         <label class="ml-1 text-gray-700" for="b2_students_3">3</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b2_students" id="b2_students_4" value="4"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_students", "section": "B2", "value": "4" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_students" id="b2_students_4" value="4">
                         <label class="ml-1 text-gray-700" for="b2_students_4">4</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b2_students" id="b2_students_na" value="NA"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b2_students", "section": "B2", "value": "NA" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b2_students" id="b2_students_na" value="NA">
                         <label class="ml-1 text-gray-700" for="b2_students_na">NA</label>
                     </div>
                 </div>
@@ -438,42 +395,22 @@
                 <div class="flex items-center gap-4 flex-wrap">
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b3_community" id="b3_community_1" value="1"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b3_community", "section": "B3", "value": "1" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b3_community" id="b3_community_1" value="1">
                         <label class="ml-1 text-gray-700" for="b3_community_1">1</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b3_community" id="b3_community_2" value="2"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b3_community", "section": "B3", "value": "2" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
-                        <label class="ml-1 text-gray-700" for="b2_students_2">2</label>
+                            type="radio" name="b3_community" id="b3_community_2" value="2">
+                        <label class="ml-1 text-gray-700" for="b3_community_2">2</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b3_community" id="b3_community_3" value="3"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b3_community", "section": "B3", "value": "3" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b3_community" id="b3_community_3" value="3">
                         <label class="ml-1 text-gray-700" for="b3_community_3">3</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b3_community" id="b3_community_4" value="4"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b3_community", "section": "B3", "value": "4" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b3_community" id="b3_community_4" value="4">
                         <label class="ml-1 text-gray-700" for="b3_community_4">4</label>
                     </div>
                 </div>
@@ -488,42 +425,22 @@
                 <div class="flex items-center gap-4 flex-wrap">
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b4_culture" id="b4_culture_1" value="1"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b4_culture", "section": "B4", "value": "1" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b4_culture" id="b4_culture_1" value="1">
                         <label class="ml-1 text-gray-700" for="b4_culture_1">1</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b4_culture" id="b4_culture_2" value="2"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b4_culture", "section": "B4", "value": "2" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b4_culture" id="b4_culture_2" value="2">
                         <label class="ml-1 text-gray-700" for="b4_culture_2">2</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b4_culture" id="b4_culture_3" value="3"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b4_culture", "section": "B4", "value": "3" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b4_culture" id="b4_culture_3" value="3">
                         <label class="ml-1 text-gray-700" for="b4_culture_3">3</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b4_culture" id="b4_culture_2" value="4"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b4_culture", "section": "B4", "value": "4" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b4_culture" id="b4_culture_4" value="4">
                         <label class="ml-1 text-gray-700" for="b4_culture_4">4</label>
                     </div>
                 </div>
@@ -534,43 +451,23 @@
                 <div class="flex items-center gap-4 flex-wrap">
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b4_religious" id="b4_religious_1" value="1"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b4_religious", "section": "B4", "value": "1" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b4_religious" id="b4_religious_1" value="1">
                         <label class="ml-1 text-gray-700" for="b4_religious_1">1</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b4_religious" id="b4_religious_2" value="2"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b4_religious", "section": "B4", "value": "2" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b4_religious" id="b4_religious_2" value="2">
                         <label class="ml-1 text-gray-700" for="b4_religious_2">2</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b4_religious" id="b4_religious_3" value="3"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b4_religious", "section": "B4", "value": "3" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
-                        <label class="ml-1 text-gray-700" for="b4_religious3">3</label>
+                            type="radio" name="b4_religious" id="b4_religious_3" value="3">
+                        <label class="ml-1 text-gray-700" for="b4_religious_3">3</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b4_religious" id="b4_religious_2" value="4"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b4_religious", "section": "B4", "value": "4" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
-                        <label class="ml-1 text-gray-700" for="b5_attitude_4">4</label>
+                            type="radio" name="b4_religious" id="b4_religious_4" value="4">
+                        <label class="ml-1 text-gray-700" for="b4_religious_4">4</label>
                     </div>
                 </div>
             </div> 
@@ -585,42 +482,22 @@
                 <div class="flex items-center gap-4 flex-wrap">
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b5_preparation" id="b5_preparation_1" value="1"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b5_preparation", "section": "B5", "value": "1" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b5_preparation" id="b5_preparation_1" value="1">
                         <label class="ml-1 text-gray-700" for="b5_preparation_1">1</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b5_preparation" id="b5_preparation_2" value="2"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b5_preparation", "section": "B5", "value": "2" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b5_preparation" id="b5_preparation_2" value="2">
                         <label class="ml-1 text-gray-700" for="b5_preparation_2">2</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b5_preparation" id="b5_preparation_3" value="3"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b5_preparation", "section": "B", "value": "3" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
-                        <label class="ml-1 text-gray-700" for="b4_preparation_3">3</label>
+                            type="radio" name="b5_preparation" id="b5_preparation_3" value="3">
+                        <label class="ml-1 text-gray-700" for="b5_preparation_3">3</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b5_preparation" id="b5_preparation_2" value="4"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b5_preparation", "section": "B5", "value": "4" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b5_preparation" id="b5_preparation_4" value="4">
                         <label class="ml-1 text-gray-700" for="b5_preparation_4">4</label>
                     </div>
                 </div>
@@ -631,42 +508,22 @@
                 <div class="flex items-center gap-4 flex-wrap">
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b5_attitude" id="b5_attitude_1" value="1"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b5_attitude", "section": "B5", "value": "1" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b5_attitude" id="b5_attitude_1" value="1">
                         <label class="ml-1 text-gray-700" for="b5_attitude_1">1</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b5_attitude" id="b5_attitude_2" value="2"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b5_attitude", "section": "B5", "value": "2" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b5_attitude" id="b5_attitude_2" value="2">
                         <label class="ml-1 text-gray-700" for="b5_attitude_2">2</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b5_attitude" id="b5_attitude_3" value="3"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b5_attitude", "section": "B5", "value": "3" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b5_attitude" id="b5_attitude_3" value="3">
                         <label class="ml-1 text-gray-700" for="b5_attitude_3">3</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b5_attitude" id="b5_attitude_2" value="4"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b5_attitude", "section": "B5", "value": "4" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b5_attitude" id="b5_attitude_4" value="4">
                         <label class="ml-1 text-gray-700" for="b5_attitude_4">4</label>
                     </div>
                 </div>
@@ -681,48 +538,22 @@
                 <div class="flex items-center gap-4 flex-wrap">
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b6_research" id="b6_research_1" value="1"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b6_research", "section": "B6", "value": "1" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b6_research" id="b6_research_1" value="1"required>
                         <label class="ml-1 text-gray-700" for="b6_research_1">1</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b6_research" id="b6_research_2" value="2"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b6_research", "section": "B6", "value": "2" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
-                        <label class="ml-1 text-gray-700" for="b6_research_1">2</label>
+                            type="radio" name="b6_research" id="b6_research_2" value="2">
+                        <label class="ml-1 text-gray-700" for="b6_research_2">2</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b6_research" id="b6_research_3" value="3"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b6_research", "section": "B6", "value": "3" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b6_research", "section": "B6", "value": "3" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b6_research" id="b6_research_3" value="3">
                         <label class="ml-1 text-gray-700" for="b6_research_3">3</label>
                     </div>
                     <div class="flex items-center">
                         <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
-                            type="radio" name="b6_research" id="b6_research_4" value="4"
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b6_research", "section": "B6", "value": "4" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-post="{% url 'appraisals:save_rating' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b6_research", "section": "B6", "value": "4" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-indicator="#save-indicator">
+                            type="radio" name="b6_research" id="b6_research_4" value="4">
                         <label class="ml-1 text-gray-700" for="b6_research_4">4</label>
                     </div>
                 </div>
@@ -730,20 +561,13 @@
 
         </div>
 
-
-    <!-- Example for text fields -->
     <div class="mb-8">
         <div class="mb-6">
             <label for="b7_strongest_points" class="block text-xl font-semibold text-gray-700 mb-2">
                 B7. Give your opinion of the appraisee's strongest points
             </label>
             <textarea class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                      id="b7_strongest_points" name="b7_strongest_points" rows="4" required
-                      hx-post="{% url 'appraisals:save_text_field' %}"
-                      hx-trigger="blur"
-                      hx-vals='{"field": "b7_strongest_points", "section": "B7" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                      hx-swap="none"
-                      hx-indicator="#save-indicator"></textarea>
+                      id="b7_strongest_points" name="b7_strongest_points" rows="4" required></textarea>
         </div>
 
         <div class="mb-6">
@@ -751,12 +575,7 @@
                 B8. Describe areas needing attention or improvement by appraisee
             </label>
             <textarea class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                      id="b8_improvement_areas" name="b8_improvement_areas" rows="4" required
-                      hx-post="{% url 'appraisals:save_text_field' %}"
-                      hx-trigger="blur"
-                      hx-vals='{"field": "b8_improvement_areas", "section": "B8" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                      hx-swap="none"
-                      hx-indicator="#save-indicator"></textarea>
+                      id="b8_improvement_areas" name="b8_improvement_areas" rows="4" required></textarea>
         </div>
 
         <div class="mb-6">
@@ -764,12 +583,7 @@
                 B9. Other comments, if any
             </label>
             <textarea class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                      id="b9_other_comments" name="b9_other_comments" rows="4"
-                      hx-post="{% url 'appraisals:save_text_field' %}"
-                      hx-trigger="blur"
-                      hx-vals='{"field": "b9_other_comments", "section": "B9" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                      hx-swap="none"
-                      hx-indicator="#save-indicator"></textarea>
+                      id="b9_other_comments" name="b9_other_comments" rows="4"></textarea>
         </div>
     </div>
 
@@ -815,7 +629,7 @@
                     <input type="number" class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
                            id="b11_known_years" name="b11_known_years" 
                            placeholder="Years" min="0" required
-                           hx-post="{% url 'appraisals:save_field' %}"
+                           hx-post="{% url 'appraisals:save_multiple_fields' %}"
                            hx-trigger="blur"
                            hx-vals='{"field": "b11_known_years", "section": "B11" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
                            hx-swap="none"
@@ -825,7 +639,7 @@
                     <input type="number" class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
                            id="b11_known_months" name="b11_known_months" 
                            placeholder="Months" min="0" max="11" required
-                           hx-post="{% url 'appraisals:save_field' %}"
+                           hx-post="{% url 'appraisals:save_multiple_fields' %}"
                            hx-trigger="blur"
                            hx-vals='{"field": "b11_known_months", "section": "B11" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
                            hx-swap="none"
@@ -840,7 +654,7 @@
                 <div class="w-full md:w-1/3">
                     <select class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
                             id="b11_relationship" name="b11_relationship" required
-                            hx-post="{% url 'appraisals:save_field' %}"
+                            hx-post="{% url 'appraisals:save_multiple_fields' %}"
                             hx-trigger="change"
                             hx-vals='{"field": "b11_relationship", "section": "B11" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
                             hx-swap="none"
@@ -858,7 +672,7 @@
                     <input type="text" class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
                            id="b11_relationship_other" name="b11_relationship_other" 
                            placeholder="Please specify relationship"
-                           hx-post="{% url 'appraisals:save_field' %}"
+                           hx-post="{% url 'appraisals:save_multiple_fields' %}"
                            hx-trigger="blur"
                            hx-vals='{"field": "b11_relationship_other", "section": "B11" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
                            hx-swap="none"
@@ -874,7 +688,7 @@
             <label for="appraiser_review_date" class="block text-xl font-semibold text-gray-700 mb-2">Date of Appraisal Review</label>
             <input type="date" class="px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
                    id="appraiser_review_date" name="appraiser_review_date" required
-                   hx-post="{% url 'appraisals:save_field' %}"
+                   hx-post="{% url 'appraisals:save_multiple_fields' %}"
                    hx-trigger="change"
                    hx-vals='{"field": "appraiser_review_date", "section": "review" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
                    hx-swap="none"
@@ -909,6 +723,18 @@
                 Previous
             </span>
         </button>
+
+        <!-- Save as Draft Button -->
+        <button type="button" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-green-500 transition-colors"
+                id="save-draft-button"
+                onclick="saveDraft()">
+            <span class="flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                </svg>
+                Save as Draft
+            </span>
+        </button>
         
         <div id="nav-indicator" class="htmx-indicator">
             <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -933,4 +759,5 @@
         </button>
     </div>
 </div>
+</form>
 {% endblock %}

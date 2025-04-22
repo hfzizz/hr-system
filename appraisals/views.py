@@ -32,6 +32,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from datetime import datetime, timedelta
 from django.core.cache import cache
+from django.views.decorators.csrf import csrf_protect
 
 logger = logging.getLogger(__name__)
 
@@ -347,49 +348,42 @@ def save_text_field(request):
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 @require_POST
-@login_required
+@csrf_protect
 def save_field(request):
-    """Save content from regular form fields (input, select, etc.)"""
+    """Universal handler for saving any field in any section"""
     try:
+        # Get data from request
         field = request.POST.get('field')
-        section = request.POST.get('section')
         value = request.POST.get('value')
+        section_name = request.POST.get('section')
         appraisal_id = request.POST.get('appraisal_id')
         
-        if not all([field, appraisal_id]):  # Section might be optional for some fields
-            return JsonResponse({'status': 'error', 'message': 'Missing required parameters'}, status=400)
-            
-        appraisal = get_object_or_404(Appraisal, appraisal_id=appraisal_id)
+        if not all([field, section_name, appraisal_id]):
+            return JsonResponse({'status': 'error', 'message': 'Missing required data'}, status=400)
         
-        # Check if user has permission to modify this appraisal
-        if not (appraisal.appraiser.user == request.user or request.user.groups.filter(name='HR').exists()):
-            return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=403)
+        # Get the appraisal
+        appraisal = Appraisal.objects.get(appraisal_id=appraisal_id)
         
-        # Some fields might be directly on the appraisal model
-        if field == 'appraiser_review_date':
-            appraisal.appraiser_review_date = value
-            appraisal.save()
-            return JsonResponse({'status': 'success', 'message': 'Date saved'})
+        # Get or create the appropriate section
+        section, created = AppraisalSection.objects.get_or_create(
+            appraisal=appraisal,
+            section_name=section_name,
+            appraiser=request.user.employee  # Assuming the current user is the appraiser
+        )
         
-        # Otherwise store in section data
-        if section:
-            # Get or create the appraisal section
-            section_obj, created = AppraisalSection.objects.get_or_create(
-                appraisal=appraisal,
-                section_name=section
-            )
-            
-            # Update the field data
-            if not section_obj.data:
-                section_obj.data = {}
-                
-            section_obj.data[field] = value
-            section_obj.save()
+        # Update the data dictionary with the new field value
+        data = section.data or {}
+        data[field] = value
+        section.data = data
+        section.save()
         
-        return JsonResponse({'status': 'success', 'message': 'Field saved'})
+        return JsonResponse({'status': 'success'})
+        
+    except Appraisal.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Appraisal not found'}, status=404)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
+    
 # @require_GET
 # @login_required
 # def toggle_leadership_section(request):
@@ -931,7 +925,7 @@ def set_default_deadline(request):
     return redirect('appraisals:appraiser_list')
 
 
-def get_default_period(request):
+def  get_default_period(request):
     # Get the default appraisal period
     default_period = AppraisalPeriod.objects.filter(is_default=True).first()
 
@@ -1108,3 +1102,200 @@ class AppraiseeUpdateView(LoginRequiredMixin, UpdateView):
     def form_invalid(self, form):
         messages.error(self.request, 'Please correct the errors below.')
         return super().form_invalid(form)
+    
+@require_POST
+@csrf_protect
+def save_multiple_fields(request):
+    """Batch save multiple fields at once for better performance"""
+    try:
+        # Check if the data is coming as JSON or form data
+        if request.content_type and 'application/json' in request.content_type:
+            # Handle JSON data from request.body
+            try:
+                data = json.loads(request.body)
+                fields = data.get('fields', [])
+                appraisal_id = data.get('appraisal_id')
+            except json.JSONDecodeError:
+                return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
+        else:
+            # Handle form data from request.POST
+            appraisal_id = request.POST.get('appraisal_id')
+            
+            # For single field updates via standard form submission
+            fields = [{
+                'field': request.POST.get('field'),
+                'section': request.POST.get('section'),
+                'value': request.POST.get('value')
+            }]
+        
+        if not appraisal_id:
+            return JsonResponse({'status': 'error', 'message': 'Missing appraisal_id'}, status=400)
+        
+        # Ensure we have a list of fields to update
+        if not fields or not isinstance(fields, list):
+            fields = []
+            
+        # Get the appraisal
+        appraisal = Appraisal.objects.get(appraisal_id=appraisal_id)
+        
+        # Get the current user's employee record (for the appraiser)
+        try:
+            current_user = request.user.employee
+        except AttributeError:
+            return JsonResponse({'status': 'error', 'message': 'User has no associated employee record'}, status=403)
+        
+        # Group fields by section
+        section_data = {}
+        for field_info in fields:
+            section_name = field_info.get('section')
+            field = field_info.get('field')
+            value = field_info.get('value')
+            
+            if not section_name or not field:
+                continue
+                
+            if section_name not in section_data:
+                section_data[section_name] = {}
+            
+            section_data[section_name][field] = value
+        
+        # Update all sections in a single transaction
+        with transaction.atomic():
+            for section_name, field_values in section_data.items():
+                section, created = AppraisalSection.objects.get_or_create(
+                    appraisal=appraisal,
+                    section_name=section_name,
+                    appraiser=current_user
+                )
+                
+                # Update with new values
+                data = section.data or {}
+                data.update(field_values)
+                section.data = data
+                section.save()
+        
+        return JsonResponse({'status': 'success'})
+        
+    except Appraisal.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Appraisal not found'}, status=404)
+    except Exception as e:
+        # Add more detailed error logging
+        import traceback
+        error_details = traceback.format_exc()
+        logger.error(f"Error in save_multiple_fields: {str(e)}\n{error_details}")
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+def save_draft(request):
+    """Save the appraisal as a draft"""
+    if request.method == 'POST':
+        appraisal_id = request.POST.get('appraisal_id')
+        section = request.POST.get('section')
+        
+        # First get the appraisal object
+        appraisal = get_object_or_404(Appraisal, appraisal_id=appraisal_id)
+
+        # Get the current user's employee record (assuming the appraiser is saving)
+        current_employee = request.user.employee
+
+        # Find or create the appropriate section record
+        section_obj, created = AppraisalSection.objects.get_or_create(
+            appraisal=appraisal, # Pass the appraisal object directly
+            section_name=section,
+            appraiser=current_employee,
+            defaults={'data': {}}
+        )
+
+        # Update the section status in the data JSON
+        data = section_obj.data or {}
+        data['status'] = 'draft'
+        section_obj.data = data
+        section_obj.save()
+
+        # Return a success message
+        return HttpResponse(status=200, content="Section saved as draft successfully.")
+    
+    return HttpResponse(status=400, content="Invalid request")
+
+@require_POST
+@csrf_protect
+def save_section_data(request):
+    """Save all form data for a specific section at once"""
+    try:
+        # Parse input data
+        appraisal_id = request.POST.get('appraisal_id')
+        section = request.POST.get('section')
+        is_draft = request.POST.get('is_draft') == 'true'
+        
+        if not all([appraisal_id, section]):
+            return JsonResponse({'status': 'error', 'message': 'Missing required parameters'}, status=400)
+        
+        # Get the appraisal object
+        appraisal = get_object_or_404(Appraisal, appraisal_id=appraisal_id)
+        
+        # Check permissions
+        if not (appraisal.appraiser.user == request.user or 
+                (appraisal.appraiser_secondary and appraisal.appraiser_secondary.user == request.user) or
+                request.user.groups.filter(name='HR').exists()):
+            return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=403)
+        
+        # Get current user's employee record
+        current_employee = request.user.employee
+        
+        # Get or create section object
+        section_obj, created = AppraisalSection.objects.get_or_create(
+            appraisal=appraisal,
+            section_name=section,
+            appraiser=current_employee,
+            defaults={'data': {}}
+        )
+        
+        # Extract all the form data for this section
+        data = section_obj.data or {}
+        section_prefix = section.lower()[0]
+        
+        # Process all fields that belong to this section
+        for key, value in request.POST.items():
+            if key.lower().startswith(section_prefix):
+                data[key] = value
+        
+        # Add status info if this is a draft save
+        if is_draft:
+            data['status'] = 'draft'
+        
+        # Save the updated data
+        section_obj.data = data
+        section_obj.save()
+        
+        return JsonResponse({'status': 'success', 'message': 'Section data saved successfully'})
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        logger.error(f"Error in save_section_data: {str(e)}\n{error_details}")
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+def get_section_data(request):
+    """Get saved data for a section"""
+    appraisal_id = request.GET.get('appraisal_id')
+    section = request.GET.get('section')
+    
+    if not appraisal_id or not section:
+        return JsonResponse({'error': 'Missing parameters'}, status=400)
+    
+    try:
+        appraisal = get_object_or_404(Appraisal, appraisal_id=appraisal_id)
+        current_employee = request.user.employee
+        
+        # Get the section data if it exists
+        try:
+            section_obj = AppraisalSection.objects.get(
+                appraisal=appraisal,
+                section_name=section,
+                appraiser=current_employee
+            )
+            return JsonResponse({'data': section_obj.data})
+        except AppraisalSection.DoesNotExist:
+            return JsonResponse({'data': {}})
+            
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

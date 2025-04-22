@@ -32,11 +32,15 @@ urlpatterns = [
     path('get-default-period/', views.get_default_period, name='get_default_period'),
 
     # HTMX endpoints for Section B
-    path('save-rating/', views.save_rating, name='save_rating'),
-    path('save-text-field/', views.save_text_field, name='save_text_field'),
+    path('save-multiple-fields/', views.save_multiple_fields, name='save_multiple_fields'),
+    # path('save-rating/', views.save_rating, name='save_rating'),
+    # path('save-text-field/', views.save_text_field, name='save_text_field'),
     path('save-field/', views.save_field, name='save_field'),
     path('toggle-leadership-section/', views.toggle_leadership_section, name='toggle_leadership_section'),
-    path('toggle-other-relationship/', views.toggle_other_relationship, name='toggle_other_relationship'),
+    path('toggle-other-relationship/', views.toggle_other_relationship, name='toggle_other_relationship'),  
+    # path('save-draft/', views.save_draft, name='save_draft'),
+    path('save-section-data/', views.save_section_data, name='save_section_data'),
+    path('get-section-data/', views.get_section_data, name='get_section_data'),
 
         # Add these URL patterns for the wizard sections
     path('forms/<int:appraisal_id>/review/section-a/', views.appraisal_wizard_section_a, name='appraisal_wizard_section_a'),
