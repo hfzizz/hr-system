@@ -5,6 +5,7 @@
 
 {% block content %}
 
+<div id="wizard-container">
 <!-- Replace your current script block with this -->
 <script>
     document.addEventListener('htmx:configRequest', function(event) {
@@ -16,6 +17,71 @@
     document.addEventListener('DOMContentLoaded', function(){
         // Load saved data for the form
         loadSavedData();
+
+        // Get the relationship dropdown and other input div
+        const relationshipSelect = document.getElementById('b11_relationship');
+        const relationshipOtherDiv = document.getElementById('relationshipOtherDiv');
+        
+        // Add change event listener
+        if (relationshipSelect && relationshipOtherDiv) {
+            // Initial check in case "Other" is already selected (from loaded data)
+            if (relationshipSelect.value === 'Other') {
+                relationshipOtherDiv.classList.remove('hidden');
+            }
+            
+            // Add event listener for changes
+            relationshipSelect.addEventListener('change', function() {
+                if (this.value === 'Other') {
+                    relationshipOtherDiv.classList.remove('hidden');
+                } else {
+                    relationshipOtherDiv.classList.add('hidden');
+                }
+            });
+        }
+
+        // Setup leadership role toggle
+        const leadershipCheckbox = document.getElementById('b_is_leadership_role');
+        const leadershipRatings = document.getElementById('leadership-ratings');
+        const leadershipIndicator = document.getElementById('leadership-indicator');
+        
+        if (leadershipCheckbox && leadershipRatings) {
+            // Set initial state based on saved data
+            if (leadershipCheckbox.checked) {
+                leadershipRatings.classList.remove('hidden');
+            }
+            
+            // Add event listener for changes
+            leadershipCheckbox.addEventListener('change', function() {
+                // Show loading indicator
+                leadershipIndicator.classList.remove('hidden');
+                
+                // Save the change to the server
+                const formData = new FormData();
+                formData.append('appraisal_id', '{{ appraisal.appraisal_id }}');
+                formData.append('section', 'B');
+                formData.append('b_is_leadership_role', leadershipCheckbox.checked);
+                
+                fetch('{% url "appraisals:save_section_data" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                })
+                .then(response => response.json())
+                .finally(() => {
+                    // Toggle visibility based on checkbox state
+                    if (leadershipCheckbox.checked) {
+                        leadershipRatings.classList.remove('hidden');
+                    } else {
+                        leadershipRatings.classList.add('hidden');
+                    }
+                    
+                    // Hide loading indicator
+                    leadershipIndicator.classList.add('hidden');
+                });
+            });
+        }
     });
 
 
@@ -55,11 +121,28 @@
                             field.value = value;
                         }
                         
-                        // Handle checkboxes separately
-                        const checkbox = document.querySelector(`input[type="checkbox"][name="${key}"]`);
-                        if (checkbox && (value === true || value === "true")) {
-                            checkbox.checked = true;
+                       // Handle checkboxes separately
+                    const checkbox = document.querySelector(`input[type="checkbox"][name="${key}"]`);
+                    if (checkbox) {
+                        // More flexible boolean checking
+                        const isChecked = value === true || 
+                                        value === "true" || 
+                                        value === 1 || 
+                                        value === "1" || 
+                                        value === "on" ||
+                                        value === "yes";
+                                        
+                        console.log(`Setting checkbox ${key} to ${isChecked} (value was ${value})`);
+                        checkbox.checked = isChecked;
+                        
+                        // If this is the leadership checkbox, update visibility
+                        if (key === 'b_is_leadership_role' && isChecked) {
+                            const leadershipRatings = document.getElementById('leadership-ratings');
+                            if (leadershipRatings) {
+                                leadershipRatings.classList.remove('hidden');
+                            }
                         }
+                    }
                     }
                     
                     // Special case for relationship other field
@@ -79,13 +162,28 @@
     function saveDraft() {
         // Create a FormData object
         const form = document.getElementById('section-b-form');
+        if (!form) {
+            console.error("Form not found!");
+            showSaveMessage('Error: Form not found', 'error');
+            return;
+        }
+        
         const formData = new FormData(form);
         formData.append('is_draft', 'true');
+        
+        // Log what we're about to send
+        console.log("Saving form data...");
         
         // Show the saving indicator
         const saveIndicator = document.getElementById('save-indicator');
         saveIndicator.classList.remove('htmx-indicator');
         saveIndicator.style.display = 'flex';
+
+        // Debug the form data being sent
+        console.log("Form data entries:");
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
+        }
         
         // Use fetch API for more control
         fetch('{% url "appraisals:save_section_data" %}', {
@@ -96,14 +194,20 @@
             }
         })
         .then(response => {
-            if (response.ok) {
-                return response.text();
+            console.log("Response status:", response.status);
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`Server error: ${response.status} - ${text || 'No error message'}`);
+                });
             }
-            throw new Error('Network response was not ok');
+            return response.text();
         })
         .then(data => {
-            console.log('Draft saved successfully');
+            console.log('Draft saved successfully:', data);
             showSaveMessage('Draft saved successfully!');
+            
+            // Optionally reload the saved data to confirm it was saved
+            setTimeout(() => loadSavedData(), 1000);
         })
         .catch(error => {
             console.error('Error saving draft:', error);
@@ -136,7 +240,9 @@
 {% csrf_token  %}
 <input type="hidden" id="csrf_token" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
-<form id="section-b-form" hx-post="{% url 'appraisals:save_section_data' %}" hx-swap="none" hx-indicator="#save-indicator">
+<form id="section-b-form" method="post" action="">
+    {% csrf_token %}
+    {{ wizard.management_form }}
     <input type="hidden" name="appraisal_id" value="{{ appraisal.appraisal_id }}">
     <input type="hidden" name="section" value="B">
 
@@ -588,7 +694,7 @@
     </div>
 
     <!-- B10. Leadership section with conditional display -->
-    <div class="mb-8" id="leadershipSection">
+    <div class="mb-8  bg-gray-50 rounded-lg shadow-sm p-5 border border-gray-100" id="leadershipSection">
         <h3 class="text-xl font-semibold text-gray-700 mb-4">
             B10. Complete the following if the appraisee is a Dean or Deputy Dean or Head Of FICO
         </h3>
@@ -597,14 +703,11 @@
         <div class="mb-6">
             <div class="flex items-center">
                 <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" 
-                        type="checkbox" id="is_leadership_role" name="is_leadership_role"
-                        hx-get="{% url 'appraisals:toggle_leadership_section' %}?appraisal_id={{ appraisal.appraisal_id }}"
-                        hx-target="#leadership-ratings"
-                        hx-trigger="change"
-                        hx-indicator="#leadership-indicator"> 
-                     Appraisee is in a leadership role (Dean/Deputy Dean/Head of FICO)
+                        type="checkbox" id="b_is_leadership_role" name="b_is_leadership_role">
+                <label for="b_is_leadership_role" class="ml-2 text-gray-700">
+                    Appraisee is in a leadership role (Dean/Deputy Dean/Head of FICO)
                 </label>
-                <div id="leadership-indicator" class="htmx-indicator ml-2">
+                <div id="leadership-indicator" class="hidden ml-2">
                     <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -614,12 +717,90 @@
         </div>
         
         <div id="leadership-ratings" class="hidden">
-            <!-- Leadership ratings would appear here -->
+        <!-- Leadership qualities -->
+        <div class="mb-6">
+            <label class="block text-gray-700 mb-2">Leadership qualities</label>
+            <div class="flex items-center gap-4 flex-wrap">
+                <div class="flex items-center">
+                    <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+                        type="radio" name="b10_leadership_qualities" id="b10_leadership_qualities_1" value="1">
+                    <label class="ml-1 text-gray-700" for="b10_leadership_qualities_1">1</label>
+                </div>
+                <div class="flex items-center">
+                    <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+                        type="radio" name="b10_leadership_qualities" id="b10_leadership_qualities_2" value="2">
+                    <label class="ml-1 text-gray-700" for="b10_leadership_qualities_2">2</label>
+                </div>
+                <div class="flex items-center">
+                    <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+                        type="radio" name="b10_leadership_qualities" id="b10_leadership_qualities_3" value="3">
+                    <label class="ml-1 text-gray-700" for="b10_leadership_qualities_3">3</label>
+                </div>
+                <div class="flex items-center">
+                    <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+                        type="radio" name="b10_leadership_qualities" id="b10_leadership_qualities_4" value="4">
+                    <label class="ml-1 text-gray-700" for="b10_leadership_qualities_4">4</label>
+                </div>
+            </div>
+            <!-- Problem-solving qualities -->
+            <div class="mb-6">
+                <label class="block text-gray-700 mb-2">Problem-solving qualities</label>
+                <div class="flex items-center gap-4 flex-wrap">
+                    <div class="flex items-center">
+                        <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+                            type="radio" name="b10_problem_solving" id="b10_problem_solving_1" value="1">
+                        <label class="ml-1 text-gray-700" for="b10_problem_solving_1">1</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+                            type="radio" name="b10_problem_solving" id="b10_problem_solving_2" value="2">
+                        <label class="ml-1 text-gray-700" for="b10_problem_solving_2">2</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+                            type="radio" name="b10_problem_solving" id="b10_problem_solving_3" value="3">
+                        <label class="ml-1 text-gray-700" for="b10_problem_solving_3">3</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+                            type="radio" name="b10_problem_solving" id="b10_problem_solving_4" value="4">
+                        <label class="ml-1 text-gray-700" for="b10_problem_solving_4">4</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Decision-making qualities -->
+            <div class="mb-6">
+                <label class="block text-gray-700 mb-2">Decision-making qualities</label>
+                <div class="flex items-center gap-4 flex-wrap">
+                    <div class="flex items-center">
+                        <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+                            type="radio" name="b10_decision_making" id="b10_decision_making_1" value="1">
+                        <label class="ml-1 text-gray-700" for="b10_decision_making_1">1</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+                            type="radio" name="b10_decision_making" id="b10_decision_making_2" value="2">
+                        <label class="ml-1 text-gray-700" for="b10_decision_making_2">2</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+                            type="radio" name="b10_decision_making" id="b10_decision_making_3" value="3">
+                        <label class="ml-1 text-gray-700" for="b10_decision_making_3">3</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" 
+                            type="radio" name="b10_decision_making" id="b10_decision_making_4" value="4">
+                        <label class="ml-1 text-gray-700" for="b10_decision_making_4">4</label>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+    </div>  
 
     <!-- B11. Relationship to the appraisee with dynamic behavior -->
-    <div class="mb-8">
+    <div class="mb-8  bg-gray-50 rounded-lg shadow-sm p-5 border border-gray-100">
         <h3 class="text-xl font-semibold text-gray-700 mb-4">B11. Relationship to the appraisee</h3>
         
         <div class="mb-6">
@@ -627,24 +808,14 @@
             <div class="flex gap-4">
                 <div class="w-32">
                     <input type="number" class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                           id="b11_known_years" name="b11_known_years" 
-                           placeholder="Years" min="0" required
-                           hx-post="{% url 'appraisals:save_multiple_fields' %}"
-                           hx-trigger="blur"
-                           hx-vals='{"field": "b11_known_years", "section": "B11" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                           hx-swap="none"
-                           hx-indicator="#save-indicator">
-                </div>
+                        id="b11_known_years" name="b11_known_years" 
+                        placeholder="Years" min="0" required>
+                    </div>
                 <div class="w-32">
                     <input type="number" class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                           id="b11_known_months" name="b11_known_months" 
-                           placeholder="Months" min="0" max="11" required
-                           hx-post="{% url 'appraisals:save_multiple_fields' %}"
-                           hx-trigger="blur"
-                           hx-vals='{"field": "b11_known_months", "section": "B11" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                           hx-swap="none"
-                           hx-indicator="#save-indicator">
-                </div>
+                        id="b11_known_months" name="b11_known_months" 
+                        placeholder="Months" min="0" max="11" required>
+                    </div>
             </div>
         </div>
 
@@ -653,15 +824,7 @@
             <div class="flex flex-col md:flex-row gap-4">
                 <div class="w-full md:w-1/3">
                     <select class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                            id="b11_relationship" name="b11_relationship" required
-                            hx-post="{% url 'appraisals:save_multiple_fields' %}"
-                            hx-trigger="change"
-                            hx-vals='{"field": "b11_relationship", "section": "B11" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                            hx-swap="none"
-                            hx-get="{% url 'appraisals:toggle_other_relationship' %}"
-                            hx-target="#relationshipOtherDiv"
-                            hx-indicator="#save-indicator">
-                        <option value="">Select relationship</option>
+                            id="b11_relationship" name="b11_relationship" required>                        <option value="">Select relationship</option>
                         <option value="Supervisor">Supervisor</option>
                         <option value="Colleague">Colleague</option>
                         <option value="Subordinate">Subordinate</option>
@@ -671,28 +834,19 @@
                 <div class="w-full md:w-2/3 hidden" id="relationshipOtherDiv">
                     <input type="text" class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
                            id="b11_relationship_other" name="b11_relationship_other" 
-                           placeholder="Please specify relationship"
-                           hx-post="{% url 'appraisals:save_multiple_fields' %}"
-                           hx-trigger="blur"
-                           hx-vals='{"field": "b11_relationship_other", "section": "B11" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                           hx-swap="none"
-                           hx-indicator="#save-indicator">
+                           placeholder="Please specify relationship">
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    
 
     <!-- Appraiser Review Date with auto-save -->
     <div class="mb-8">
         <div class="mb-6">
             <label for="appraiser_review_date" class="block text-xl font-semibold text-gray-700 mb-2">Date of Appraisal Review</label>
             <input type="date" class="px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                   id="appraiser_review_date" name="appraiser_review_date" required
-                   hx-post="{% url 'appraisals:save_multiple_fields' %}"
-                   hx-trigger="change"
-                   hx-vals='{"field": "appraiser_review_date", "section": "review" ,"appraisal_id": "{{ appraisal.appraisal_id }}"}'
-                   hx-swap="none"
-                   hx-indicator="#save-indicator">
+                   id="b_appraiser_review_date" name="b_appraiser_review_date" required>
         </div>
     </div>
 
@@ -709,13 +863,10 @@
 
     <!-- Navigation Buttons -->
     <div class="flex justify-between items-center mt-8 pt-4 border-t border-gray-200">
-        <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors"
-                id="prev-button"
-                hx-get="{% url 'appraisals:appraisal_wizard_section_a' appraisal_id=appraisal.appraisal_id %}"
-                hx-target="#wizard-container"
-                hx-swap="innerHTML"
-                hx-push-url="true"
-                hx-indicator="#nav-indicator">
+        <button type="submit" 
+                name="wizard_goto_step" 
+                value="{{ wizard.steps.prev }}" 
+                class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors">
             <span class="flex items-center">
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
@@ -760,4 +911,5 @@
     </div>
 </div>
 </form>
+</div>
 {% endblock %}
