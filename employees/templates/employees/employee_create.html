@@ -5,109 +5,54 @@
 {% block title %}Create Employee - HR System{% endblock %}
 
 {% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const parseButton = document.getElementById('parse_resume_btn');
-    const fileInput = document.getElementById('resume_upload');
-    const messageDiv = document.createElement('div');
-    
-    // Create and style the message div
-    messageDiv.className = 'hidden mt-2 text-sm text-indigo-700 bg-indigo-50 p-3 rounded-md border border-indigo-200';
-    fileInput.parentElement.appendChild(messageDiv);
-    
-    if (parseButton && fileInput) {
-        parseButton.addEventListener('click', async function(e) {
-            e.preventDefault();
-            
-            if (!fileInput.files.length) {
-                alert('Please select a PDF file first.');
-                return;
-            }
-            
-            // Show processing message
-            messageDiv.textContent = 'File uploaded, attempting to autofill form. Note: Autofilled fields may not be accurate, please review.';
-            messageDiv.className = messageDiv.className.replace('hidden', 'block');
-            
-            // Show loading state
-            parseButton.disabled = true;
-            parseButton.textContent = 'Parsing...';
-            
-            // Create FormData object
-            const formData = new FormData();
-            formData.append('resume', fileInput.files[0]);
-            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
-            
-            try {
-                const response = await fetch('{% url "employees:parse_resume" %}', {
-                    method: 'POST',
-                    body: formData,
-                    credentials: 'same-origin',
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                console.log('Received data:', data);
-
-                if (data.status === 'success') {
-                    // Map the fields
-                    const fieldMap = {
-                        'first_name': 'id_first_name',
-                        'last_name': 'id_last_name',
-                        'email': 'id_email',
-                        'phone_number': 'id_phone_number',
-                        'address': 'id_address',
-                        'ic_number': 'id_ic_no'
-                    };
-                    
-                    // Fill the form fields
-                    Object.entries(fieldMap).forEach(([key, elementId]) => {
-                        const input = document.getElementById(elementId);
-                        if (input && data.data[key]) {
-                            input.value = data.data[key];
-                            // Add visual feedback
-                            input.style.backgroundColor = '#e8f5e9';
-                            setTimeout(() => {
-                                input.style.backgroundColor = '';
-                            }, 2000);
-                        }
-                    });
-                    
-                    // Keep the success message visible
-                    messageDiv.className = messageDiv.className.replace('hidden', 'block');
-                } else {
-                    messageDiv.textContent = data.message || 'Error parsing resume';
-                    messageDiv.className = messageDiv.className.replace('text-indigo-700 bg-indigo-50', 'text-red-700 bg-red-50 border-red-200');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                messageDiv.textContent = 'Error uploading resume. Please try again.';
-                messageDiv.className = messageDiv.className.replace('text-indigo-700 bg-indigo-50', 'text-red-700 bg-red-50 border-red-200');
-            } finally {
-                // Reset button state
-                parseButton.disabled = false;
-                parseButton.textContent = 'Parse Resume';
-            }
-        });
-
-        // Add file selection message
-        fileInput.addEventListener('change', function() {
-            if (this.files.length) {
-                messageDiv.textContent = 'PDF selected. Click "Parse Resume" to process.';
-                messageDiv.className = messageDiv.className.replace('hidden', 'block');
-            } else {
-                messageDiv.className += ' hidden';
-            }
-        });
-    }
-});
-
-// Include any other JavaScript you need
-console.log('Template loaded');
-</script>
 <script src="{% static 'employees/js/employee_create.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize password functions
+        window.generatePassword = function() {
+            const length = 12;
+            const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+            let password = "";
+            for (let i = 0; i < length; i++) {
+                password += charset.charAt(Math.floor(Math.random() * charset.length));
+            }
+            document.getElementById('id_password').value = password;
+        };
+
+        window.togglePasswordVisibility = function() {
+            const passwordInput = document.getElementById('id_password');
+            const toggleButton = document.getElementById('toggle_password');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleButton.textContent = 'Hide';
+            } else {
+                passwordInput.type = 'password';
+                toggleButton.textContent = 'Show';
+            }
+        };
+
+        window.copyPassword = function() {
+            const passwordInput = document.getElementById('id_password');
+            
+            const tempInput = document.createElement('input');
+            tempInput.value = passwordInput.value;
+            document.body.appendChild(tempInput);
+            
+            tempInput.select();
+            document.execCommand('copy');
+            
+            document.body.removeChild(tempInput);
+            
+            const copyButton = document.getElementById('copy_password');
+            const originalText = copyButton.textContent;
+            copyButton.textContent = 'Copied!';
+            setTimeout(() => {
+                copyButton.textContent = originalText;
+            }, 2000);
+        };
+    });
+</script>
 {% endblock %}
 
 {% block content %}
@@ -115,549 +60,520 @@ console.log('Template loaded');
     <!-- Header -->
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">Create New Employee</h1>
-        <a href="{% url 'employees:employee_list' %}" 
-           class="rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-200">
-            Back to Employee List
-        </a>
+        <a href="{% url 'employees:employee_list' %}" class="rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-200">Back to Employee List</a>
     </div>
 
-    <!-- Resume Upload Section -->
-    <div class="mb-8 p-4 bg-white rounded-lg shadow">
-        <h2 class="text-lg font-semibold mb-2">Resume Parser</h2>
-        <div class="bg-blue-50 border-l-4 border-indigo-400 p-4 mb-4">
-            <p class="text-sm text-indigo-700">
-                Upload a PDF resume to automatically fill the form fields below.
-            </p>
-        </div>
-        <div class="space-y-4">
+    <!-- Resume Parser -->
+    <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4">Upload Resume</h2>
+        <form id="resumeUploadForm" class="mb-6">
+            {% csrf_token %}
             <div class="flex items-center space-x-4">
-                {% csrf_token %}
-                <input type="file" 
-                       id="resume_upload" 
-                       name="resume" 
-                       accept="application/pdf"
-                       class="block w-full text-sm text-gray-500 
-                              file:mr-4 file:py-2 file:px-4 
-                              file:rounded-md file:border-0 
-                              file:text-sm file:font-semibold 
-                              file:bg-indigo-50 file:text-indigo-700 
-                              hover:file:bg-indigo-100"/>
-                <button type="button" 
-                        id="parse_resume_btn"
-                        class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm 
-                               hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 
-                               focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                <input type="file" name="resume" accept=".pdf" class="block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-full file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-blue-50 file:text-blue-700
+                    hover:file:bg-blue-100">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                     Parse Resume
                 </button>
             </div>
-            <!-- Message will be inserted here by JavaScript -->
-        </div>
+        </form>
     </div>
 
-    <!-- Form -->
-    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-lg">
-        <form method="post" enctype="multipart/form-data" class="space-y-8 p-6" id="employee_form">
-            {% csrf_token %}
-            
-            <!-- Form Errors -->
-            {% if form.errors %}
-            <div class="rounded-md bg-red-50 p-4 mb-6">
-                <div class="flex">
-                    <div class="ml-3">
-                        <h3 class="text-sm font-medium text-red-800">Please correct the following errors:</h3>
-                        <div class="mt-2 text-sm text-red-700">
-                            <ul class="list-disc pl-5 space-y-1">
-                                {% for field, errors in form.errors.items %}
-                                    {% if field == '__all__' %}
-                                        {% for error in errors %}
-                                            <li>{{ error }}</li>
-                                        {% endfor %}
-                                    {% else %}
-                                        {% for error in errors %}
-                                            <li>{{ field }}: {{ error }}</li>
-                                        {% endfor %}
-                                    {% endif %}
-                                {% endfor %}
-                            </ul>
+    <!-- Main Form -->
+    <form method="post" enctype="multipart/form-data" class="space-y-8">
+        {% csrf_token %}
+        
+        <!-- Form Errors -->
+        {% if form.errors %}
+        <div class="rounded-md bg-red-50 p-4 mb-6">
+            <h3 class="text-sm font-medium text-red-800">Please correct the following errors:</h3>
+            <div class="mt-2 text-sm text-red-700">
+                <ul class="list-disc pl-5 space-y-1">
+                    {% for field, errors in form.errors.items %}
+                        {% if field == '__all__' %}
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% else %}
+                            {% for error in errors %}
+                                <li>{{ field }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Employee ID -->
+        <div>
+            <label for="id_employee_id" class="block text-sm font-medium text-gray-700">Employee ID</label>
+            {% render_field form.employee_id class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 bg-gray-50 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6" readonly="readonly" %}
+            <p class="mt-1 text-sm text-gray-500">Employee ID is automatically generated</p>
+        </div>
+
+        <!-- Employee Information -->
+        <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 w-full">
+            <h3 class="text-lg font-medium leading-6 text-gray-900 mb-6">Employee Information</h3>
+            <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+                <!-- Username -->
+                <div>
+                    <label for="id_username" class="block text-sm font-medium text-gray-700">Username</label>
+                    {% render_field form.username class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                    {% if form.username.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.username.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label for="id_password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <div class="mt-1 space-y-2">
+                        <div class="flex space-x-2">
+                            {% render_field form.password class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" type="password" %}
+                            <button type="button" id="toggle_password" onclick="window.togglePasswordVisibility()" class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Show</button>
                         </div>
+                        <div class="flex space-x-2">
+                            <button type="button" onclick="window.generatePassword()" class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Generate</button>
+                            <button type="button" id="copy_password" onclick="window.copyPassword()" class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Copy</button>
+                        </div>
+                        {% if form.password.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.password.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">Leave blank to generate a random password</p>
                     </div>
                 </div>
-            </div>
-            {% endif %}
-            
-            <!-- Employee ID Section -->
-            <div class="space-y-6">
-                <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                    <div>
-                        <label for="id_employee_id" class="block text-sm font-medium text-gray-700">Employee ID</label>
-                        {% render_field form.employee_id class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 bg-gray-50 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" readonly="readonly" %}
-                        <p class="mt-1 text-sm text-gray-500">Employee ID is automatically generated</p>
-                    </div>
+
+                <!-- First Name -->
+                <div>
+                    <label for="id_first_name" class="block text-sm font-medium text-gray-700">First Name</label>
+                    {% render_field form.first_name class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                    {% if form.first_name.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.first_name.errors.0 }}</p>
+                    {% endif %}
                 </div>
-            </div>
-            
-            <!-- Employee Information -->
-            <div class="space-y-6">
-                <h3 class="text-lg font-medium leading-6 text-gray-900">Employee Information</h3>
-                <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                    <!-- Username and Password Section -->
-                    <div>
-                        <label for="id_username" class="block text-sm font-medium text-gray-700">Username</label>
-                        {% render_field form.username class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
-                        {% if form.username.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.username.errors.0 }}</p>
-                        {% endif %}
-                    </div>
 
-                    <div>
-                        <label for="id_password" class="block text-sm font-medium text-gray-700">Password</label>
-                        <div class="mt-1 space-y-2">
-                            <div class="flex space-x-2">
-                                {% render_field form.password class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" type="password" %}
-                                <button type="button" 
-                                        id="toggle_password"
-                                        onclick="window.togglePasswordVisibility()"
-                                        class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    Show
-                                </button>
-                            </div>
-                            <div class="flex space-x-2">
-                                <button type="button"
-                                        onclick="window.generatePassword()"
-                                        class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    Generate Password
-                                </button>
-                                <button type="button"
-                                        id="copy_password"
-                                        onclick="window.copyPassword()"
-                                        class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    Copy
-                                </button>
-                            </div>
-                            <p class="mt-1 text-sm text-gray-500">Leave blank to generate a random password</p>
-                            {% if form.password.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.password.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-                    </div>
+                <!-- Last Name -->
+                <div>
+                    <label for="id_last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
+                    {% render_field form.last_name class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                    {% if form.last_name.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.last_name.errors.0 }}</p>
+                    {% endif %}
+                </div>
 
-                    <!-- Personal Information -->
-                    <div>
-                        <label for="id_first_name" class="block text-sm font-medium text-gray-700">First Name</label>
-                        {% render_field form.first_name class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
-                        {% if form.first_name.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.first_name.errors.0 }}</p>
-                        {% endif %}
-                    </div>
+                <!-- Email -->
+                <div>
+                    <label for="id_email" class="block text-sm font-medium text-gray-700">Email</label>
+                    {% render_field form.email class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                    {% if form.email.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                    {% endif %}
+                </div>
 
-                    <div>
-                        <label for="id_last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
-                        {% render_field form.last_name class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
-                        {% if form.last_name.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.last_name.errors.0 }}</p>
-                        {% endif %}
-                    </div>
+                <!-- Phone -->
+                <div>
+                    <label for="id_phone_number" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                    {% render_field form.phone_number class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                    {% if form.phone_number.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.phone_number.errors.0 }}</p>
+                    {% endif %}
+                </div>
 
-                    <!-- Email -->
-                    <div>
-                        <label for="id_email" class="block text-sm font-medium text-gray-700">Email</label>
-                        {% render_field form.email class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
-                        {% if form.email.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.email.errors.0 }}</p>
-                        {% endif %}
-                    </div>
+                <!-- IC Number -->
+                <div>
+                    <label for="id_ic_no" class="block text-sm font-medium text-gray-700">IC Number</label>
+                    {% render_field form.ic_no class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                </div>
 
-                    <!-- Phone Number -->
-                    <div>
-                        <label for="id_phone_number" class="block text-sm font-medium text-gray-700">Phone Number</label>
-                        {% render_field form.phone_number class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
-                        {% if form.phone_number.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.phone_number.errors.0 }}</p>
-                        {% endif %}
-                    </div>
+                <!-- IC Colour -->
+                <div>
+                    <label for="id_ic_colour" class="block text-sm font-medium text-gray-700">IC Colour</label>
+                    {% render_field form.ic_colour class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                </div>
 
-                    <!-- IC Number -->
-                    <div>
-                        <label for="id_ic_no" class="block text-sm font-medium text-gray-700">IC Number</label>
-                        {% render_field form.ic_no class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
-                    </div>
+                <!-- Date of Birth -->
+                <div>
+                    <label for="id_date_of_birth" class="block text-sm font-medium text-gray-700">Date of Birth</label>
+                    {% render_field form.date_of_birth class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" type="date" %}
+                    {% if form.date_of_birth.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.date_of_birth.errors.0 }}</p>
+                    {% endif %}
+                </div>
 
-                    <!-- IC Colour -->
-                    <div>
-                        <label for="id_ic_colour" class="block text-sm font-medium text-gray-700">IC Colour</label>
-                        {% render_field form.ic_colour class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
-                    </div>
-
-                    <!-- Date of Birth -->
-                    <div>
-                        <label for="id_date_of_birth" class="block text-sm font-medium text-gray-700">Date of Birth</label>
-                        {% render_field form.date_of_birth class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" type="date" %}
-                        {% if form.date_of_birth.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.date_of_birth.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Gender -->
-                    <div>
-                        <label for="id_gender" class="block text-sm font-medium text-gray-700">Gender</label>
-                        <select id="id_gender" name="gender" class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                            <option value="">Select Gender</option>
-                            <option value="M">Male</option>
-                            <option value="F">Female</option>
-                            <option value="O">Other</option>
-                            <option value="N">Prefer not to say</option>
-                        </select>
-                        {% if form.gender.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.gender.errors.0 }}</p>
-                        {% endif %}
-                    </div>
+                <!-- Gender -->
+                <div>
+                    <label for="id_gender" class="block text-sm font-medium text-gray-700">Gender</label>
+                    {% render_field form.gender class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                    {% if form.gender.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.gender.errors.0 }}</p>
+                    {% endif %}
                 </div>
 
                 <!-- Address -->
                 <div class="sm:col-span-2">
                     <label for="id_address" class="block text-sm font-medium text-gray-700">Address</label>
-                    {% render_field form.address class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" rows="3" %}
+                    {% render_field form.address class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" rows="3" %}
                     {% if form.address.errors %}
                         <p class="mt-2 text-sm text-red-600">{{ form.address.errors.0 }}</p>
                     {% endif %}
                 </div>
 
-                    <!-- Hire Date -->
-                    <div>
-                        <label for="id_hire_date" class="block text-sm font-medium text-gray-700">Hire Date</label>
-                        {% render_field form.hire_date class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" type="date" %}
-                        {% if form.hire_date.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.hire_date.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Salary -->
-                    <div>
-                        <label for="id_salary" class="block text-sm font-medium text-gray-700">Salary</label>
-                        {% render_field form.salary class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" type="number" step="0.01" %}
-                        {% if form.salary.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.salary.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Employee Status -->
-                    <div>
-                        <label for="id_employee_status" class="block text-sm font-medium text-gray-700">Employee Status</label>
-                        {% render_field form.employee_status class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
-                        {% if form.employee_status.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.employee_status.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Type of Appointment -->
-                    <div>
-                        <label for="id_appointment_type" class="block text-sm font-medium text-gray-700">Type of Appointment</label>
-                        {% render_field form.appointment_type class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
-                        {% if form.appointment_type.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.appointment_type.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                </div>
-                <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                    <!-- Post -->
-                    <div>
-                        <label for="id_post" class="block text-sm font-medium text-gray-700">Post</label>
-                        {% render_field form.post class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
-                        {% if form.post.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.post.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Department -->
-                    <div>
-                        <label for="id_department" class="block text-sm font-medium text-gray-700">Department</label>
-                        {% render_field form.department class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
-                        {% if form.department.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.department.errors.0 }}</p>
-                        {% endif %}
-                    </div>
+                <!-- Hire Date -->
+                <div>
+                    <label for="id_hire_date" class="block text-sm font-medium text-gray-700">Hire Date</label>
+                    {% render_field form.hire_date class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" type="date" %}
+                    {% if form.hire_date.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.hire_date.errors.0 }}</p>
+                    {% endif %}
                 </div>
 
-                <!-- Form Errors -->
-                {% if form.non_field_errors %}
-                <div class="rounded-md bg-red-50 p-4">
-                    <div class="flex">
-                        <div class="ml-3">
-                            <h3 class="text-sm font-medium text-red-800">There were errors with your submission</h3>
-                            <div class="mt-2 text-sm text-red-700">
-                                <ul class="list-disc pl-5 space-y-1">
-                                    {% for error in form.non_field_errors %}
-                                        <li>{{ error }}</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Salary -->
+                <div>
+                    <label for="id_salary" class="block text-sm font-medium text-gray-700">Salary</label>
+                    {% render_field form.salary class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" type="number" step="0.01" %}
+                    {% if form.salary.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.salary.errors.0 }}</p>
+                    {% endif %}
                 </div>
-                {% endif %}
 
-                <!-- Academic Qualifications -->
-                <div class="space-y-6 sm:col-span-2">
-                    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 w-full">
-                        <h3 class="text-lg font-medium leading-6 text-gray-900 mb-6">Academic Qualifications</h3>
-                        <div class="w-full">
-                            {{ qualification_formset.management_form }}
-                            
-                            <!-- Add the template before the table -->
-                            <template id="empty-form-template">
-                                <tr class="qualification-form">
-                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
-                                        <input type="text" 
-                                               name="qualification_set-__prefix__-degree_diploma" 
-                                               id="id_qualification_set-__prefix__-degree_diploma"
-                                               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                    </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                        <input type="text" 
-                                               name="qualification_set-__prefix__-university_college" 
-                                               id="id_qualification_set-__prefix__-university_college"
-                                               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                    </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                        <input type="date" 
-                                               name="qualification_set-__prefix__-from_date" 
-                                               id="id_qualification_set-__prefix__-from_date"
-                                               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                    </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                        <input type="date" 
-                                               name="qualification_set-__prefix__-to_date" 
-                                               id="id_qualification_set-__prefix__-to_date"
-                                               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                    </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                        <input type="hidden" 
-                                               name="qualification_set-__prefix__-DELETE" 
-                                               id="id_qualification_set-__prefix__-DELETE">
-                                        <button type="button" 
-                                                onclick="window.deleteQualification(this)"
-                                                class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
-                                            Delete
-                                        </button>
-                                    </td>
-                                </tr>
-                            </template>
-
-                            <div class="overflow-x-auto ring-1 ring-gray-300 rounded-lg w-full">
-                                <table class="min-w-full divide-y divide-gray-300">
-                                    <thead>
-                                        <tr class="bg-gray-50">
-                                            <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Degree/Diploma</th>
-                                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">University/College</th>
-                                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">From Date</th>
-                                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">To Date</th>
-                                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-gray-200 bg-white" id="qualification-formset">
-                                        {% for form in qualification_formset %}
-                                            <tr class="qualification-form {% if form.DELETE.value %}d-none{% endif %}">
-                                                {{ form.id }}
-                                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
-                                                    {{ form.degree_diploma|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
-                                                </td>
-                                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                                    {{ form.university_college|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
-                                                </td>
-                                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                                    {{ form.from_date|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
-                                                </td>
-                                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                                    {{ form.to_date|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
-                                                </td>
-                                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                                    {{ form.DELETE.as_hidden }}
-                                                    <button type="button" 
-                                                            onclick="window.deleteQualification(this)"
-                                                            class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
-                                                        Delete
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="mt-6 space-y-6">
-                                <div>
-                                    <button type="button" 
-                                            onclick="window.addQualification()"
-                                            class="mt-4 inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                                        Add Another Qualification
-                                    </button>
-                                </div>
-
-                                <!-- Roles - Checkbox Group with 2 Columns -->
-                    <div class="sm:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Roles
-                        </label>
-                        <div class="max-h-48 overflow-y-auto p-3 bg-white rounded-md border border-gray-300">
-                            <div class="grid grid-cols-2 gap-4">
-                                {% for choice in form.roles.field.queryset %}
-                                <div class="flex items-center">
-                                    <input type="checkbox" 
-                                        name="roles" 
-                                        value="{{ choice.id }}" 
-                                        id="role_{{ choice.id }}"
-                                        {% if choice in form.instance.roles.all %}checked{% endif %}
-                                        class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
-                                    <label for="role_{{ choice.id }}" class="ml-2 text-sm text-gray-900 truncate">
-                                        {{ choice.name }}
-                                    </label>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        {% if form.roles.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.roles.errors.0 }}</p>
-                        {% endif %}
-                        <p class="mt-1 text-sm text-gray-500">Select all applicable roles</p>
-                    </div>
-                                
-                                <!-- Form Actions -->
-                                <div class="flex items-center justify-end gap-x-6 border-t border-gray-900/10 pt-6">
-                                    <a href="{% url 'employees:employee_list' %}" 
-                                       class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600">
-                                        Cancel
-                                    </a>
-                                    <button type="submit"
-                                            class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                                        Create Employee
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Appointment Type -->
+                <div>
+                    <label for="id_appointment_type" class="block text-sm font-medium text-gray-700">Type of Appointment</label>
+                    {% render_field form.appointment_type class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                    {% if form.appointment_type.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.appointment_type.errors.0 }}</p>
+                    {% endif %}
                 </div>
-            </div>
-        </form>
-    </div>
-</div>
 
-<!-- Document Upload Section -->
-<div class="space-y-6 sm:col-span-2">
-    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 w-full">
-        <h3 class="text-lg font-medium leading-6 text-gray-900 mb-6">Documents</h3>
-        <div class="w-full">
-            {{ document_formset.management_form }}
-            
-            <!-- Document template -->
-            <template id="empty-document-template">
-                <tr class="document-form">
-                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
-                        <input type="text" 
-                               name="document_set-__prefix__-title" 
-                               id="id_document_set-__prefix__-title"
-                               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                               placeholder="Document Title">
-                    </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                        <div class="file-input-container">
-                            <input type="file" 
-                                   name="document_set-__prefix__-file" 
-                                   id="id_document_set-__prefix__-file"
-                                   onchange="handleFileSelect(this)"
-                                   class="block w-full text-sm text-gray-500
-                                          file:mr-4 file:py-2 file:px-4
-                                          file:rounded-md file:border-0
-                                          file:text-sm file:font-semibold
-                                          file:bg-indigo-50 file:text-indigo-700
-                                          file:hover:bg-indigo-100">
-                            <span class="hidden selected-filename text-sm text-gray-900"></span>
-                        </div>
-                    </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                        <div class="flex items-center gap-3">
-                            <button type="button" 
-                                    onclick="triggerFileInput(this)"
-                                    class="hidden replace-button inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                                Replace
-                            </button>
-                            <input type="hidden" 
-                                   name="document_set-__prefix__-DELETE" 
-                                   id="id_document_set-__prefix__-DELETE">
-                            <button type="button" 
-                                    onclick="window.deleteDocument(this)"
-                                    class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
-                                Delete
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            </template>
+                <!-- Employee Status -->
+                <div>
+                    <label for="id_employee_status" class="block text-sm font-medium text-gray-700">Employee Status</label>
+                    {% render_field form.employee_status class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                    {% if form.employee_status.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.employee_status.errors.0 }}</p>
+                    {% endif %}
+                </div>
 
-            <div class="overflow-x-auto ring-1 ring-gray-300 rounded-lg w-full">
-                <table class="min-w-full divide-y divide-gray-300">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Title</th>
-                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">File</th>
-                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200 bg-white" id="document-formset">
-                        {% for form in document_formset %}
-                            <tr class="document-form {% if form.DELETE.value %}d-none{% endif %}">
-                                {{ form.id }}
-                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
-                                    <input type="text" 
-                                           name="document_set-{{ forloop.counter0 }}-title" 
-                                           id="id_document_set-{{ forloop.counter0 }}-title"
-                                           value="{{ form.instance.title|default:'' }}"
-                                           class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                </td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                    <div class="file-input-container">
-                                        <input type="file" 
-                                               name="document_set-{{ forloop.counter0 }}-file" 
-                                               id="id_document_set-{{ forloop.counter0 }}-file"
-                                               onchange="handleFileSelect(this)"
-                                               class="block w-full text-sm text-gray-500
-                                                      file:mr-4 file:py-2 file:px-4
-                                                      file:rounded-md file:border-0
-                                                      file:text-sm file:font-semibold
-                                                      file:bg-indigo-50 file:text-indigo-700
-                                                      file:hover:bg-indigo-100">
-                                        <span class="hidden selected-filename text-sm text-gray-900"></span>
-                                    </div>
-                                </td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                    <div class="flex items-center gap-3">
-                                        <button type="button" 
-                                                onclick="triggerFileInput(this)"
-                                                class="hidden replace-button inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                                            Replace
-                                        </button>
-                                        <input type="hidden" 
-                                               name="document_set-{{ forloop.counter0 }}-DELETE" 
-                                               id="id_document_set-{{ forloop.counter0 }}-DELETE">
-                                        <button type="button" 
-                                                onclick="window.deleteDocument(this)"
-                                                class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
-                                            Delete
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            <div class="mt-6">
-                <button type="button" 
-                        onclick="window.addDocument()"
-                        class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Add Document
-                </button>
+                <!-- Post -->
+                <div>
+                    <label for="id_post" class="block text-sm font-medium text-gray-700">Post</label>
+                    {% render_field form.post class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                    {% if form.post.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.post.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Department -->
+                <div>
+                    <label for="id_department" class="block text-sm font-medium text-gray-700">Department</label>
+                    {% render_field form.department class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" %}
+                    {% if form.department.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.department.errors.0 }}</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
-    </div>
+
+        <!-- Academic Qualifications -->
+        <div class="space-y-6 sm:col-span-2">
+            <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 w-full">
+                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-6">Academic Qualifications</h3>
+                <div class="w-full">
+                    {{ qualification_formset.management_form }}
+                    
+                    <!-- Template for new row -->
+                    <template id="empty-form-template">
+                        <tr class="qualification-form">
+                            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
+                                <input type="text" 
+                                       name="qualification_set-__prefix__-degree_diploma" 
+                                       id="id_qualification_set-__prefix__-degree_diploma"
+                                       class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                <input type="text" 
+                                       name="qualification_set-__prefix__-university_college" 
+                                       id="id_qualification_set-__prefix__-university_college"
+                                       class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                <input type="date" 
+                                       name="qualification_set-__prefix__-from_date" 
+                                       id="id_qualification_set-__prefix__-from_date"
+                                       class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                <input type="date" 
+                                       name="qualification_set-__prefix__-to_date" 
+                                       id="id_qualification_set-__prefix__-to_date"
+                                       class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                <input type="hidden" 
+                                       name="qualification_set-__prefix__-DELETE" 
+                                       id="id_qualification_set-__prefix__-DELETE">
+                                <button type="button" 
+                                        onclick="window.deleteQualification(this)"
+                                        class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    </template>
+
+                    <!-- Existing Formset Rows -->
+                    <div class="overflow-x-auto ring-1 ring-gray-300 rounded-lg w-full">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Degree/Diploma</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">University/College</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">From Date</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">To Date</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white" id="qualification-formset">
+                                {% for form in qualification_formset %}
+                                    <tr class="qualification-form {% if form.DELETE.value %}d-none{% endif %}">
+                                        {{ form.id }}
+                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
+                                            {{ form.degree_diploma|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                            {{ form.university_college|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                            {{ form.from_date|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                            {{ form.to_date|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-gray-300 focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                            {{ form.DELETE.as_hidden }}
+                                            <button type="button" 
+                                                    onclick="window.deleteQualification(this)"
+                                                    class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500">
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Add Button -->
+                    <div class="mt-6">
+                        <button type="button" 
+                                onclick="window.addQualification()"
+                                class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                            Add Another Qualification
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Roles -->
+        <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Roles</label>
+            <div class="max-h-48 overflow-y-auto p-3 bg-white rounded-md border border-gray-300">
+                <div class="grid grid-cols-2 gap-4">
+                    {% for choice in form.roles.field.queryset %}
+                    <div class="flex items-center">
+                        <input type="checkbox" 
+                            name="roles" 
+                            value="{{ choice.id }}" 
+                            id="role_{{ choice.id }}"
+                            {% if choice in form.instance.roles.all %}checked{% endif %}
+                            class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
+                        <label for="role_{{ choice.id }}" class="ml-2 text-sm text-gray-900 truncate">
+                            {{ choice.name }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% if form.roles.errors %}
+                <p class="mt-2 text-sm text-red-600">{{ form.roles.errors.0 }}</p>
+            {% endif %}
+            <p class="mt-1 text-sm text-gray-500">Select all applicable roles</p>
+        </div>
+
+        <!-- Documents -->
+        <div class="space-y-6 sm:col-span-2">
+            <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 w-full">
+                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-6">Documents</h3>
+                <div class="w-full">
+                    {{ document_formset.management_form }}
+                    
+                    <!-- Empty row template for new document -->
+                    <template id="empty-document-template">
+                        <tr class="document-form">
+                            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
+                                <input type="text" 
+                                       name="document_set-__prefix__-title" 
+                                       id="id_document_set-__prefix__-title"
+                                       class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                       placeholder="Document Title">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                <div class="file-input-container">
+                                    <input type="file" 
+                                           name="document_set-__prefix__-file" 
+                                           id="id_document_set-__prefix__-file"
+                                           onchange="handleFileSelect(this)"
+                                           class="block w-full text-sm text-gray-500
+                                                  file:mr-4 file:py-2 file:px-4
+                                                  file:rounded-md file:border-0
+                                                  file:text-sm file:font-semibold
+                                                  file:bg-indigo-50 file:text-indigo-700
+                                                  hover:file:bg-indigo-100">
+                                    <span class="hidden selected-filename text-sm text-gray-900"></span>
+                                </div>
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                <div class="flex items-center gap-3">
+                                    <button type="button" 
+                                            onclick="triggerFileInput(this)"
+                                            class="hidden replace-button inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                                        Replace
+                                    </button>
+                                    <input type="hidden" 
+                                           name="document_set-__prefix__-DELETE" 
+                                           id="id_document_set-__prefix__-DELETE">
+                                    <button type="button" 
+                                            onclick="window.deleteDocument(this)"
+                                            class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500">
+                                        Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+
+                    <!-- Existing document rows -->
+                    <div class="overflow-x-auto ring-1 ring-gray-300 rounded-lg w-full">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Title</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">File</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white" id="document-formset">
+                                {% for form in document_formset %}
+                                    <tr class="document-form {% if form.DELETE.value %}d-none{% endif %}">
+                                        {{ form.id }}
+                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
+                                            <input type="text" 
+                                                   name="document_set-{{ forloop.counter0 }}-title" 
+                                                   id="id_document_set-{{ forloop.counter0 }}-title"
+                                                   value="{{ form.instance.title|default:'' }}"
+                                                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                            <div class="file-input-container">
+                                                <input type="file" 
+                                                       name="document_set-{{ forloop.counter0 }}-file" 
+                                                       id="id_document_set-{{ forloop.counter0 }}-file"
+                                                       onchange="handleFileSelect(this)"
+                                                       class="block w-full text-sm text-gray-500
+                                                              file:mr-4 file:py-2 file:px-4
+                                                              file:rounded-md file:border-0
+                                                              file:text-sm file:font-semibold
+                                                              file:bg-indigo-50 file:text-indigo-700
+                                                              hover:file:bg-indigo-100">
+                                                <span class="hidden selected-filename text-sm text-gray-900"></span>
+                                            </div>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                            <div class="flex items-center gap-3">
+                                                <button type="button" 
+                                                        onclick="triggerFileInput(this)"
+                                                        class="hidden replace-button inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                                                    Replace
+                                                </button>
+                                                <input type="hidden" 
+                                                       name="document_set-{{ forloop.counter0 }}-DELETE" 
+                                                       id="id_document_set-{{ forloop.counter0 }}-DELETE">
+                                                <button type="button" 
+                                                        onclick="window.deleteDocument(this)"
+                                                        class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500">
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Add Button -->
+                    <div class="mt-6">
+                        <button type="button" 
+                                onclick="window.addDocument()"
+                                class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                            Add Document
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex items-center justify-end gap-x-6 border-t border-gray-900/10 pt-6">
+            <a href="{% url 'employees:employee_list' %}" 
+               class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600">
+                Cancel
+            </a>
+            <button type="submit"
+                    class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600">
+                Create Employee
+            </button>
+        </div>
+    </form>
 </div>
-{% endblock %}  
+<script>
+    document.getElementById('resumeUploadForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        fetch('{% url "employees:parse_resume" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                document.getElementById('id_username').value = data.data.username;
+                document.getElementById('id_email').value = data.data.email;
+                document.getElementById('id_first_name').value = data.data.first_name;
+                document.getElementById('id_last_name').value = data.data.last_name;
+                document.getElementById('id_phone_number').value = data.data.phone_number;
+                document.getElementById('id_ic_no').value = data.data.ic_no;
+                document.getElementById('id_address').value = data.data.address;
+    
+                alert('Resume parsed successfully!');
+            } else {
+                alert('Error parsing resume: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while parsing the resume.');
+        });
+    });
+    </script>
+{% endblock %}

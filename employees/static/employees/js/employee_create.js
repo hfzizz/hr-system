@@ -88,6 +88,61 @@ window.triggerFileInput = function(button) {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM Content Loaded');
     
+    // Initialize resume parsing functionality
+    const resumeForm = document.getElementById('resumeUploadForm');
+    console.log('Resume form found:', resumeForm);
+    
+    if (resumeForm) {
+        console.log('Resume form URL:', resumeForm.dataset.url);
+        
+        resumeForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            console.log('Form submitted');
+            
+            const formData = new FormData(this);
+            const resumeFile = formData.get('resume');
+            console.log('Resume file:', resumeFile);
+            
+            if (!resumeFile) {
+                showMessage('Please select a resume file', 'error');
+                return;
+            }
+
+            showMessage('Parsing resume... Please wait.', 'info');
+            
+            try {
+                console.log('Sending request to:', resumeForm.dataset.url);
+                const response = await fetch(resumeForm.dataset.url, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+
+                console.log('Response status:', response.status);
+                if (!response.ok) throw new Error('Resume parsing failed');
+
+                const data = await response.json();
+                console.log('Received response data:', data);
+                console.log('JSONB data:', data.jsonb_data);
+                console.log('Form data:', data.data);
+
+                if (data.status === 'success') {
+                    console.log('Starting to populate fields with data:', data.data);
+                    populateFormFields(data.data);
+                    showMessage(`Resume parsed successfully! Populated ${Object.keys(data.data).length} fields.`, 'success');
+                } else {
+                    throw new Error(data.message || 'Failed to parse resume');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage(`Error: ${error.message}`, 'error');
+            }
+        });
+    }
+
+    // Initialize other functions
     window.formCount = document.querySelectorAll('.qualification-form').length;
     window.maxForms = 10;
     
@@ -114,6 +169,122 @@ document.addEventListener('DOMContentLoaded', function() {
     const initialForms = document.querySelectorAll("#publication-formset .publication-form");
     if (initialForms.length === 0) {
         addPublication(); // Add one form by default if empty
+    }
+
+    // Initialize other document-related functions
+    const template = document.querySelector('#empty-document-template');
+    console.log('Checking for template:', template);
+    
+    if (template) {
+        window.addDocument = function() {
+            console.log('Adding document...');
+            const totalFormsInput = document.querySelector('[name="document_set-TOTAL_FORMS"]');
+            const currentFormCount = parseInt(totalFormsInput.value);
+            
+            // Clone the template content
+            const newRow = template.content.cloneNode(true).querySelector('tr');
+            const tbody = document.getElementById('document-formset');
+            
+            if (!tbody) {
+                console.error('Document formset tbody not found');
+                return;
+            }
+            
+            // Replace all instances of __prefix__ with the current form count
+            newRow.innerHTML = newRow.innerHTML.replace(/__prefix__/g, currentFormCount);
+            
+            // Update the employee ID in the new row
+            const employeeId = document.querySelector('[name="id"]')?.value;
+            if (employeeId) {
+                const employeeInput = newRow.querySelector(`[name="document_set-${currentFormCount}-employee"]`);
+                if (employeeInput) {
+                    employeeInput.value = employeeId;
+                }
+            }
+            
+            tbody.appendChild(newRow);
+            
+            // Update management form
+            totalFormsInput.value = currentFormCount + 1;
+            
+            console.log('Document added successfully. New total:', totalFormsInput.value);
+        };
+
+        window.deleteDocument = function(button) {
+            const row = button.closest('tr');
+            const deleteInput = row.querySelector('input[name$="-DELETE"]');
+            
+            if (deleteInput) {
+                // Mark for deletion in Django
+                deleteInput.value = 'on';
+                
+                // Hide the row visually
+                row.style.display = 'none';
+                row.classList.add('d-none');
+                
+                console.log('Document marked for deletion:', deleteInput.value);
+            } else {
+                // If no DELETE input found (new unsaved row), just remove the row
+                row.remove();
+                
+                // Update the total forms count
+                const totalFormsInput = document.querySelector('[name="document_set-TOTAL_FORMS"]');
+                if (totalFormsInput) {
+                    const currentTotal = parseInt(totalFormsInput.value);
+                    totalFormsInput.value = currentTotal - 1;
+                }
+            }
+        };
+
+        // Preview modal functions
+        window.showPreviewModal = function(title, url) {
+            console.log('Showing preview modal:', title, url);
+            const modal = document.getElementById('previewModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const preview = document.getElementById('documentPreview');
+            
+            if (!modal || !modalTitle || !preview) {
+                console.error('Modal elements not found');
+                return;
+            }
+
+            modalTitle.textContent = title;
+            preview.src = url;
+            modal.classList.remove('hidden');
+        };
+
+        window.closePreviewModal = function() {
+            const modal = document.getElementById('previewModal');
+            const preview = document.getElementById('documentPreview');
+            
+            if (modal && preview) {
+                preview.src = '';
+                modal.classList.add('hidden');
+            }
+        };
+
+        // Initialize event listeners
+        function initializeEventListeners() {
+            console.log('Initializing document event listeners...');
+            
+            // Preview buttons
+            document.querySelectorAll('.preview-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const title = this.getAttribute('data-title');
+                    const url = this.getAttribute('data-url');
+                    console.log('Preview clicked:', title, url);
+                    showPreviewModal(title, url);
+                });
+            });
+        }
+
+        // Call the initialization when the DOM is loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeEventListeners);
+        } else {
+            initializeEventListeners();
+        }
     }
 });
 
@@ -389,124 +560,6 @@ function initializeQualificationFunctions() {
         if (totalFormsInput) {
             totalFormsInput.value = rows.length;
             console.log('Updated total forms count:', rows.length);
-        }
-    }
-}
-
-function initializeDocumentFunctions() {
-    // Initialize other document-related functions
-    const template = document.querySelector('#empty-document-template');
-    console.log('Checking for template:', template);
-    
-    if (template) {
-        window.addDocument = function() {
-            console.log('Adding document...');
-            const totalFormsInput = document.querySelector('[name="document_set-TOTAL_FORMS"]');
-            const currentFormCount = parseInt(totalFormsInput.value);
-            
-            // Clone the template content
-            const newRow = template.content.cloneNode(true).querySelector('tr');
-            const tbody = document.getElementById('document-formset');
-            
-            if (!tbody) {
-                console.error('Document formset tbody not found');
-                return;
-            }
-            
-            // Replace all instances of __prefix__ with the current form count
-            newRow.innerHTML = newRow.innerHTML.replace(/__prefix__/g, currentFormCount);
-            
-            // Update the employee ID in the new row
-            const employeeId = document.querySelector('[name="id"]')?.value;
-            if (employeeId) {
-                const employeeInput = newRow.querySelector(`[name="document_set-${currentFormCount}-employee"]`);
-                if (employeeInput) {
-                    employeeInput.value = employeeId;
-                }
-            }
-            
-            tbody.appendChild(newRow);
-            
-            // Update management form
-            totalFormsInput.value = currentFormCount + 1;
-            
-            console.log('Document added successfully. New total:', totalFormsInput.value);
-        };
-
-        window.deleteDocument = function(button) {
-            const row = button.closest('tr');
-            const deleteInput = row.querySelector('input[name$="-DELETE"]');
-            
-            if (deleteInput) {
-                // Mark for deletion in Django
-                deleteInput.value = 'on';
-                
-                // Hide the row visually
-                row.style.display = 'none';
-                row.classList.add('d-none');
-                
-                console.log('Document marked for deletion:', deleteInput.value);
-            } else {
-                // If no DELETE input found (new unsaved row), just remove the row
-                row.remove();
-                
-                // Update the total forms count
-                const totalFormsInput = document.querySelector('[name="document_set-TOTAL_FORMS"]');
-                if (totalFormsInput) {
-                    const currentTotal = parseInt(totalFormsInput.value);
-                    totalFormsInput.value = currentTotal - 1;
-                }
-            }
-        };
-
-        // Preview modal functions
-        window.showPreviewModal = function(title, url) {
-            console.log('Showing preview modal:', title, url);
-            const modal = document.getElementById('previewModal');
-            const modalTitle = document.getElementById('modalTitle');
-            const preview = document.getElementById('documentPreview');
-            
-            if (!modal || !modalTitle || !preview) {
-                console.error('Modal elements not found');
-                return;
-            }
-
-            modalTitle.textContent = title;
-            preview.src = url;
-            modal.classList.remove('hidden');
-        };
-
-        window.closePreviewModal = function() {
-            const modal = document.getElementById('previewModal');
-            const preview = document.getElementById('documentPreview');
-            
-            if (modal && preview) {
-                preview.src = '';
-                modal.classList.add('hidden');
-            }
-        };
-
-        // Initialize event listeners
-        function initializeEventListeners() {
-            console.log('Initializing document event listeners...');
-            
-            // Preview buttons
-            document.querySelectorAll('.preview-btn').forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const title = this.getAttribute('data-title');
-                    const url = this.getAttribute('data-url');
-                    console.log('Preview clicked:', title, url);
-                    showPreviewModal(title, url);
-                });
-            });
-        }
-
-        // Call the initialization when the DOM is loaded
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeEventListeners);
-        } else {
-            initializeEventListeners();
         }
     }
 }
@@ -895,3 +948,107 @@ window.finalizeCitation = finalizeCitation;
 window.removePublication = removePublication;
 window.populateAdditionalFields = populateAdditionalFields;
 window.inspectDOM = inspectDOM;
+
+function populateFormFields(data) {
+    console.log('=== populateFormFields Debug ===');
+    console.log('Raw data received:', data);
+    console.log('Data type:', typeof data);
+    
+    // Check if data is a string that needs parsing
+    if (typeof data === 'string') {
+        try {
+            data = JSON.parse(data);
+            console.log('Parsed JSON data:', data);
+        } catch (e) {
+            console.error('Failed to parse data as JSON:', e);
+            return;
+        }
+    }
+    
+    const fieldMapping = {
+        'username': 'id_username',
+        'first_name': 'id_first_name',
+        'last_name': 'id_last_name',
+        'email': 'id_email',
+        'phone_number': 'id_phone_number',
+        'address': 'id_address',
+        'ic_no': 'id_ic_no',
+        'date_of_birth': 'id_date_of_birth',
+        'gender': 'id_gender',
+        'department': 'id_department',
+        'post': 'id_post',
+        'appointment_type': 'id_appointment_type',
+        'employee_status': 'id_employee_status',
+        'hire_date': 'id_hire_date',
+        'salary': 'id_salary'
+    };
+
+    console.log('Field mapping:', fieldMapping);
+    let populatedCount = 0;
+    let notFoundFields = [];
+    let emptyDataFields = [];
+    
+    for (const [key, fieldId] of Object.entries(fieldMapping)) {
+        const field = document.getElementById(fieldId);
+        console.log(`\nChecking field "${key}":`);
+        console.log('- Field ID:', fieldId);
+        console.log('- Field element:', field);
+        console.log('- Data value:', data[key]);
+        
+        if (!field) {
+            notFoundFields.push(fieldId);
+            console.log(`- Field element not found in DOM: ${fieldId}`);
+            continue;
+        }
+        
+        if (!data[key]) {
+            emptyDataFields.push(key);
+            console.log(`- No data for field: ${key}`);
+            continue;
+        }
+        
+        try {
+            console.log(`- Setting value for ${fieldId}:`, data[key]);
+            field.value = data[key];
+            field.classList.add('bg-green-50');
+            setTimeout(() => field.classList.remove('bg-green-50'), 2000);
+            populatedCount++;
+            console.log(`- Successfully set value for ${fieldId}`);
+        } catch (e) {
+            console.error(`- Error setting value for ${fieldId}:`, e);
+        }
+    }
+    
+    console.log('\n=== Population Summary ===');
+    console.log('Total fields populated:', populatedCount);
+    console.log('Fields not found in DOM:', notFoundFields);
+    console.log('Fields with no data:', emptyDataFields);
+    
+    if (populatedCount > 0) {
+        showMessage(`Successfully populated ${populatedCount} fields from resume!`, 'success');
+    } else {
+        showMessage('No fields could be populated from the resume. Please check the console for details.', 'error');
+    }
+}
+
+function showMessage(message, type = 'info') {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `mt-2 text-sm p-3 rounded-md border ${
+        type === 'error' ? 'text-red-700 bg-red-50 border-red-200' :
+        type === 'success' ? 'text-green-700 bg-green-50 border-green-200' :
+        'text-indigo-700 bg-indigo-50 border-indigo-200'
+    }`;
+    messageDiv.textContent = message;
+    
+    const resumeSection = document.querySelector('.resume-upload-section');
+    if (resumeSection) {
+        // Remove any existing messages
+        const existingMessages = resumeSection.querySelectorAll('.mt-2');
+        existingMessages.forEach(msg => msg.remove());
+        
+        resumeSection.appendChild(messageDiv);
+        if (type !== 'info') {
+            setTimeout(() => messageDiv.remove(), 5000);
+        }
+    }
+}

@@ -36,7 +36,7 @@
             },
             labels: [
                 {% for appointment in appointments %}
-                    "{{ appointment.name }}"{% if not forloop.last %},{% endif %}
+                    "{{ appointment.appointment_type|default:'Unknown' }}"{% if not forloop.last %},{% endif %}
                 {% endfor %}
             ],
             dataLabels: {

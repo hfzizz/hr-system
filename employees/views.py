@@ -292,6 +292,13 @@ class EmployeeListView(LoginRequiredMixin, HRRequiredMixin, ListView):
                 'id': 'phone_number',
                 'label': 'Phone',
                 'value': 'phone_number'
+            },
+            {
+                'id': 'actions',
+                'label': 'Actions',
+                'value': 'actions',
+                'sortable': False,
+                'visible': True
             }
         ]
 
@@ -880,10 +887,11 @@ class SettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
 class ResumeParserView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
-        print("Received POST request")  # Debug print
+        print("\n=== Resume Parser View Debug ===")
+        print("Received POST request")
         
         if 'resume' not in request.FILES:
-            print("No file in request")  # Debug print
+            print("No file in request")
             return JsonResponse({
                 'status': 'error',
                 'message': 'No resume file provided'
@@ -891,7 +899,9 @@ class ResumeParserView(LoginRequiredMixin, View):
             
         try:
             resume_file = request.FILES['resume']
-            print(f"Processing file: {resume_file.name}")  # Debug print
+            print(f"Processing file: {resume_file.name}")
+            print(f"File size: {resume_file.size} bytes")
+            print(f"Content type: {resume_file.content_type}")
             
             # Verify file type
             if not resume_file.name.lower().endswith('.pdf'):
@@ -907,37 +917,73 @@ class ResumeParserView(LoginRequiredMixin, View):
             # Save the file temporarily
             file_path = fs.save(filename, resume_file)
             full_path = fs.path(file_path)
+            print(f"Saved file to: {full_path}")
             
             try:
                 # Parse the resume
+                print("\n=== Resume Parsing ===")
                 parsed_data = parse_resume(full_path)
-                print(f"Parsed data: {parsed_data}")  # Debug print
+                print(f"Raw parsed data type: {type(parsed_data)}")
+                print(f"Raw parsed data keys: {parsed_data.keys() if isinstance(parsed_data, dict) else 'Not a dictionary'}")
+                print("Raw parsed data content:")
+                print(json.dumps(parsed_data, indent=2))
                 
-                # Ensure all values are strings and JSON serializable
-                cleaned_data = {}
-                for key, value in parsed_data.items():
-                    if value is not None:
-                        try:
-                            # Test JSON serialization
-                            json.dumps(str(value))
-                            cleaned_data[key] = str(value)
-                        except (TypeError, ValueError):
-                            cleaned_data[key] = ''
-                    else:
-                        cleaned_data[key] = ''
-                
-                response_data = {
-                    'status': 'success',
-                    'data': cleaned_data
+                # Transform the parsed data into form-compatible format
+                print("\n=== Data Transformation ===")
+                form_data = {
+                    'first_name': parsed_data.get('personal_info', {}).get('first_name', ''),
+                    'last_name': parsed_data.get('personal_info', {}).get('last_name', ''),
+                    'email': parsed_data.get('personal_info', {}).get('email', ''),
+                    'phone_number': parsed_data.get('personal_info', {}).get('phone_number', ''),
+                    'address': parsed_data.get('personal_info', {}).get('address', ''),
+                    'ic_no': parsed_data.get('personal_info', {}).get('ic_no', ''),
+                    'date_of_birth': parsed_data.get('personal_info', {}).get('date_of_birth', ''),
+                    'gender': parsed_data.get('personal_info', {}).get('gender', ''),
+                    'department': parsed_data.get('employment', {}).get('department', ''),
+                    'post': parsed_data.get('employment', {}).get('post', ''),
+                    'appointment_type': parsed_data.get('employment', {}).get('appointment_type', ''),
+                    'employee_status': parsed_data.get('employment', {}).get('employee_status', ''),
+                    'hire_date': parsed_data.get('employment', {}).get('hire_date', ''),
+                    'salary': parsed_data.get('employment', {}).get('salary', '')
                 }
                 
-                # Test full response serialization
-                json.dumps(response_data)
+                # Generate a username from email or name
+                if form_data['email']:
+                    form_data['username'] = form_data['email'].split('@')[0]
+                elif form_data['first_name'] and form_data['last_name']:
+                    form_data['username'] = f"{form_data['first_name']}{form_data['last_name']}".lower()
+                
+                print("\nTransformed form data:")
+                print(json.dumps(form_data, indent=2))
+                print(f"Form data type: {type(form_data)}")
+                
+                # Check which fields have values
+                populated_fields = {k: v for k, v in form_data.items() if v}
+                print(f"\nFields with values ({len(populated_fields)}):")
+                for key, value in populated_fields.items():
+                    print(f"- {key}: {value}")
+                
+                # Prepare the response
+                response_data = {
+                    'status': 'success',
+                    'data': form_data,
+                    'jsonb_data': parsed_data
+                }
+                
+                print("\n=== Response Data ===")
+                print(f"Response structure: {list(response_data.keys())}")
+                print(f"Response data type: {type(response_data)}")
+                print(f"Form data in response type: {type(response_data['data'])}")
+                print(f"JSONB data in response type: {type(response_data['jsonb_data'])}")
                 
                 return JsonResponse(response_data)
                     
             except Exception as e:
-                print(f"Error parsing resume: {str(e)}")  # Debug print
+                print(f"\nError parsing resume: {str(e)}")
+                print(f"Error type: {type(e)}")
+                import traceback
+                print("Traceback:")
+                print(traceback.format_exc())
                 return JsonResponse({
                     'status': 'error',
                     'message': str(e)
@@ -946,13 +992,51 @@ class ResumeParserView(LoginRequiredMixin, View):
                 # Clean up: remove the temporary file
                 if os.path.exists(full_path):
                     os.remove(full_path)
+                    print(f"\nCleaned up temporary file: {full_path}")
                 
         except Exception as e:
-            print(f"Error handling file: {str(e)}")  # Debug print
+            print(f"\nError handling file: {str(e)}")
+            print(f"Error type: {type(e)}")
+            import traceback
+            print("Traceback:")
+            print(traceback.format_exc())
             return JsonResponse({
                 'status': 'error',
                 'message': str(e)
             }, status=400)
 
+@login_required
+def employee_search(request):
+    """
+    Search for employees based on query parameters.
+    """
+    query = request.GET.get('q', '')
+    if query:
+        employees = Employee.objects.filter(
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query) |
+            Q(employee_id__icontains=query) |
+            Q(email__icontains=query)
+        )
+    else:
+        employees = Employee.objects.none()
+    
+    return render(request, 'employees/employee_list.html', {
+        'employees': employees,
+        'search_query': query
+    })
 
-
+@login_required
+@require_http_methods(["POST"])
+def employee_delete(request, employee_id):
+    """
+    Delete an employee record.
+    """
+    try:
+        employee = Employee.objects.get(id=employee_id)
+        employee.delete()
+        messages.success(request, f'Employee {employee.get_full_name()} has been deleted successfully.')
+    except Employee.DoesNotExist:
+        messages.error(request, 'Employee not found.')
+    
+    return redirect('employees:employee_list')

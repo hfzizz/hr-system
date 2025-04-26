@@ -46,7 +46,7 @@
 
             <!-- Pending Reviews -->
             <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-                <dt class="truncate text-sm font-medium text-gray-500">Pending Reviews</dt>
+                <dt class="truncate text-sm font-medium text-gray-500">Pending Appraisals Reviews</dt>
                 <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ pending_reviews }}</dd>
             </div>
         </div>
@@ -54,13 +54,13 @@
         <!-- First row of charts -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             {% include "employees/department_chart.html" %}
-            {% include "employees/status_chart.html" %}
+            {% include "employees/appointment_chart.html" %}
         </div>
 
         <!-- Second row of charts -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {% include "employees/position_chart.html" %}
-            {% include "employees/appointment_chart.html" %}
+            {% include "employees/status_chart.html" %}
         </div>
 
         <!-- Recent Activity -->
