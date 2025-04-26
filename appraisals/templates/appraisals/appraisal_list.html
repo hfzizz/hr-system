@@ -334,6 +334,9 @@
                         <th scope="col" data-column="period" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Period
                         </th>
+                        <th scope="col" data-column="dateline" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Deadline
+                        </th>
                         <th scope="col" data-column="status" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Status
                         </th>
@@ -359,7 +362,10 @@
                                 <div class="text-sm text-gray-900">{{ appraisal.appraiser_secondary }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">{{ appraisal.get_review_period_display }}</div>
+                                <div class="text-sm text-gray-900">{{ appraisal.get_appraisal_period_display }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ appraisal.get_deadline_display }}</div>
                             </td>
                             <td data-column="status" class="px-6 py-4 whitespace-nowrap">
                                 {% with status=appraisal.status %}

@@ -43,7 +43,17 @@ function validateAppraisers() {
 // Form submission handler
 document.getElementById('assignForm').addEventListener('submit', async function(event) {
     event.preventDefault();
-    
+
+     // Set today's date as the default review start date
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const formattedToday = `${yyyy}-${mm}-${dd}`;
+     
+    // Set the hidden field value
+    document.getElementById('review_period_start').value = formattedToday;
+
     // Validate appraisers first
     if (!validateAppraisers()) {
         return;
@@ -70,14 +80,16 @@ document.getElementById('assignForm').addEventListener('submit', async function(
     
     const reviewStart = document.getElementById('review_period_start').value;
     const reviewEnd = document.getElementById('review_period_end').value;
-    const appraisalStart = document.getElementById('appraisal_period_start').value;
-    const appraisalEnd = document.getElementById('appraisal_period_end').value;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const reviewStartDate = new Date(reviewStart);
+    if (period) {
+        const selectedOption = document.querySelector(`#period_select option[value="${period}"]`);
+        if (selectedOption) {
+            document.getElementById('appraisal_period_start').value = selectedOption.dataset.start || '';
+            document.getElementById('appraisal_period_end').value = selectedOption.dataset.end || '';
+        }
+    }
 
-    if (reviewStartDate < today) {
+    if (reviewStart < today) {
         errorMessage.querySelector('span').textContent = 'The review period start date cannot be in the past.';
         errorMessage.classList.remove('hidden');
         submitButton.disabled = false; 

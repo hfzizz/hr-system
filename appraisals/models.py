@@ -189,6 +189,12 @@ class Appraisal(models.Model):
         if self.review_period_start and self.review_period_end:
             return f"{self.review_period_start.strftime('%d %b %Y')} - {self.review_period_end.strftime('%d %b %Y')}"
         return 'Not Set'
+    
+    def get_deadline_display(self):
+        """Returns formatted deadline string."""
+        if self.review_period_end:
+            return f"{self.review_period_end.strftime('%d %b %Y')}"
+        return 'Not Set'
 
     def get_date_created_display(self):
         """Returns formatted creation date."""
@@ -328,3 +334,5 @@ class AppraisalSection(models.Model):
         
     def __str__(self):
         return f"Section {self.section_name} for Appraisal {self.appraisal.appraisal_id} by {self.appraiser.name}"
+    
+    
