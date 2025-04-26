@@ -118,15 +118,6 @@
               <ul class="mt-2 space-y-1 px-4">
                 <li>
                   <a
-                    href="{% url 'appraisals:period_list' %}"
-                    class="block rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 {% if 'period' in request.path %}bg-gray-100 text-gray-900{% endif %} "
-                  >
-                    Appraisal Periods
-                  </a>
-                </li>
-  
-                <li>
-                  <a
                     href="{% url 'appraisals:appraiser_list' %}"
                     class="block rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 {% if 'appraiser' in request.path %}bg-gray-100 text-gray-900{% endif %}"
                   >
@@ -255,30 +246,7 @@
           </a>
         </li>
       </ul>
-    </nav>
-
-<!-- Add at the bottom of the sidebar.html file, before </aside> -->
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const dropdown = document.getElementById('appraisals-dropdown');
-    
-    // Check if it should be open
-    if (localStorage.getItem('appraisalsDropdownOpen') === 'true') {
-      dropdown.setAttribute('open', '');
-    }
-    
-    // Save state when toggled
-    dropdown.addEventListener('toggle', function() {
-      localStorage.setItem('appraisalsDropdownOpen', dropdown.open);
-    });
-    
-    // Open if current page is under appraisals
-    if (window.location.href.includes('appraisals')) {
-      dropdown.setAttribute('open', '');
-    }
-  });
-</script>
- 
+    </nav> 
 </aside>
 
 <!-- Add this somewhere in your sidebar for debugging -->

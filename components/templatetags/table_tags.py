@@ -4,9 +4,13 @@ register = template.Library()
 
 @register.inclusion_tag('components/data_table.html')
 def render_data_table(items, columns, table_config=None, empty_message=None):
+    # Get only visible columns
+    visible_columns = [col for col in columns if col.get('visible', True)]
+
     return {
         'items': items,
         'columns': columns,
+        'visible_columns': visible_columns,
         'table_config': table_config or {},
         'empty_message': empty_message or "No items found."
     }

@@ -2833,7 +2833,7 @@ def moe_decision(request, contract_id):
             pass
         
         messages.success(request, f'MOE decision has been recorded successfully.')
-        return redirect('contract:all_submissions')  # Redirect to all submissions page
+        return redirect('contract:view_all_submissions')  # Redirect to all submissions page
     
     except Contract.DoesNotExist:
         messages.error(request, 'Contract not found.')

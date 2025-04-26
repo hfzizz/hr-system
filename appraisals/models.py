@@ -9,6 +9,7 @@ class AppraisalPeriod(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     is_active = models.BooleanField(default=False)
+    is_default = models.BooleanField(default=False, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -28,26 +29,6 @@ class AppraisalPeriod(models.Model):
         if self.start_date and self.end_date and self.start_date >= self.end_date:
             raise ValidationError("End date must be after start date")
 
-        # Check if there's an overlap with other periods
-        overlapping = AppraisalPeriod.objects.filter(
-            start_date__lte=self.end_date,
-            end_date__gte=self.start_date
-        )
-        
-        if self.pk:  # If updating existing period
-            overlapping = overlapping.exclude(pk=self.pk)
-            
-        if overlapping.exists():
-            raise ValidationError("This period overlaps with an existing period")
-
-        # If trying to activate, check no other active periods
-        if self.is_active:
-            active_periods = AppraisalPeriod.objects.filter(is_active=True)
-            if self.pk:
-                active_periods = active_periods.exclude(pk=self.pk)
-            if active_periods.exists():
-                raise ValidationError("Another period is already active")
-
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
@@ -56,7 +37,12 @@ class Appraisal(models.Model):
     appraisal_id = models.AutoField(primary_key=True)
     STATUS_CHOICES = [
         ('pending', 'Pending'),
-        ('in_review', 'In Review'),
+        ('primary_review', 'Under Primary Appraiser Review'),
+        ('secondary_review', 'Under Secondary Appraiser Review'),
+        ('pending_response', 'Pending Response'),
+        ('disagreed', 'Disagreed'),
+        ('reassigned', 'Reassigned'),
+        ('reassigned_review', 'Under Reassigned Appraiser Review'),
         ('completed', 'Completed')
     ]
 
@@ -69,6 +55,13 @@ class Appraisal(models.Model):
         Employee, 
         on_delete=models.CASCADE, 
         related_name='conducted_appraisals',
+        null=True,
+        blank=True
+    )
+    appraiser_secondary = models.ForeignKey(
+        Employee,
+        on_delete=models.SET_NULL,
+        related_name='secondary_appraisals',
         null=True,
         blank=True
     )
@@ -87,6 +80,7 @@ class Appraisal(models.Model):
     higher_degree_students_supervised = models.TextField(blank=True, null=True)
     last_research = models.TextField(blank=True, null=True)
     ongoing_research = models.TextField(blank=True, null=True)
+    publications = models.TextField(blank=True, null=True) # temporary
     attendance = models.TextField(blank=True, null=True)
     conference_papers = models.TextField(blank=True, null=True)
     consultancy_work = models.TextField(blank=True, null=True)
@@ -95,14 +89,15 @@ class Appraisal(models.Model):
     participation_other_activities_outside = models.TextField(blank=True, null=True)
     objectives_next_year = models.TextField(blank=True, null=True)
     appraiser_comments = models.TextField(blank=True, null=True)
-
     last_modified_by = models.ForeignKey(
         'auth.User',
         on_delete=models.SET_NULL,
         null=True,
         related_name='modified_appraisals'
-    )
+    )    
     last_modified_date = models.DateTimeField(auto_now=True)
+    appraisal_period_start=models.DateField(null=True, blank=True)
+    appraisal_period_end=models.DateField(null=True, blank=True)
     review_period_start = models.DateField(
         help_text=_("Start date of review period"),
         null=True,
@@ -146,6 +141,16 @@ class Appraisal(models.Model):
             raise ValidationError({
                 'appraiser': 'Appraiser cannot be the same as the employee being appraised.'
             })
+        
+        if self.appraiser_secondary and self.employee and self.appraiser_secondary == self.employee:
+            raise ValidationError({
+                'appraiser_secondary': 'Secondary appraiser cannot be the same as the employee being appraised.'
+            })
+        
+        if self.appraiser and self.appraiser_secondary and self.appraiser == self.appraiser_secondary:
+            raise ValidationError({
+                'appraiser_secondary': 'Secondary appraiser cannot be the same as the primary appraiser.'
+            })
 
         super().clean()
 
@@ -172,11 +177,23 @@ class Appraisal(models.Model):
             return self.employee.ic_no or "Not provided"
         except AttributeError:
             return "Not provided"
+        
+    def get_appraisal_period_display(self):
+        """Returns formatted appraisal period string."""
+        if self.appraisal_period_start and self.appraisal_period_end:
+            return f"{self.appraisal_period_start.strftime('%d %b %Y')} - {self.appraisal_period_end.strftime('%d %b %Y')}"
+        return 'Not Set'
 
     def get_review_period_display(self):
         """Returns formatted review period string."""
         if self.review_period_start and self.review_period_end:
             return f"{self.review_period_start.strftime('%d %b %Y')} - {self.review_period_end.strftime('%d %b %Y')}"
+        return 'Not Set'
+    
+    def get_deadline_display(self):
+        """Returns formatted deadline string."""
+        if self.review_period_end:
+            return f"{self.review_period_end.strftime('%d %b %Y')}"
         return 'Not Set'
 
     def get_date_created_display(self):
@@ -198,7 +215,9 @@ class Appraisal(models.Model):
         """Returns the present post of the employee."""
         return self.employee.post or "Not specified"
 
-
+    def get_latest_3_appraisals(self):
+        """Returns the last three appraisals for the employee."""
+        return Appraisal.objects.filter(employee=self.employee).order_by('-date_created')[:3]
 
 class Module(models.Model):
     employee = models.ForeignKey(
@@ -302,3 +321,18 @@ class Membership(models.Model):
             raise ValidationError({
                 'to_date': _('End date must be after start date.')
             })
+        
+class AppraisalSection(models.Model):
+    """Stores section-specific data for appraisals"""
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.CASCADE, related_name='sections')
+    section_name = models.CharField(max_length=50)  # e.g., 'B1', 'B2', etc.
+    data = models.JSONField(default=dict, blank=True)  # Stores all field values for this section
+    appraiser = models.ForeignKey('employees.Employee', on_delete=models.CASCADE, related_name='appraisal_sections', null=True, blank=True)
+    
+    class Meta:
+        unique_together = ('appraisal', 'section_name', 'appraiser')
+        
+    def __str__(self):
+        return f"Section {self.section_name} for Appraisal {self.appraisal.appraisal_id} by {self.appraiser.name}"
+    
+    
