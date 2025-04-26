@@ -97,7 +97,7 @@
                             <div class="flex flex-col space-y-1">
                                 <label class="text-sm font-medium text-gray-700">Type of Contract Applied *</label>
                                 <select name="contract_type" 
-                                        id="contract_type"
+                                        id="contract_type" required
                                         class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-800 shadow-sm">
                                     <option value="">Select contract type</option>
                                     {% for value, label in contract_type_choices %}
@@ -143,42 +143,15 @@
                                         <table class="min-w-full divide-y divide-gray-200">
                                             <thead class="bg-gray-50">
                                                 <tr>
-                                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Degree/Diploma
-                                                    </th>
-                                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        University/College
-                                                    </th>
-                                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        From
-                                                    </th>
-                                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        To
-                                                    </th>
-                                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Actions
-                                                    </th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Degree/Diploma</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">University/College</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From Date</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">To Date</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody class="bg-white divide-y divide-gray-200" id="academicQualificationsTable">
                                                 <!-- Rows will be populated here -->
-                                                <tr>
-                                                    <td class="px-6 py-4 whitespace-nowrap">
-                                                        <input type="text" placeholder="Enter Degree/Diploma" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                                    </td>
-                                                    <td class="px-6 py-4 whitespace-nowrap">
-                                                        <input type="text" placeholder="Enter University/College" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                                    </td>
-                                                    <td class="px-6 py-4 whitespace-nowrap">
-                                                        <input type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                                    </td>
-                                                    <td class="px-6 py-4 whitespace-nowrap">
-                                                        <input type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                                    </td>
-                                                    <td class="px-6 py-4 whitespace-nowrap">
-                                                        <!-- Action buttons will be added here -->
-                                                    </td>
-                                                </tr>
                                             </tbody>
                                         </table>
                                     </div>
@@ -248,7 +221,8 @@
                                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
                                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
                                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Funding Agency</th>
-                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grants</th>
+                                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody class="bg-white divide-y divide-gray-200">
@@ -277,7 +251,8 @@
                                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
                                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
                                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Funding Agency</th>
-                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grants</th>
+                                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody class="bg-white divide-y divide-gray-200">
@@ -352,6 +327,7 @@
                             </div>
                         </div>
                     </div>
+
 
                     <!-- Administrative Duties Section -->
                     <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
@@ -510,7 +486,7 @@
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity/Event</th>
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role/Position</th>
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                             </tr>
                                         </thead>
@@ -542,7 +518,7 @@
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity/Event</th>
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role/Position</th>
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                             </tr>
                                         </thead>
@@ -561,6 +537,35 @@
                             </div>
                             <input type="hidden" name="participation_outside_text" id="participation_outside_text">
                         </div>
+                    </div>
+
+                     <!-- Fellowships and Awards Section -->
+                     <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-2 pb-2 border-b">Fellowships and Awards</h2>
+                        <p class="text-gray-600 mb-4">List awards, fellowships, grants, and recognitions you have received in chronological order. Include the date, title of the award, and the awarding organization.</p>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200" id="fellowshipsAwardsTable">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organization</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <!-- Rows will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4">
+                            <button type="button" 
+                                    id="addFellowshipAwardBtn"
+                                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Add Fellowship/Award
+                            </button>
+                        </div>
+                        <input type="hidden" name="fellowships_awards_text" id="fellowships_awards_text">
                     </div>
 
                     <!-- Teaching Section -->
@@ -593,7 +598,6 @@
                         </div>
                         <input type="hidden" name="teaching_modules_text" id="teaching_modules_text">
 
-
                         <!--Upload Teaching Portfolio-->
                         <div class="mt-6">
                             <label class="block text-sm font-medium text-gray-700">Teaching Portfolio</label>
@@ -615,8 +619,70 @@
                             </div>
                         </div>
                         
-                        <!-- Add Future Plan text box -->
-                        <div class="mt-6">
+                        
+                        <!-- Mentorship Section (under Teaching) -->
+                        <div class="mt-8 pt-6 border-t border-gray-200">
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Mentorship</h3>
+                            <p class="text-gray-600 mb-4">Document your mentorship activities for both students and staff. Include the name of the mentee, their programme (for students) or role (for staff), and the period of mentorship.</p>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200" id="mentorshipTable">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Programme/Description</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <!-- Rows will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-4">
+                                <button type="button" 
+                                        id="addMentorshipBtn"
+                                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    Add Mentorship
+                                </button>
+                            </div>
+                            <input type="hidden" name="mentorship_text" id="mentorship_text">
+                        </div>
+
+                        <!-- Graduate Student Supervision Section (under Teaching) -->
+                        <div class="mt-8 pt-6 border-t border-gray-200">
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Supervision of Graduate Students</h3>
+                            <p class="text-gray-600 mb-4">Record all post-graduate students you have supervised or are currently supervising. Include the student's name, degree programme, current status, and the period of supervision.</p>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200" id="gradSupervisionTable">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Programme</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <!-- Rows will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-4">
+                                <button type="button" 
+                                        id="addGradSupervisionBtn"
+                                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    Add Graduate Supervision
+                                </button>
+                            </div>
+                            <input type="hidden" name="grad_supervision_text" id="grad_supervision_text">
+                        </div>
+                          <!-- Add Future Plan text box -->
+                        <div class="mt-8 pt-6 border-t border-gray-200">
                             <label class="block text-sm font-medium text-gray-700">Future Plan</label>
                             <p class="mt-1 text-sm text-gray-500">Describe your teaching plans for the future</p>
                             <textarea name="teaching_future_plan" 
@@ -687,6 +753,32 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Debug: Verify that all table elements exist
+    console.log("DOM Content Loaded - Starting table element verification");
+    
+    const tableIds = [
+        'consultancyWorkTable', 
+        'researchHistoryTable', 
+        'ongoingResearchTable', 
+        'conferencePapersTable',
+        'academicQualificationsTable',
+        'conferenceAttendanceTable',
+        'teachingModulesTable',
+        'administrativePositionsTable',
+        'universityCommitteesTable',
+        'externalCommitteesTable',
+        'participationWithinTable'
+    ];
+    
+    tableIds.forEach(id => {
+        const table = document.getElementById(id);
+        console.log(`Table '${id}': ${table ? 'FOUND ✓' : 'MISSING ✗'}`);
+        if (table) {
+            const tbody = table.querySelector('tbody');
+            console.log(`  - tbody for '${id}': ${tbody ? 'FOUND ✓' : 'MISSING ✗'}`);
+        }
+    });
+    
     const formFields = document.getElementById('formFields');
     const commentsHistory = document.getElementById('appraiserCommentsHistory');
     const employeeId = document.querySelector('input[name="employee"]').value;
@@ -694,6 +786,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const addQualificationBtn = document.getElementById('addQualificationBtn');
     const qualificationsInput = document.getElementById('academic_qualifications_text');
 
+    // Get references to all table elements upfront to avoid issues
     const attendanceTable = document.getElementById('conferenceAttendanceTable');
     const addAttendanceBtn = document.getElementById('addAttendanceBtn');
     const attendanceInput = document.getElementById('attendance_data');
@@ -701,11 +794,37 @@ document.addEventListener('DOMContentLoaded', function() {
     const teachingModulesTable = document.getElementById('teachingModulesTable');
     const addTeachingModuleBtn = document.getElementById('addTeachingModuleBtn');
     const teachingModulesInput = document.getElementById('teaching_modules_text');
+    
+    // Add table references for research, consultancy work, etc.
+    const consultancyTable = document.getElementById('consultancyWorkTable');
+    const addConsultancyBtn = document.getElementById('addConsultancyBtn');
+    const consultancyInput = document.getElementById('consultancy_work');
+    
+    const researchHistoryTable = document.getElementById('researchHistoryTable');
+    const addResearchHistoryBtn = document.getElementById('addResearchHistoryBtn');
+    const researchHistoryInput = document.getElementById('last_research');
+    
+    const ongoingResearchTable = document.getElementById('ongoingResearchTable');
+    const addOngoingResearchBtn = document.getElementById('addOngoingResearchBtn');
+    const ongoingResearchInput = document.getElementById('ongoing_research');
+    
+    const conferencePapersTable = document.getElementById('conferencePapersTable');
+    const addConferencePaperBtn = document.getElementById('addConferencePaperBtn');
+    const conferencePapersInput = document.getElementById('conference_papers');
 
     // Participation Within University
     const participationWithinTable = document.getElementById('participationWithinTable');
     const addParticipationWithinBtn = document.getElementById('addParticipationWithinBtn');
     const participationWithinInput = document.getElementById('participation_within_text');
+    
+    const administrativePositionsTable = document.getElementById('administrativePositionsTable');
+    const addAdministrativePositionBtn = document.getElementById('addAdministrativePositionBtn');
+    const administrativePositionsInput = document.getElementById('administrative_positions_text');
+    
+    const universityCommitteesTable = document.getElementById('universityCommitteesTable');
+    const externalCommitteesTable = document.getElementById('externalCommitteesTable');
+    const universityCommitteesInput = document.getElementById('university_committees_text');
+    const externalCommitteesInput = document.getElementById('external_committees_text');
 
     // IC Color mapping
     const IC_COLOURS = {
@@ -1122,6 +1241,558 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => console.error('Error:', error));
 
+    // If in edit mode, load contract data from the context to populate all tables
+    {% if is_edit_mode and contract_data_json %}
+    const contractData = {{ contract_data_json|safe }};
+    console.log("Edit mode enabled - populating tables with saved data");
+    
+    // Clear tables before populating with saved data to prevent duplicates
+    function clearTable(tableId) {
+        const table = document.getElementById(tableId);
+        if (table && table.querySelector('tbody')) {
+            const tbody = table.querySelector('tbody');
+            while (tbody.firstChild) {
+                tbody.removeChild(tbody.firstChild);
+            }
+            console.log(`Cleared table: ${tableId}`);
+        }
+    }
+    
+    // Clear all dynamic tables
+    ['academicQualificationsTable', 'consultancyWorkTable', 'researchHistoryTable', 
+     'ongoingResearchTable', 'conferencePapersTable', 'conferenceAttendanceTable',
+     'teachingModulesTable', 'administrativePositionsTable', 'universityCommitteesTable',
+     'externalCommitteesTable', 'participationWithinTable', 'participationOutsideTable'].forEach(clearTable);
+    
+    // Helper function to safely parse JSON that might be double-encoded
+    function safelyParseJson(jsonData) {
+        if (!jsonData) return [];
+        
+        try {
+            // If it's already an object, return it
+            if (typeof jsonData === 'object') return jsonData;
+            
+            // If it's a string, try to parse it
+            const parsed = JSON.parse(jsonData);
+            
+            // If the parsed result is a string (might be double-encoded), parse again
+            if (typeof parsed === 'string') {
+                try {
+                    return JSON.parse(parsed);
+                } catch (e) {
+                    console.error("Error parsing inner JSON string:", e);
+                    return [];
+                }
+            }
+            
+            return parsed;
+        } catch (e) {
+            console.error("Error parsing JSON:", e);
+            return [];
+        }
+    }
+    
+    // Load academic qualifications if not already loaded from employee data
+    if (contractData.academic_qualifications_text) {
+        displayAcademicQualifications(contractData.academic_qualifications_text);
+    }
+    
+    // Load teaching modules data
+    if (contractData.teaching_modules_text) {
+        try {
+            const modules = JSON.parse(contractData.teaching_modules_text);
+            modules.forEach(module => createTeachingModuleRow(module));
+        } catch(e) {
+            console.error('Error parsing teaching modules:', e);
+        }
+    }
+    
+    // Load attendance data
+    if (contractData.attendance) {
+        try {
+            const attendance = JSON.parse(contractData.attendance);
+            attendance.forEach(event => createAttendanceRow(event));
+        } catch(e) {
+            console.error('Error parsing attendance data:', e);
+        }
+    }
+    
+    // Load administrative positions
+    if (contractData.administrative_positions_text) {
+        try {
+            const positions = JSON.parse(contractData.administrative_positions_text);
+            positions.forEach(position => {
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="text" value="${position.position || ''}" placeholder="Position" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="date" value="${position.from_date || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="date" value="${position.to_date || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="text" value="${position.details || ''}" placeholder="Details" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateAdministrativePositionsData();">Delete</button>
+                    </td>
+                `;
+                administrativePositionsTable.querySelector('tbody').appendChild(newRow);
+            });
+            updateAdministrativePositionsData();
+        } catch(e) {
+            console.error('Error parsing administrative positions:', e);
+        }
+    }
+    
+    // Load university committees data
+    if (contractData.university_committees_text) {
+        try {
+            const committees = JSON.parse(contractData.university_committees_text);
+            committees.forEach(committee => {
+                const row = document.createElement('tr');
+                
+                // Add each field as a cell with an input
+                ['name', 'position', 'from_date', 'to_date', 'details'].forEach(field => {
+                    const cell = document.createElement('td');
+                    cell.className = 'px-6 py-4 whitespace-nowrap';
+                    
+                    const input = document.createElement('input');
+                    input.type = field.includes('date') ? 'date' : 'text';
+                    input.value = committee[field] || '';
+                    input.className = commonInputClasses;
+                    input.placeholder = field.replace('_', ' ');
+                    
+                    cell.appendChild(input);
+                    row.appendChild(cell);
+                });
+                
+                // Add actions cell
+                const actionsCell = document.createElement('td');
+                actionsCell.className = 'px-6 py-4 whitespace-nowrap text-right text-sm font-medium';
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'text-red-600 hover:text-red-900 ml-2';
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.onclick = () => {
+                    row.remove();
+                    updateUniversityCommitteesData();
+                };
+                
+                actionsCell.appendChild(deleteBtn);
+                row.appendChild(actionsCell);
+                
+                universityCommitteesTable.querySelector('tbody').appendChild(row);
+            });
+            updateUniversityCommitteesData();
+        } catch(e) {
+            console.error('Error parsing university committees:', e);
+        }
+    }
+    
+    // Load external committees data
+    if (contractData.external_committees_text) {
+        try {
+            const committees = JSON.parse(contractData.external_committees_text);
+            committees.forEach(committee => {
+                const row = document.createElement('tr');
+                
+                // Add each field as a cell with an input
+                ['organization', 'position', 'from_date', 'to_date', 'details'].forEach(field => {
+                    const cell = document.createElement('td');
+                    cell.className = 'px-6 py-4 whitespace-nowrap';
+                    
+                    const input = document.createElement('input');
+                    input.type = field.includes('date') ? 'date' : 'text';
+                    input.value = committee[field] || '';
+                    input.className = commonInputClasses;
+                    input.placeholder = field.replace('_', ' ');
+                    
+                    cell.appendChild(input);
+                    row.appendChild(cell);
+                });
+                
+                // Add actions cell
+                const actionsCell = document.createElement('td');
+                actionsCell.className = 'px-6 py-4 whitespace-nowrap text-right text-sm font-medium';
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'text-red-600 hover:text-red-900 ml-2';
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.onclick = () => {
+                    row.remove();
+                    updateExternalCommitteesData();
+                };
+                
+                actionsCell.appendChild(deleteBtn);
+                row.appendChild(actionsCell);
+                
+                externalCommitteesTable.querySelector('tbody').appendChild(row);
+            });
+            updateExternalCommitteesData();
+        } catch(e) {
+            console.error('Error parsing external committees:', e);
+        }
+    }
+    
+    // Load participation within university
+    if (contractData.participation_within_text) {
+        try {
+            console.log("Loading participation within data:", contractData.participation_within_text);
+            const participations = JSON.parse(contractData.participation_within_text);
+            console.log("Parsed participation within data:", participations);
+            
+            // Clear the table first to prevent duplicates
+            const tbody = document.getElementById('participationWithinTable').querySelector('tbody');
+            while (tbody && tbody.firstChild) {
+                tbody.removeChild(tbody.firstChild);
+            }
+            
+            participations.forEach((participation, index) => {
+                console.log(`Processing participation within item ${index}:`, participation);
+                // Ensure compatibility with both field naming conventions (details or remarks)
+                const data = {
+                    activity: participation.activity || '',
+                    role: participation.role || '',
+                    date: participation.date || '',
+                    remarks: participation.remarks || participation.details || '' // Use remarks if available, otherwise fall back to details
+                };
+                createParticipationRow('participationWithinTable', data);
+            });
+            updateParticipationData('participationWithinTable');
+        } catch(e) {
+            console.error('Error parsing participation within university:', e);
+        }
+    }
+    
+    // Load participation outside university
+    if (contractData.participation_outside_text) {
+        try {
+            console.log("Loading participation outside data:", contractData.participation_outside_text);
+            const participations = JSON.parse(contractData.participation_outside_text);
+            console.log("Parsed participation outside data:", participations);
+            
+            // Clear the table first to prevent duplicates
+            const tbody = document.getElementById('participationOutsideTable').querySelector('tbody');
+            while (tbody && tbody.firstChild) {
+                tbody.removeChild(tbody.firstChild);
+            }
+            
+            participations.forEach((participation, index) => {
+                console.log(`Processing participation outside item ${index}:`, participation);
+                // Ensure compatibility with both field naming conventions (details or remarks)
+                const data = {
+                    activity: participation.activity || '',
+                    role: participation.role || '',
+                    date: participation.date || '',
+                    remarks: participation.remarks || participation.details || '' // Use remarks if available, otherwise fall back to details
+                };
+                createParticipationRow('participationOutsideTable', data);
+            });
+            updateParticipationData('participationOutsideTable');
+        } catch(e) {
+            console.error('Error parsing participation outside university:', e);
+        }
+    }
+    
+    // Load last research data
+    if (contractData.last_research) {
+        try {
+            console.log("Loading research history data:", contractData.last_research);
+            const researchData = safelyParseJson(contractData.last_research);
+            console.log("Parsed research history data:", researchData);
+            
+            if (Array.isArray(researchData)) {
+                console.log(`Found ${researchData.length} research history items to load`);
+                // Clear the table first to prevent any existing entries
+                const tbody = researchHistoryTable.querySelector('tbody');
+                while (tbody.firstChild) {
+                    tbody.removeChild(tbody.firstChild);
+                }
+                
+                researchData.forEach((research, index) => {
+                    console.log(`Processing research history item ${index}:`, research);
+                    addResearchHistoryRow(research);
+                });
+                updateResearchHistoryData();
+            }
+        } catch(e) {
+            console.error('Error parsing research history data:', e);
+        }
+    } else {
+        console.log("No research history data found");
+    }
+    
+    // Load ongoing research data
+    if (contractData.ongoing_research) {
+        try {
+            console.log("Loading ongoing research data:", contractData.ongoing_research);
+            const researchData = safelyParseJson(contractData.ongoing_research);
+            console.log("Parsed ongoing research data:", researchData);
+            
+            if (Array.isArray(researchData)) {
+                console.log(`Found ${researchData.length} ongoing research items to load`);
+                // Clear the table first to prevent any existing entries
+                const tbody = ongoingResearchTable.querySelector('tbody');
+                while (tbody.firstChild) {
+                    tbody.removeChild(tbody.firstChild);
+                }
+                
+                researchData.forEach((research, index) => {
+                    console.log(`Processing ongoing research item ${index}:`, research);
+                    addOngoingResearchRow(research);
+                });
+                updateOngoingResearchData();
+            }
+        } catch(e) {
+            console.error('Error parsing ongoing research data:', e);
+        }
+    } else {
+        console.log("No ongoing research data found");
+    }
+    
+    // Load consultancy work data
+    if (contractData.consultancy_work) {
+        try {
+            console.log("Loading consultancy work data:", contractData.consultancy_work);
+            const consultancyData = safelyParseJson(contractData.consultancy_work);
+            console.log("Parsed consultancy data:", consultancyData);
+            
+            if (Array.isArray(consultancyData)) {
+                console.log(`Found ${consultancyData.length} consultancy work items to load`);
+                consultancyData.forEach((consultancy, index) => {
+                    console.log(`Processing consultancy item ${index}:`, consultancy);
+                    const newRow = document.createElement('tr');
+                    newRow.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="text" value="${consultancy.title || ''}" placeholder="Enter Title/Project" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="text" value="${consultancy.company || ''}" placeholder="Enter Company/Institute" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="date" value="${consultancy.startDate || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="date" value="${consultancy.endDate || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateConsultancyData();">Delete</button>
+                        </td>
+                    `;
+                    
+                    if (consultancyTable && consultancyTable.querySelector('tbody')) {
+                        consultancyTable.querySelector('tbody').appendChild(newRow);
+                    } else {
+                        console.error("Cannot find consultancy table tbody:", consultancyTable);
+                    }
+                });
+                updateConsultancyData();
+            }
+        } catch(e) {
+            console.error('Error parsing consultancy work data:', e);
+        }
+    } else {
+        console.log("No consultancy work data found");
+    }
+    
+    // Load research history data
+    if (contractData.last_research) {
+        try {
+            console.log("Loading research history data:", contractData.last_research);
+            const researchData = safelyParseJson(contractData.last_research);
+            console.log("Parsed research history data:", researchData);
+            
+            if (Array.isArray(researchData)) {
+                console.log(`Found ${researchData.length} research history items to load`);
+                // Clear the table first to prevent any existing entries
+                const tbody = researchHistoryTable.querySelector('tbody');
+                while (tbody.firstChild) {
+                    tbody.removeChild(tbody.firstChild);
+                }
+                
+                researchData.forEach((research, index) => {
+                    console.log(`Processing research history item ${index}:`, research);
+                    addResearchHistoryRow(research);
+                });
+                updateResearchHistoryData();
+            }
+        } catch(e) {
+            console.error('Error parsing research history data:', e);
+        }
+    } else {
+        console.log("No research history data found");
+    }
+    
+    // Load ongoing research data
+    if (contractData.ongoing_research) {
+        try {
+            console.log("Loading ongoing research data:", contractData.ongoing_research);
+            const researchData = safelyParseJson(contractData.ongoing_research);
+            console.log("Parsed ongoing research data:", researchData);
+            
+            if (Array.isArray(researchData)) {
+                console.log(`Found ${researchData.length} ongoing research items to load`);
+                // Clear the table first to prevent any existing entries
+                const tbody = ongoingResearchTable.querySelector('tbody');
+                while (tbody.firstChild) {
+                    tbody.removeChild(tbody.firstChild);
+                }
+                
+                researchData.forEach((research, index) => {
+                    console.log(`Processing ongoing research item ${index}:`, research);
+                    addOngoingResearchRow(research);
+                });
+                updateOngoingResearchData();
+            }
+        } catch(e) {
+            console.error('Error parsing ongoing research data:', e);
+        }
+    } else {
+        console.log("No ongoing research data found");
+    }
+    
+    // Load conference papers data
+    if (contractData.conference_papers) {
+        try {
+            console.log("Loading conference papers data:", contractData.conference_papers);
+            const papersData = safelyParseJson(contractData.conference_papers);
+            console.log("Parsed conference papers data:", papersData);
+            
+            if (Array.isArray(papersData)) {
+                console.log(`Found ${papersData.length} conference papers items to load`);
+                papersData.forEach((paper, index) => {
+                    console.log(`Processing conference paper item ${index}:`, paper);
+                    const newRow = document.createElement('tr');
+                    newRow.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="text" value="${paper.author || ''}" placeholder="Enter Author" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="text" value="${paper.year || ''}" placeholder="Enter Year" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="text" value="${paper.title || ''}" placeholder="Enter Title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="text" value="${paper.volume || ''}" placeholder="Enter Volume" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="text" value="${paper.pages || ''}" placeholder="Enter Pages" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="text" value="${paper.doi || ''}" placeholder="Enter DOI" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateConferencePapersData();">Delete</button>
+                        </td>
+                    `;
+                    if (conferencePapersTable && conferencePapersTable.querySelector('tbody')) {
+                        conferencePapersTable.querySelector('tbody').appendChild(newRow);
+                    } else {
+                        console.error("Cannot find conference papers table tbody:", conferencePapersTable);
+                    }
+                });
+                updateConferencePapersData();
+            }
+        } catch(e) {
+            console.error('Error parsing conference papers data:', e);
+        }
+    } else {
+        console.log("No conference papers data found");
+    }
+    
+    // Load fellowships and awards data
+    if (contractData.fellowships_awards_text) {
+        try {
+            console.log("Loading fellowships and awards data:", contractData.fellowships_awards_text);
+            const awardsData = safelyParseJson(contractData.fellowships_awards_text);
+            console.log("Parsed fellowships and awards data:", awardsData);
+            
+            if (Array.isArray(awardsData)) {
+                console.log(`Found ${awardsData.length} fellowships and awards to load`);
+                // Clear the table first to prevent any existing entries
+                const tbody = fellowshipsAwardsTable.querySelector('tbody');
+                while (tbody && tbody.firstChild) {
+                    tbody.removeChild(tbody.firstChild);
+                }
+                
+                awardsData.forEach((award, index) => {
+                    console.log(`Processing fellowship/award item ${index}:`, award);
+                    addFellowshipAwardRow(award);
+                });
+                updateFellowshipsAwardsData();
+            }
+        } catch(e) {
+            console.error('Error parsing fellowships and awards data:', e);
+        }
+    } else {
+        console.log("No fellowships and awards data found");
+    }
+    
+    // Load mentorship data
+    if (contractData.mentorship_text) {
+        try {
+            console.log("Loading mentorship data:", contractData.mentorship_text);
+            const mentorshipData = safelyParseJson(contractData.mentorship_text);
+            console.log("Parsed mentorship data:", mentorshipData);
+            
+            if (Array.isArray(mentorshipData)) {
+                console.log(`Found ${mentorshipData.length} mentorship entries to load`);
+                // Clear the table first to prevent any existing entries
+                const tbody = mentorshipTable.querySelector('tbody');
+                while (tbody && tbody.firstChild) {
+                    tbody.removeChild(tbody.firstChild);
+                }
+                
+                mentorshipData.forEach((mentorship, index) => {
+                    console.log(`Processing mentorship item ${index}:`, mentorship);
+                    addMentorshipRow(mentorship);
+                });
+                updateMentorshipData();
+            }
+        } catch(e) {
+            console.error('Error parsing mentorship data:', e);
+        }
+    } else {
+        console.log("No mentorship data found");
+    }
+    
+    // Load graduate supervision data
+    if (contractData.grad_supervision_text) {
+        try {
+            console.log("Loading graduate supervision data:", contractData.grad_supervision_text);
+            const supervisionData = safelyParseJson(contractData.grad_supervision_text);
+            console.log("Parsed graduate supervision data:", supervisionData);
+            
+            if (Array.isArray(supervisionData)) {
+                console.log(`Found ${supervisionData.length} graduate supervision entries to load`);
+                // Clear the table first to prevent any existing entries
+                const tbody = gradSupervisionTable.querySelector('tbody');
+                while (tbody && tbody.firstChild) {
+                    tbody.removeChild(tbody.firstChild);
+                }
+                
+                supervisionData.forEach((supervision, index) => {
+                    console.log(`Processing graduate supervision item ${index}:`, supervision);
+                    addGradSupervisionRow(supervision);
+                });
+                updateGradSupervisionData();
+            }
+        } catch(e) {
+            console.error('Error parsing graduate supervision data:', e);
+        }
+    } else {
+        console.log("No graduate supervision data found");
+    }
+    
+    {% endif %}
+
     // Add Scopus publications fetching
     const scopusInput = document.getElementById('scopus_id');
     const fetchPublicationsBtn = document.getElementById('fetchPublicationsBtn');
@@ -1222,6 +1893,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Display existing teaching modules if any
+    {% if not is_edit_mode %}
     if (teachingModulesInput.value) {
         try {
             const modules = JSON.parse(teachingModulesInput.value);
@@ -1230,6 +1902,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error parsing teaching modules:', e);
         }
     }
+    {% endif %}
 
     function createParticipationRow(tableId, data = {}) {
         const table = document.getElementById(tableId);
@@ -1239,7 +1912,7 @@ document.addEventListener('DOMContentLoaded', function() {
             { name: 'activity', placeholder: 'Activity/Event' },
             { name: 'role', placeholder: 'Role/Position' },
             { name: 'date', placeholder: 'Date', type: 'date' },
-            { name: 'Details', placeholder: 'Details' }
+            { name: 'remarks', placeholder: 'Remarks' }
         ];
 
         fields.forEach(field => {
@@ -1285,6 +1958,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Initialize existing data if any
+    {% if not is_edit_mode %}
+    // Only initialize from local data if NOT in edit mode (otherwise it comes from contractData)
     if (participationWithinInput.value) {
         try {
             const activities = JSON.parse(participationWithinInput.value);
@@ -1302,10 +1977,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error parsing participation outside:', e);
         }
     }
-
-    const administrativePositionsTable = document.getElementById('administrativePositionsTable');
-    const addAdministrativePositionBtn = document.getElementById('addAdministrativePositionBtn');
-    const administrativePositionsInput = document.getElementById('administrative_positions_text');
+    {% endif %}
 
     addAdministrativePositionBtn.addEventListener('click', function() {
         const row = document.createElement('tr');
@@ -1348,8 +2020,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const inputs = row.querySelectorAll('input');
             console.log(`Debug: Row ${index + 1} inputs:`, {
                 position: inputs[0].value,
-                fromDate: inputs[1].value,
-                toDate: inputs[2].value,
+                from_date: inputs[1].value,
+                to_date: inputs[2].value,
                 details: inputs[3].value
             });
 
@@ -1361,8 +2033,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (position || fromDate || toDate || details) {
                 positions.push({
                     position: position,
-                    fromDate: fromDate,
-                    toDate: toDate,
+                    from_date: fromDate,
+                    to_date: toDate,
                     details: details
                 });
             }
@@ -1379,11 +2051,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Debug: Table changed");
         updateAdministrativePositionsData();
     });
-
-    const universityCommitteesTable = document.getElementById('universityCommitteesTable');
-    const externalCommitteesTable = document.getElementById('externalCommitteesTable');
-    const universityCommitteesInput = document.getElementById('university_committees_text');
-    const externalCommitteesInput = document.getElementById('external_committees_text');
 
     // Function to create a new row for University Committees
     function createUniversityCommitteeRow(committee = {}) {
@@ -1541,7 +2208,8 @@ document.addEventListener('DOMContentLoaded', function() {
         updateExternalCommitteesData();
     });
 
-    // Update the initialization of existing data
+    // Initialize university committees if there's existing data
+    {% if not is_edit_mode %}
     if (universityCommitteesInput.value) {
         try {
             const committees = JSON.parse(universityCommitteesInput.value);
@@ -1561,26 +2229,23 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error parsing external committees:', e);
         }
     }
+    {% endif %}
 
-    // Research Section Table Handlers
-    const consultancyTable = document.getElementById('consultancyWorkTable');
-    const addConsultancyBtn = document.getElementById('addConsultancyBtn');
-    const consultancyInput = document.getElementById('consultancy_work');
-
-    function addConsultancyRow() {
+    // Consultancy Work Table
+    function addConsultancyRow(data = {}) {
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
             <td class="px-6 py-4 whitespace-nowrap">
-                <input type="text" placeholder="Enter Title/Project" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <input type="text" value="${data.title || ''}" placeholder="Enter Title/Project" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-                <input type="text" placeholder="Enter Company/Institute" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <input type="text" value="${data.company || ''}" placeholder="Enter Company/Institute" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-                <input type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <input type="date" value="${data.startDate || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-                <input type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <input type="date" value="${data.endDate || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateConsultancyData();">Delete</button>
@@ -1607,24 +2272,45 @@ document.addEventListener('DOMContentLoaded', function() {
     consultancyTable.addEventListener('change', updateConsultancyData);
 
     // Research History Table
-    const researchHistoryTable = document.getElementById('researchHistoryTable');
-    const addResearchHistoryBtn = document.getElementById('addResearchHistoryBtn');
-    const researchHistoryInput = document.getElementById('last_research');
-
-    function addResearchHistoryRow() {
+    function addResearchHistoryRow(data = {}) {
+        // Skip adding duplicate rows
+        if (data.title) {
+            const existingRows = researchHistoryTable.querySelectorAll('tbody tr');
+            let isDuplicate = false;
+            
+            existingRows.forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                if (inputs[0].value === data.title && 
+                    inputs[1].value === data.startDate && 
+                    inputs[2].value === data.endDate && 
+                    inputs[3].value === data.fundingAgency &&
+                    inputs[4].value === data.grants) {
+                    isDuplicate = true;
+                }
+            });
+            
+            if (isDuplicate) {
+                console.log(`Skipping duplicate research history item: ${data.title}`);
+                return;
+            }
+        }
+        
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
             <td class="px-6 py-4 whitespace-nowrap">
-                <input type="text" placeholder="Enter Title/Project" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <input type="text" value="${data.title || ''}" placeholder="Enter Title/Project" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-                <input type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <input type="date" value="${data.startDate || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-                <input type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <input type="date" value="${data.endDate || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-                <input type="text" placeholder="Enter Funding Agency" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <input type="text" value="${data.fundingAgency || ''}" placeholder="Enter Funding Agency" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" value="${data.grants || ''}" placeholder="Enter Grant Amount" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateResearchHistoryData();">Delete</button>
@@ -1635,40 +2321,63 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateResearchHistoryData() {
         const rows = researchHistoryTable.querySelectorAll('tbody tr');
-        const data = Array.from(rows).map(row => {
+        const researchHistory = Array.from(rows).map(row => {
             const inputs = row.querySelectorAll('input');
             return {
                 title: inputs[0].value,
                 startDate: inputs[1].value,
                 endDate: inputs[2].value,
-                fundingAgency: inputs[3].value
+                fundingAgency: inputs[3].value,
+                grants: inputs[4].value
             };
         });
-        researchHistoryInput.value = JSON.stringify(data);
+        researchHistoryInput.value = JSON.stringify(researchHistory);
+        console.log('Updated research history data:', researchHistoryInput.value);
     }
 
-    addResearchHistoryBtn.addEventListener('click', addResearchHistoryRow);
+    addResearchHistoryBtn.addEventListener('click', () => addResearchHistoryRow({}));
     researchHistoryTable.addEventListener('change', updateResearchHistoryData);
 
     // Ongoing Research Table
-    const ongoingResearchTable = document.getElementById('ongoingResearchTable');
-    const addOngoingResearchBtn = document.getElementById('addOngoingResearchBtn');
-    const ongoingResearchInput = document.getElementById('ongoing_research');
-
-    function addOngoingResearchRow() {
+    function addOngoingResearchRow(data = {}) {
+        // Skip adding duplicate rows
+        if (data.title) {
+            const existingRows = ongoingResearchTable.querySelectorAll('tbody tr');
+            let isDuplicate = false;
+            
+            existingRows.forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                if (inputs[0].value === data.title && 
+                    inputs[1].value === data.startDate && 
+                    inputs[2].value === data.endDate && 
+                    inputs[3].value === data.fundingAgency &&
+                    inputs[4].value === data.grants) {
+                    isDuplicate = true;
+                }
+            });
+            
+            if (isDuplicate) {
+                console.log(`Skipping duplicate ongoing research item: ${data.title}`);
+                return;
+            }
+        }
+        
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
             <td class="px-6 py-4 whitespace-nowrap">
-                <input type="text" placeholder="Enter Title/Project" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <input type="text" value="${data.title || ''}" placeholder="Enter Title/Project" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-                <input type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <input type="date" value="${data.startDate || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-                <input type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <input type="date" value="${data.endDate || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-                <input type="text" placeholder="Enter Funding Agency" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <input type="text" value="${data.fundingAgency || ''}" placeholder="Enter Funding Agency" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" value="${data.grants || ''}" placeholder="Enter Grant Amount" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateOngoingResearchData();">Delete</button>
@@ -1679,26 +2388,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateOngoingResearchData() {
         const rows = ongoingResearchTable.querySelectorAll('tbody tr');
-        const data = Array.from(rows).map(row => {
+        const ongoingResearch = Array.from(rows).map(row => {
             const inputs = row.querySelectorAll('input');
             return {
                 title: inputs[0].value,
                 startDate: inputs[1].value,
                 endDate: inputs[2].value,
-                fundingAgency: inputs[3].value
+                fundingAgency: inputs[3].value,
+                grants: inputs[4].value
             };
         });
-        ongoingResearchInput.value = JSON.stringify(data);
+        ongoingResearchInput.value = JSON.stringify(ongoingResearch);
+        console.log('Updated ongoing research data:', ongoingResearchInput.value);
     }
 
-    addOngoingResearchBtn.addEventListener('click', addOngoingResearchRow);
+    addOngoingResearchBtn.addEventListener('click', () => addOngoingResearchRow({}));
     ongoingResearchTable.addEventListener('change', updateOngoingResearchData);
 
     // Conference Papers Table
-    const conferencePapersTable = document.getElementById('conferencePapersTable');
-    const addConferencePaperBtn = document.getElementById('addConferencePaperBtn');
-    const conferencePapersInput = document.getElementById('conference_papers');
-
     function addConferencePaperRow() {
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
@@ -1706,11 +2413,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="text" placeholder="Enter Author" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-                <input type="text" 
-                       placeholder="Enter Year" 
-                       pattern="\\d{4}"
-                       maxlength="4"
-                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <input type="text" placeholder="Enter Year" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
                 <input type="text" placeholder="Enter Title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
@@ -1749,6 +2452,323 @@ document.addEventListener('DOMContentLoaded', function() {
 
     addConferencePaperBtn.addEventListener('click', addConferencePaperRow);
     conferencePapersTable.addEventListener('change', updateConferencePapersData);
+
+    // Initialize dynamic tables if there's existing data
+    {% if not is_edit_mode %}
+    // Only initialize from local input values if NOT in edit mode
+    console.log("Initializing tables from local values (not in edit mode)");
+    
+    if (consultancyInput.value && consultancyInput.value !== 'null') {
+        try {
+            console.log("Initializing consultancy from local value:", consultancyInput.value);
+            const consultancyData = JSON.parse(consultancyInput.value);
+            if (Array.isArray(consultancyData)) {
+                consultancyData.forEach(item => addConsultancyRow(item));
+            }
+        } catch (e) {
+            console.error('Error parsing consultancy data:', e);
+        }
+    }
+    
+    if (researchHistoryInput.value && researchHistoryInput.value !== 'null') {
+        try {
+            console.log("Initializing research history from local value:", researchHistoryInput.value);
+            const researchData = JSON.parse(researchHistoryInput.value);
+            if (Array.isArray(researchData)) {
+                researchData.forEach(item => addResearchHistoryRow(item));
+                updateResearchHistoryData();
+            }
+        } catch (e) {
+            console.error('Error parsing research history data:', e);
+        }
+    }
+    
+    if (ongoingResearchInput.value && ongoingResearchInput.value !== 'null') {
+        try {
+            console.log("Initializing ongoing research from local value:", ongoingResearchInput.value);
+            const researchData = JSON.parse(ongoingResearchInput.value);
+            if (Array.isArray(researchData)) {
+                researchData.forEach(item => {
+                    const newRow = document.createElement('tr');
+                    newRow.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="text" value="${item.title || ''}" placeholder="Enter Title/Project" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="date" value="${item.startDate || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="date" value="${item.endDate || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="text" value="${item.fundingAgency || ''}" placeholder="Enter Funding Agency" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="text" value="${item.grants || ''}" placeholder="Enter Grant Amount" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateOngoingResearchData();">Delete</button>
+                        </td>
+                    `;
+                    ongoingResearchTable.querySelector('tbody').appendChild(newRow);
+                });
+                updateOngoingResearchData();
+            }
+        } catch (e) {
+            console.error('Error parsing ongoing research data:', e);
+        }
+    }
+    
+    if (conferencePapersInput.value && conferencePapersInput.value !== 'null') {
+        try {
+            console.log("Initializing conference papers from local value:", conferencePapersInput.value);
+            const papersData = JSON.parse(conferencePapersInput.value);
+            if (Array.isArray(papersData)) {
+                papersData.forEach(item => {
+                    const newRow = document.createElement('tr');
+                    newRow.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="text" value="${item.author || ''}" placeholder="Enter Author" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="text" value="${item.year || ''}" placeholder="Enter Year" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="text" value="${item.title || ''}" placeholder="Enter Title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="text" value="${item.volume || ''}" placeholder="Enter Volume" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="text" value="${item.pages || ''}" placeholder="Enter Pages" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="text" value="${item.doi || ''}" placeholder="Enter DOI" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateConferencePapersData();">Delete</button>
+                        </td>
+                    `;
+                    conferencePapersTable.querySelector('tbody').appendChild(newRow);
+                });
+                updateConferencePapersData();
+            }
+        } catch (e) {
+            console.error('Error parsing conference papers data:', e);
+        }
+    }
+    {% endif %}
+
+    // Fellowships and Awards Table
+    const fellowshipsAwardsTable = document.getElementById('fellowshipsAwardsTable');
+    const addFellowshipAwardBtn = document.getElementById('addFellowshipAwardBtn');
+    const fellowshipsAwardsInput = document.getElementById('fellowships_awards_text');
+
+    function addFellowshipAwardRow(data = {}) {
+        // Skip adding duplicate rows
+        if (data.title) {
+            const existingRows = fellowshipsAwardsTable.querySelectorAll('tbody tr');
+            let isDuplicate = false;
+            
+            existingRows.forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                if (inputs[0].value === data.date && 
+                    inputs[1].value === data.title && 
+                    inputs[2].value === data.organization) {
+                    isDuplicate = true;
+                }
+            });
+            
+            if (isDuplicate) {
+                console.log(`Skipping duplicate fellowship/award: ${data.title}`);
+                return;
+            }
+        }
+        
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="date" value="${data.date || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" value="${data.title || ''}" placeholder="Enter Title/Award Name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" value="${data.organization || ''}" placeholder="Enter Awarding Organization" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateFellowshipsAwardsData();">Delete</button>
+            </td>
+        `;
+        fellowshipsAwardsTable.querySelector('tbody').appendChild(newRow);
+        updateFellowshipsAwardsData();
+    }
+
+    function updateFellowshipsAwardsData() {
+        const rows = fellowshipsAwardsTable.querySelectorAll('tbody tr');
+        const data = Array.from(rows).map(row => {
+            const inputs = row.querySelectorAll('input');
+            return {
+                date: inputs[0].value,
+                title: inputs[1].value,
+                organization: inputs[2].value
+            };
+        });
+        fellowshipsAwardsInput.value = JSON.stringify(data);
+    }
+
+    addFellowshipAwardBtn.addEventListener('click', () => addFellowshipAwardRow({}));
+    fellowshipsAwardsTable.addEventListener('change', updateFellowshipsAwardsData);
+
+    // Mentorship Table
+    const mentorshipTable = document.getElementById('mentorshipTable');
+    const addMentorshipBtn = document.getElementById('addMentorshipBtn');
+    const mentorshipInput = document.getElementById('mentorship_text');
+
+    function addMentorshipRow(data = {}) {
+        // Skip adding duplicate rows
+        if (data.name) {
+            const existingRows = mentorshipTable.querySelectorAll('tbody tr');
+            let isDuplicate = false;
+            
+            existingRows.forEach(row => {
+                const inputs = row.querySelectorAll('input, select');
+                if (inputs[0].value === data.name && 
+                    inputs[1].value === data.type && 
+                    inputs[2].value === data.programme &&
+                    inputs[3].value === data.startDate &&
+                    inputs[4].value === data.endDate) {
+                    isDuplicate = true;
+                }
+            });
+            
+            if (isDuplicate) {
+                console.log(`Skipping duplicate mentorship: ${data.name}`);
+                return;
+            }
+        }
+        
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" value="${data.name || ''}" placeholder="Enter Name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <select class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    <option value="Student" ${data.type === 'Student' ? 'selected' : ''}>Student</option>
+                    <option value="Staff" ${data.type === 'Staff' ? 'selected' : ''}>Staff</option>
+                </select>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" value="${data.programme || ''}" placeholder="Enter Programme/Description" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="date" value="${data.startDate || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="date" value="${data.endDate || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateMentorshipData();">Delete</button>
+            </td>
+        `;
+        mentorshipTable.querySelector('tbody').appendChild(newRow);
+        updateMentorshipData();
+    }
+
+    function updateMentorshipData() {
+        const rows = mentorshipTable.querySelectorAll('tbody tr');
+        const data = Array.from(rows).map(row => {
+            const inputs = row.querySelectorAll('input, select');
+            return {
+                name: inputs[0].value,
+                type: inputs[1].value,
+                programme: inputs[2].value,
+                startDate: inputs[3].value,
+                endDate: inputs[4].value
+            };
+        });
+        mentorshipInput.value = JSON.stringify(data);
+        console.log('Updated mentorship data:', mentorshipInput.value);
+    }
+
+    addMentorshipBtn.addEventListener('click', () => addMentorshipRow({}));
+    mentorshipTable.addEventListener('change', updateMentorshipData);
+
+    // Graduate Student Supervision Table
+    const gradSupervisionTable = document.getElementById('gradSupervisionTable');
+    const addGradSupervisionBtn = document.getElementById('addGradSupervisionBtn');
+    const gradSupervisionInput = document.getElementById('grad_supervision_text');
+
+    function addGradSupervisionRow(data = {}) {
+        // Skip adding duplicate rows
+        if (data.name) {
+            const existingRows = gradSupervisionTable.querySelectorAll('tbody tr');
+            let isDuplicate = false;
+            
+            existingRows.forEach(row => {
+                const inputs = row.querySelectorAll('input, select');
+                if (inputs[0].value === data.name && 
+                    inputs[1].value === data.programme && 
+                    inputs[2].value === data.status &&
+                    inputs[3].value === data.startDate &&
+                    inputs[4].value === data.endDate) {
+                    isDuplicate = true;
+                }
+            });
+            
+            if (isDuplicate) {
+                console.log(`Skipping duplicate graduate supervision: ${data.name}`);
+                return;
+            }
+        }
+        
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" value="${data.name || ''}" placeholder="Enter Name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="text" value="${data.programme || ''}" placeholder="Enter Programme" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <select class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    <option value="Active" ${data.status === 'Active' ? 'selected' : ''}>Active</option>
+                    <option value="Inactive" ${data.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
+                </select>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="date" value="${data.startDate || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <input type="date" value="${data.endDate || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateGradSupervisionData();">Delete</button>
+            </td>
+        `;
+        gradSupervisionTable.querySelector('tbody').appendChild(newRow);
+        updateGradSupervisionData();
+    }
+
+    function updateGradSupervisionData() {
+        const rows = gradSupervisionTable.querySelectorAll('tbody tr');
+        const data = Array.from(rows).map(row => {
+            const inputs = row.querySelectorAll('input, select');
+            return {
+                name: inputs[0].value,
+                programme: inputs[1].value,
+                status: inputs[2].value,
+                startDate: inputs[3].value,
+                endDate: inputs[4].value
+            };
+        });
+        gradSupervisionInput.value = JSON.stringify(data);
+        console.log('Updated graduate supervision data:', gradSupervisionInput.value);
+    }
+
+    addGradSupervisionBtn.addEventListener('click', () => addGradSupervisionRow({}));
+    gradSupervisionTable.addEventListener('change', updateGradSupervisionData);
 });
 </script>
 
@@ -1798,4 +2818,24 @@ document.addEventListener('DOMContentLoaded', function() {
         background: linear-gradient(to right, transparent, #e5e7eb, transparent);
     }
 </style>
+
+{% if is_edit_mode %}
+<div class="bg-gray-100 p-4 my-4 rounded" style="display: none;">
+    <h3 class="text-lg font-bold">Debug Data</h3>
+    <pre class="text-xs overflow-auto max-h-40">{{ debug_data|json_script:"debug-data" }}</pre>
+    
+    <h4 class="font-bold mt-2">Contract Data JSON:</h4>
+    <pre class="text-xs overflow-auto max-h-40">{{ contract_data_json|json_script:"contract-data-json" }}</pre>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const debugData = JSON.parse(document.getElementById('debug-data').textContent);
+            const contractDataJson = JSON.parse(document.getElementById('contract-data-json').textContent);
+            
+            console.log('Debug Data:', debugData);
+            console.log('Contract Data JSON:', contractDataJson);
+        });
+    </script>
+</div>
+{% endif %}
 {% endblock %}

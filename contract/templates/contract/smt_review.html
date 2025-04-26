@@ -66,11 +66,11 @@
                                 </svg>
                                 Download Document: {{ dean_review.document_name }}
                             </a>
-                            <button onclick="fetchAndPreviewDocument({{ contract.id }}, {{ dean_review.id }})" 
+                            <button onclick="fetchAndPreviewDocument({{ contract.id }}, {{ dean_review.id }}, '{{ dean_review.document_name }}', 'dean')" 
                                     class="inline-flex items-center px-4 py-2 border-2 border-indigo-500 text-sm font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 transition-colors duration-150 shadow-sm">
-                                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                 </svg>
                                 Preview Document
                             </button>
@@ -82,6 +82,37 @@
             <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <p class="text-gray-600">No dean review available for this contract.</p>
             </div>
+        {% endif %}
+        
+        <!-- Peer Review Documents Section -->
+        {% if peer_reviews %}
+        <div class="mt-6">
+            <h3 class="text-md font-medium text-gray-900 mb-4 text-indigo-800">Peer Reviews</h3>
+            {% for review in peer_reviews %}
+            <div class="mb-4 p-4 border rounded-lg border-indigo-200 bg-indigo-50">
+                <p class="font-semibold text-indigo-900">{{ review.name }}</p>
+                <p class="text-sm text-gray-500 mt-1">Uploaded on {{ review.created_at|date:"F d, Y" }}</p>
+                
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <a href="{% url 'contract:download_peer_review' contract.id review.id %}" 
+                       class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150 shadow-sm">
+                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Download Document: {{ review.document_name }}
+                    </a>
+                    <button onclick="fetchAndPreviewDocument({{ contract.id }}, {{ review.id }}, '{{ review.document_name }}', 'peer')" 
+                            class="inline-flex items-center px-4 py-2 border-2 border-indigo-500 text-sm font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 transition-colors duration-150 shadow-sm">
+                        <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Preview Document
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
         {% endif %}
     </div>
     
@@ -227,7 +258,7 @@ document.getElementById('smt_document').addEventListener('change', function() {
 });
 
 // Enhanced preview function with better styling for document previews
-function fetchAndPreviewDocument(contractId, reviewId) {
+function fetchAndPreviewDocument(contractId, reviewId, documentName, type) {
     // Show the modal first
     document.getElementById('documentPreviewModal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -237,16 +268,30 @@ function fetchAndPreviewDocument(contractId, reviewId) {
     document.getElementById('previewFallback').classList.add('hidden');
     
     // Set download link
-    const downloadUrl = `/contract/download-dean-document/${contractId}/${reviewId}/`;
-    document.getElementById('modalDownloadLink').href = downloadUrl;
-    document.getElementById('fallbackDownloadLink').href = downloadUrl;
+    let downloadUrl = '';
+    if (type === 'peer') {
+        downloadUrl = `/contract/download-peer-review/${contractId}/${reviewId}/`;
+        document.getElementById('modalDownloadLink').href = downloadUrl;
+        document.getElementById('fallbackDownloadLink').href = downloadUrl;
+    } else {
+        downloadUrl = `/contract/download-${type}-document/${contractId}/${reviewId}/`;
+        document.getElementById('modalDownloadLink').href = downloadUrl;
+        document.getElementById('fallbackDownloadLink').href = downloadUrl;
+    }
     
     // Set title
     const documentTitle = document.getElementById('previewDocumentTitle');
-    documentTitle.textContent = 'Document Preview';
+    documentTitle.textContent = `Document Preview: ${documentName}`;
     
     // Get file content using fetch API
-    fetch(`/contract/preview-dean-document/${contractId}/${reviewId}/`)
+    let previewUrl = '';
+    if (type === 'peer') {
+        previewUrl = `/contract/preview-peer-review/${contractId}/${reviewId}/`;
+    } else {
+        previewUrl = `/contract/preview-${type}-document/${contractId}/${reviewId}/`;
+    }
+    
+    fetch(previewUrl)
         .then(response => {
             // Get filename from Content-Disposition header if available
             const contentDisposition = response.headers.get('Content-Disposition');

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ContractSubmissionView, get_employee_data, ContractListView, ContractDeleteView, ContractReviewView, ThankYouView, ViewSubmissionsView, enable_contract, send_notification, NotificationsView, delete_notification, forward_to_smt, mark_notification_read, ViewAllSubmissionsView, EmployeeContractView, ContractRedirectView, ContractDetailView, delete_all_notifications, fetch_publications, download_document, send_back_to_employee, get_hr_comments, EditSubmissionView, DeanContractView, SMTReviewView
+from .views import ContractSubmissionView, get_employee_data, ContractListView, ContractDeleteView, ContractReviewView, ThankYouView, ViewSubmissionsView, enable_contract, send_notification, NotificationsView, delete_notification, forward_to_smt, mark_notification_read, ViewAllSubmissionsView, EmployeeContractView, ContractRedirectView, ContractDetailView, delete_all_notifications, fetch_publications, download_moe_document, send_back_to_employee, get_hr_comments, EditSubmissionView, DeanContractView, SMTReviewView
 from . import views
 
 app_name = 'contract'
@@ -24,7 +24,9 @@ urlpatterns = [
     path('view/<int:pk>/', views.ContractDetailView.as_view(), name='contract_detail'),
     path('delete-all-notifications/', delete_all_notifications, name='delete_all_notifications'),
     path('fetch-publications/<str:scopus_id>/', fetch_publications, name='fetch_publications'),
-    path('download-document/<int:contract_id>/<str:doc_type>/', download_document, name='download_document'),
+    path('download-document/<int:contract_id>/<str:doc_type>/', views.download_document, name='download_document'),
+    path('download-document/<int:contract_id>/<int:review_id>/', download_moe_document, name='download_moe_document_with_id'),
+    path('preview-document/<int:contract_id>/<str:doc_type>/', views.preview_document, name='preview_document'),
     path('send-back/<int:contract_id>/', send_back_to_employee, name='send_back_to_employee'),
     path('get-hr-comments/<int:contract_id>/', get_hr_comments, name='get_hr_comments'),
     path('edit-submission/<int:pk>/', EditSubmissionView.as_view(), name='edit_submission'),
@@ -39,8 +41,16 @@ urlpatterns = [
     path('smt-contracts/', views.SMTContractsView.as_view(), name='smt_contracts'),
     path('download-smt-document/<int:contract_id>/', views.download_smt_document, name='download_smt_document'),
     path('download-smt-document-with-id/<int:contract_id>/<int:review_id>/', views.download_smt_document, name='download_smt_document_with_id'),
+    path('preview-smt-document/<int:contract_id>/<int:review_id>/', views.preview_smt_document, name='preview_smt_document'),
     path('preview-dean-document/<int:contract_id>/<int:review_id>/', views.preview_dean_document, name='preview_dean_document'),
     path('print-contract-form/<int:contract_id>/', views.print_contract_form, name='print_contract_form'),
+    path('download-merged-contract/<int:contract_id>/', views.download_merged_contract_pdf, name='download_merged_contract'),
     path('moe-decision/<int:contract_id>/', views.moe_decision, name='moe_decision'),
     path('download-moe-document/<int:contract_id>/<int:review_id>/', views.download_moe_document, name='download_moe_document'),
+    path('preview-moe-document/<int:contract_id>/<int:review_id>/', views.preview_moe_document, name='preview_moe_document'),
+    # Peer review URLs
+    path('upload-peer-review/<int:contract_id>/', views.upload_peer_review, name='upload_peer_review'),
+    path('download-peer-review/<int:contract_id>/<int:review_id>/', views.download_peer_review, name='download_peer_review'),
+    path('preview-peer-review/<int:contract_id>/<int:review_id>/', views.preview_peer_review, name='preview_peer_review'),
+    path('delete-peer-review/<int:contract_id>/<int:review_id>/', views.delete_peer_review, name='delete_peer_review'),
 ]

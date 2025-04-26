@@ -117,6 +117,39 @@
                 </div>
             </div>
 
+            <!-- Fellowships and Awards Section -->
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Fellowships and Awards</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title/Award</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organization</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% if fellowships_awards %}
+                                {% for award in fellowships_awards %}
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ award.title }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ award.organization }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ award.date }}</td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">
+                                        No fellowships or awards provided
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- Research and Publications Section -->
             <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Research, Consultancy and Publications</h2>
@@ -170,6 +203,7 @@
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Funding Agency</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grants</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
@@ -180,11 +214,12 @@
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.startDate }}</td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.endDate }}</td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.fundingAgency }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.grantAmount|default:"-" }}</td>
                                                 </tr>
                                             {% endfor %}
                                         {% else %}
                                             <tr>
-                                                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                                                <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
                                                     No research history records provided
                                                 </td>
                                             </tr>
@@ -207,6 +242,7 @@
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Funding Agency</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grants</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
@@ -217,11 +253,12 @@
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.startDate }}</td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.endDate }}</td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.fundingAgency }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.grantAmount|default:"-" }}</td>
                                                 </tr>
                                             {% endfor %}
                                         {% else %}
                                             <tr>
-                                                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                                                <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
                                                     No ongoing research records provided
                                                 </td>
                                             </tr>
@@ -587,6 +624,74 @@
                         <p class="text-sm text-gray-900 whitespace-pre-line">{{ contract.teaching_future_plan|default:"No future plan provided" }}</p>
                     </div>
                 </div>
+                
+                <!-- Mentorship Section -->
+                <div class="mt-6">
+                    <h3 class="text-md font-medium text-gray-900 mb-4">Mentorship</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Programme</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% if mentorship_data %}
+                                    {% for mentorship in mentorship_data %}
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ mentorship.name }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ mentorship.programme }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ mentorship.startDate }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ mentorship.endDate }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                                            No mentorship records provided
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Graduate Supervision Section -->
+                <div class="mt-6">
+                    <h3 class="text-md font-medium text-gray-900 mb-4">Graduate Student Supervision</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Programme</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% if grad_supervision_data %}
+                                    {% for supervision in grad_supervision_data %}
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ supervision.name }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ supervision.programme }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ supervision.status }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">
+                                            No graduate supervision records provided
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <!-- Appraiser Comments Section -->
@@ -666,6 +771,69 @@
                             <p class="mt-1 text-sm text-gray-500">Current document: {{ dean_review.document_name }}</p>
                             <a href="{% url 'contract:download_dean_document' contract.id dean_review.id %}" class="text-blue-600 hover:underline">Download</a>
                         {% endif %}
+                    </div>
+                    
+                    <!-- Peer Review Table Section -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Peer Reviews</label>
+                        <table id="peerReviewTable" class="min-w-full divide-y divide-gray-200 mb-2">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Review Name</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="peerReviewTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Peer review rows will be added here dynamically -->
+                                {% if peer_reviews %}
+                                    {% for review in peer_reviews %}
+                                    <tr data-review-id="{{ review.id }}">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ review.name }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <a href="{% url 'contract:download_peer_review' contract.id review.id %}" class="text-blue-600 hover:underline">{{ review.document_name }}</a>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <button type="button" onclick="deletePeerReview({{ review.id }})" class="text-red-600 hover:text-red-900">Delete</button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr id="emptyPeerReviewRow">
+                                        <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">No peer reviews uploaded yet</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                        
+                        <div id="peerReviewUpload" class="hidden border border-gray-300 rounded-md p-4 mb-4">
+                            <div class="mb-2">
+                                <label for="peerReviewName" class="block text-sm font-medium text-gray-700 mb-1">Review Name</label>
+                                <input type="text" id="peerReviewName" name="peer_review_name" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="e.g., Peer Review 1">
+                            </div>
+                            <div class="mb-2">
+                                <label for="peerReviewFile" class="block text-sm font-medium text-gray-700 mb-1">Upload Document</label>
+                                <input type="file" id="peerReviewFile" name="peer_review_file" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                            <div class="flex justify-end mt-2">
+                                <button type="button" id="savePeerReview" class="bg-green-600 hover:bg-green-700 text-white font-medium py-1 px-3 mr-2 rounded text-sm">
+                                    Save
+                                </button>
+                                <button type="button" id="cancelPeerReview" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-1 px-3 rounded text-sm">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="addPeerReviewBtn" class="mt-2 inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                            <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            Add Peer Review
+                        </button>
                     </div>
                     
                     <div class="flex justify-end">
@@ -771,32 +939,289 @@
             filePreview.classList.add('text-sm', 'text-gray-600', 'mt-2');
             filePreview.textContent = `Selected file: ${fileName}`;
             
-            const existingPreview = fileInput.parentElement.parentElement.parentElement.querySelector('p.text-sm.text-gray-600.mt-2');
+            const existingPreview = fileInput.parentElement.querySelector('p.text-sm.text-gray-500');
             if (existingPreview) {
                 existingPreview.textContent = `Selected file: ${fileName}`;
             } else {
-                fileInput.parentElement.parentElement.parentElement.appendChild(filePreview);
+                fileInput.parentElement.appendChild(filePreview);
             }
         }
     });
     
     // Form validation
-    const form = document.getElementById('deanReviewForm');
-    form.addEventListener('submit', function(e) {
-        const comments = document.getElementById('dean_comments').value.trim();
-        const recommendation = document.querySelector('input[name="recommendation"]:checked');
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const comments = document.getElementById('dean_comments').value.trim();
+            
+            if (!comments) {
+                e.preventDefault();
+                alert('Please provide comments for your review.');
+                return;
+            }
+        });
+    }
+
+    // Peer Review functionality - ensure elements are loaded
+    window.addEventListener('load', function() {
+        console.log("Window loaded");
         
-        if (!comments) {
-            e.preventDefault();
-            alert('Please provide comments for your review.');
+        const addPeerReviewBtn = document.getElementById('addPeerReviewBtn');
+        if (!addPeerReviewBtn) {
+            console.error("Add Peer Review button not found");
             return;
         }
         
-        if (!recommendation) {
-            e.preventDefault();
-            alert('Please select a recommendation.');
-            return;
+        const peerReviewUpload = document.getElementById('peerReviewUpload');
+        const savePeerReviewBtn = document.getElementById('savePeerReview');
+        const cancelPeerReviewBtn = document.getElementById('cancelPeerReview');
+        const peerReviewTableBody = document.getElementById('peerReviewTableBody');
+        const emptyPeerReviewRow = document.getElementById('emptyPeerReviewRow');
+        const peerReviewFileInput = document.getElementById('peerReviewFile');
+        
+        console.log("Elements found:", {
+            addPeerReviewBtn: !!addPeerReviewBtn,
+            peerReviewUpload: !!peerReviewUpload,
+            savePeerReviewBtn: !!savePeerReviewBtn,
+            cancelPeerReviewBtn: !!cancelPeerReviewBtn,
+            peerReviewTableBody: !!peerReviewTableBody,
+            peerReviewFileInput: !!peerReviewFileInput
+        });
+        
+        // Preview for peer review file upload
+        if (peerReviewFileInput) {
+            peerReviewFileInput.addEventListener('change', function(e) {
+                const fileName = e.target.files[0]?.name;
+                if (fileName) {
+                    let filePreview = peerReviewFileInput.nextElementSibling;
+                    if (!filePreview || !filePreview.classList.contains('file-preview')) {
+                        filePreview = document.createElement('p');
+                        filePreview.classList.add('file-preview', 'text-sm', 'text-gray-600', 'mt-2');
+                        peerReviewFileInput.parentElement.appendChild(filePreview);
+                    }
+                    filePreview.textContent = `Selected file: ${fileName}`;
+                }
+            });
         }
+        
+        // Counter for new peer reviews
+        let peerReviewCounter = 1;
+        
+        // Show the peer review upload form
+        addPeerReviewBtn.addEventListener('click', function() {
+            console.log("Add Peer Review button clicked");
+            peerReviewUpload.classList.remove('hidden');
+            document.getElementById('peerReviewName').value = `Peer Review ${peerReviewCounter}`;
+            document.getElementById('peerReviewFile').value = '';
+        });
+        
+        // Cancel adding a peer review
+        if (cancelPeerReviewBtn) {
+            cancelPeerReviewBtn.addEventListener('click', function() {
+                peerReviewUpload.classList.add('hidden');
+                // Clear any file preview messages
+                const filePreview = peerReviewFileInput.parentElement.querySelector('.file-preview');
+                if (filePreview) {
+                    filePreview.remove();
+                }
+            });
+        }
+        
+        // Save a new peer review
+        if (savePeerReviewBtn) {
+            savePeerReviewBtn.addEventListener('click', function(e) {
+                e.preventDefault(); // Prevent form submission
+                
+                const peerReviewName = document.getElementById('peerReviewName').value.trim();
+                const peerReviewFile = document.getElementById('peerReviewFile').files[0];
+                
+                if (!peerReviewName) {
+                    alert('Please enter a name for the peer review');
+                    return;
+                }
+                
+                if (!peerReviewFile) {
+                    alert('Please select a file to upload');
+                    return;
+                }
+                
+                // Check file size (limit to 10MB)
+                const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+                if (peerReviewFile.size > MAX_FILE_SIZE) {
+                    alert(`File is too large. Maximum size is 10MB. Your file is ${(peerReviewFile.size / (1024 * 1024)).toFixed(2)}MB.`);
+                    return;
+                }
+                
+                // Create form data to submit
+                const formData = new FormData();
+                formData.append('peer_review_name', peerReviewName);
+                formData.append('peer_review_file', peerReviewFile);
+                formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+                
+                // Show loading indicator
+                const saveBtn = document.getElementById('savePeerReview');
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<span class="animate-pulse">Uploading...</span>';
+                saveBtn.disabled = true;
+                
+                // Submit the data via AJAX
+                console.log("Preparing to upload peer review:", { name: peerReviewName, fileName: peerReviewFile.name });
+                
+                fetch(`/contract/upload-peer-review/{{ contract.id }}/`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    console.log("Response status:", response.status);
+                    
+                    if (!response.ok) {
+                        // Try to get error details if available
+                        return response.json()
+                            .then(errorData => {
+                                throw new Error(errorData.message || `Error: HTTP ${response.status}`);
+                            })
+                            .catch(err => {
+                                if (err instanceof SyntaxError) {
+                                    // If it's not JSON, throw the original HTTP error
+                                    throw new Error(`Error uploading file: HTTP ${response.status}`);
+                                }
+                                throw err; // Otherwise, rethrow the error with the message
+                            });
+                    }
+                    
+                    return response.json();
+                })
+                .then(data => {
+                    // Handle successful upload
+                    console.log('Peer review uploaded successfully:', data);
+                    
+                    // Remove empty row if present
+                    const emptyRow = document.getElementById('emptyPeerReviewRow');
+                    if (emptyRow) {
+                        emptyRow.remove();
+                    }
+                    
+                    // Add the new review to the table
+                    const newRow = document.createElement('tr');
+                    newRow.setAttribute('data-review-id', data.review_id);
+                    newRow.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${peerReviewName}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <a href="/contract/download-peer-review/{{ contract.id }}/${data.review_id}/" class="text-blue-600 hover:underline">${peerReviewFile.name}</a>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <button type="button" onclick="deletePeerReview(${data.review_id})" class="text-red-600 hover:text-red-900">Delete</button>
+                        </td>
+                    `;
+                    peerReviewTableBody.appendChild(newRow);
+                    
+                    // Update counter for next review
+                    peerReviewCounter++;
+                    
+                    // Clear the form
+                    document.getElementById('peerReviewName').value = '';
+                    document.getElementById('peerReviewFile').value = '';
+                    
+                    // Remove file preview if exists
+                    const filePreview = peerReviewFileInput.parentElement.querySelector('.file-preview');
+                    if (filePreview) {
+                        filePreview.remove();
+                    }
+                    
+                    // Hide the upload form
+                    peerReviewUpload.classList.add('hidden');
+                    
+                    // Show success message
+                    alert('Peer review uploaded successfully');
+                })
+                .catch(error => {
+                    console.error('Error details:', error);
+                    
+                    // Show a more detailed error message
+                    const errorMessage = error.message || 'Error uploading peer review. Please try again.';
+                    alert(errorMessage);
+                    
+                    // Log to console for debugging
+                    console.error('Upload failed:', errorMessage);
+                })
+                .finally(() => {
+                    // Reset button state
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+                });
+            });
+        }
+        
+        // Function to delete a peer review
+        window.deletePeerReview = function(reviewId) {
+            if (confirm('Are you sure you want to delete this peer review?')) {
+                // Show loading indicator on the delete button
+                const deleteButton = document.querySelector(`button[onclick="deletePeerReview(${reviewId})"]`);
+                if (deleteButton) {
+                    const originalText = deleteButton.textContent;
+                    deleteButton.textContent = 'Deleting...';
+                    deleteButton.disabled = true;
+                }
+                
+                // Send AJAX request to delete the review
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                
+                fetch(`/contract/delete-peer-review/{{ contract.id }}/${reviewId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': csrfToken
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error('Error deleting peer review');
+                    }
+                })
+                .then(data => {
+                    console.log('Delete response:', data);
+                    // Find and remove the row
+                    const row = document.querySelector(`tr[data-review-id="${reviewId}"]`) || 
+                                document.querySelector(`button[onclick="deletePeerReview(${reviewId})"]`).closest('tr');
+                    
+                    if (row) {
+                        row.remove();
+                        
+                        // Add the empty message back if there are no more rows
+                        if (peerReviewTableBody.querySelectorAll('tr:not(#emptyPeerReviewRow)').length === 0) {
+                            const emptyRow = document.createElement('tr');
+                            emptyRow.id = 'emptyPeerReviewRow';
+                            const emptyCell = document.createElement('td');
+                            emptyCell.colSpan = 3;
+                            emptyCell.className = 'px-6 py-4 text-center text-sm text-gray-500';
+                            emptyCell.textContent = 'No peer reviews uploaded yet';
+                            emptyRow.appendChild(emptyCell);
+                            peerReviewTableBody.appendChild(emptyRow);
+                        }
+                    }
+                    
+                    // Show success message
+                    alert(data.message || 'Peer review deleted successfully');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error deleting peer review. Please try again.');
+                    
+                    // Reset delete button if it exists
+                    if (deleteButton) {
+                        deleteButton.textContent = originalText;
+                        deleteButton.disabled = false;
+                    }
+                });
+            }
+        };
     });
 </script>
 {% endblock %}

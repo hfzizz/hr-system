@@ -103,6 +103,9 @@ class Contract(models.Model):
 
     university_committees_text = models.TextField(blank=True, null=True)
     external_committees_text = models.TextField(blank=True, null=True)
+    fellowships_awards_text = models.TextField(blank=True, null=True)
+    mentorship_text = models.TextField(blank=True, null=True)
+    grad_supervision_text = models.TextField(blank=True, null=True)
 
     class Meta:
         ordering = ['-submission_date']
@@ -232,3 +235,17 @@ class MOEReview(models.Model):
     
     def __str__(self):
         return f"MOE Review processed by {self.hr_officer.get_full_name()} for {self.contract.contract_id}"
+
+class PeerReview(models.Model):
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='peer_reviews')
+    name = models.CharField(max_length=255, help_text="Name of the peer review")
+    document = models.BinaryField(null=True, blank=True)
+    document_name = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    uploaded_by = models.ForeignKey('employees.Employee', on_delete=models.CASCADE, related_name='uploaded_peer_reviews')
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Peer Review '{self.name}' for {self.contract.contract_id}"

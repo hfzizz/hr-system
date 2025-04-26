@@ -182,6 +182,7 @@
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Funding Agency</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grants</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
@@ -192,6 +193,7 @@
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.startDate }}</td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.endDate }}</td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.fundingAgency }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.grants }}</td>
                                                 </tr>
                                             {% endfor %}
                                         {% else %}
@@ -219,6 +221,7 @@
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Funding Agency</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grants</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
@@ -229,6 +232,7 @@
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.startDate }}</td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.endDate }}</td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.fundingAgency }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ research.grants }}</td>
                                                 </tr>
                                             {% endfor %}
                                         {% else %}
@@ -284,6 +288,40 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Fellowships and Awards Section -->
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Fellowships and Awards</h2>
+                <p class="text-gray-600 mb-4">Awards, fellowships, grants, and recognitions received by the applicant.</p>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organization</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% if fellowships_awards %}
+                                {% for award in fellowships_awards %}
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ award.date }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ award.title }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ award.organization }}</td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">
+                                        No fellowships or awards provided
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -580,15 +618,24 @@
                 {% if contract.teaching_documents %}
                 <div class="mt-6">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Teaching Portfolio</label>
-                    <div class="flex items-center">
+                    <div class="flex items-center flex-wrap gap-2">
                         <a href="{% url 'contract:download_document' contract.id 'teaching' %}" 
-                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                           class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150 shadow-sm">
                             <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                             </svg>
                             Download Portfolio
                         </a>
-                        <span class="ml-4 text-sm text-gray-500">{{ contract.teaching_documents_name }}</span>
+                        <button type="button" 
+                                onclick="fetchAndPreviewDocument('teaching', {{ contract.id }}, 0, '{{ contract.teaching_documents_name }}')"
+                                class="inline-flex items-center px-4 py-2 border-2 border-indigo-500 text-sm font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 transition-colors duration-150 shadow-sm">
+                            <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            Preview Portfolio
+                        </button>
+                        <span class="ml-2 text-sm text-gray-500">{{ contract.teaching_documents_name }}</span>
                     </div>
                 </div>
                 {% else %}
@@ -603,6 +650,82 @@
                     <label class="block text-sm font-medium text-gray-700">Future Plan</label>
                     <div class="mt-1 bg-gray-50 rounded p-4 border border-gray-200">
                         <p class="text-sm text-gray-900 whitespace-pre-line">{{ contract.teaching_future_plan|default:"No future plan provided" }}</p>
+                    </div>
+                </div>
+                
+                <!-- Mentorship Section (under Teaching) -->
+                <div class="mt-8 pt-6 border-t border-gray-200">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Mentorship</h3>
+                    <p class="text-gray-600 mb-4">Mentorship activities for both students and staff.</p>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Programme/Description</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% if mentorship_data %}
+                                    {% for mentorship in mentorship_data %}
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ mentorship.name }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ mentorship.type }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ mentorship.programme }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ mentorship.startDate }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ mentorship.endDate }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                                            No mentorship information provided
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Graduate Student Supervision Section (under Teaching) -->
+                <div class="mt-8 pt-6 border-t border-gray-200">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Supervision of Graduate Students</h3>
+                    <p class="text-gray-600 mb-4">Record of post-graduate students supervised or currently supervising.</p>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Programme</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% if grad_supervision_data %}
+                                    {% for supervision in grad_supervision_data %}
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ supervision.name }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ supervision.programme }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ supervision.status }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ supervision.startDate }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ supervision.endDate }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                                            No graduate student supervision information provided
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -694,6 +817,39 @@
                     {% endif %}
                 </div>
                 {% endfor %}
+                
+                <!-- Peer Reviews Section -->
+                {% if peer_reviews %}
+                <div class="mt-6 border-t border-gray-200 pt-6">
+                    <h3 class="text-lg font-medium text-indigo-800 mb-4">Peer Reviews</h3>
+                    
+                    {% for review in peer_reviews %}
+                    <div class="mb-4 p-4 border rounded-lg border-indigo-200 bg-indigo-50 {% if not forloop.last %}mb-6{% endif %}">
+                        <p class="font-semibold text-indigo-900">{{ review.name }}</p>
+                        <p class="text-sm text-gray-500 mt-1">Uploaded on {{ review.created_at|date:"F d, Y" }}</p>
+                        
+                        <div class="mt-4 flex flex-wrap gap-2">
+                            <a href="{% url 'contract:download_peer_review' contract.id review.id %}" 
+                               class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150 shadow-sm">
+                                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                Download Document: {{ review.document_name }}
+                            </a>
+                            <button type="button" 
+                                    onclick="fetchAndPreviewDocument('peer', {{ contract.id }}, {{ review.id }}, '{{ review.document_name }}')"
+                                    class="inline-flex items-center px-4 py-2 border-2 border-indigo-500 text-sm font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 transition-colors duration-150 shadow-sm">
+                                <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                Preview Document
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
             {% endif %}
 
@@ -739,7 +895,6 @@
                 {% endfor %}
             </div>
             {% endif %}
-
 
             <!-- MOE Decision Section - Only visible if contract has been approved by SMT -->
             <div class="my-8 border-t border-gray-200"></div>
@@ -1180,12 +1335,23 @@ async function fetchAndPreviewDocument(docType, contractId, reviewId, documentNa
     
     // Set download link and document title
     let downloadUrl;
+    let previewUrl;
+    
     if (docType === 'dean') {
         downloadUrl = `/contract/download-dean-document/${contractId}/${reviewId}/`;
+        previewUrl = `/contract/preview-dean-document/${contractId}/${reviewId}/`;
     } else if (docType === 'smt') {
         downloadUrl = `/contract/download-smt-document-with-id/${contractId}/${reviewId}/`;
+        previewUrl = `/contract/preview-smt-document/${contractId}/${reviewId}/`;
     } else if (docType === 'moe') {
         downloadUrl = `/contract/download-moe-document/${contractId}/${reviewId}/`;
+        previewUrl = `/contract/preview-moe-document/${contractId}/${reviewId}/`;
+    } else if (docType === 'peer') {
+        downloadUrl = `/contract/download-peer-review/${contractId}/${reviewId}/`;
+        previewUrl = `/contract/preview-peer-review/${contractId}/${reviewId}/`;
+    } else if (docType === 'teaching') {
+        downloadUrl = `/contract/download-document/${contractId}/teaching/`;
+        previewUrl = `/contract/preview-document/${contractId}/teaching/`;
     }
     
     document.getElementById('modalDownloadLink').href = downloadUrl;
@@ -1197,9 +1363,11 @@ async function fetchAndPreviewDocument(docType, contractId, reviewId, documentNa
     
     try {
         // Get file content using fetch API
-        const response = await fetch(downloadUrl);
+        console.log('Fetching preview from:', previewUrl);
+        const response = await fetch(previewUrl);
         
         if (!response.ok) {
+            console.error('Preview fetch failed with status:', response.status);
             throw new Error('Failed to fetch document');
         }
         
