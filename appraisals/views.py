@@ -103,7 +103,7 @@ class AppraisalListView(LoginRequiredMixin, ListView):
         # My Appraisals tab - show only appraisals where user is the employee
         context['my_appraisals'] = Appraisal.objects.filter(
             employee__user=user,
-            status='pending' or 'pending_response',
+            status='pending',
         ).select_related('employee__user', 'appraiser__user', 'appraiser_secondary')  # Add select_related
         
         # Review tab - show appraisals where user is the primary or secondary appraiser
@@ -156,7 +156,7 @@ class BaseAppraisalWizard(SessionWizardView):
 
     def save_draft(self, form):
         appraisal = form.save(commit=False)
-        appraisal.status = 'draft'
+        appraisal.status = 'pending',
         appraisal.save()
     
 class AppraiserWizard(BaseAppraisalWizard):
@@ -1072,11 +1072,12 @@ class AppraiseeUpdateView(LoginRequiredMixin, UpdateView):
             # Save the main form
             self.object = form.save(commit=False)
             
-            # Handle draft save
+            # Handle draft save vs. full submission
             if self.request.POST.get('save_draft') == 'true':
-                self.object.status = 'draft'
-            else:
                 self.object.status = 'pending'
+            else:
+                # If not saving as draft, set status to primary_review
+                self.object.status = 'primary_review'
             
             self.object.save()
             
@@ -1088,7 +1089,7 @@ class AppraiseeUpdateView(LoginRequiredMixin, UpdateView):
             module_formset.save()
             
             # Add success message
-            msg = 'Form saved as draft successfully.' if self.request.POST.get('save_draft') == 'true' else 'Form submitted successfully.'
+            msg = 'Form saved as draft successfully.' if self.request.POST.get('save_draft') == 'true' else 'Form submitted successfully and sent for review.'
             messages.success(self.request, msg)
             
             # Redirect to detail view

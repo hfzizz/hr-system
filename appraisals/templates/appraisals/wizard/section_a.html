@@ -149,7 +149,7 @@
                 <!-- Position Information -->
                 <div class="grid grid-cols-2 gap-6">
                     {% for field in form %}
-                        {% if field.name in 'present_post,salary_scale_division' %}
+                        {% if field.name == 'present_post' or field.name == 'salary_scale_division' %}
                             <div class="form-group">
                                 <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
                                     {{ field.label }}
@@ -165,7 +165,7 @@
                 <!-- Dates Information -->
                 <div class="grid grid-cols-2 gap-6">
                     {% for field in form %}
-                        {% if field.name in 'incremental_date_of_present_post,date_of_last_appraisal' %}
+                        {% if field.name == 'incremental_date_of_present_post' or field.name == 'date_of_last_appraisal' %}
                             <div class="form-group">
                                 <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
                                     {{ field.label }}
