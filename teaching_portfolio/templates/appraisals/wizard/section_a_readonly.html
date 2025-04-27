@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+{% load appraisal_tags %}
+
+{% block title %}Appraisal Form - Section A (Review){% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
+        <div class="pb-5 border-b border-gray-200">
+            <h3 class="text-lg font-medium leading-6 text-gray-900">
+                Section A: Review Personal and Professional Information
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">
+                This section shows information provided by the employee. Review these details before continuing to the next section.
+            </p>
+        </div>
+
+        <form method="post" class="space-y-8 mt-6">
+            {% csrf_token %}
+            {{ wizard.management_form }}
+            
+            <!-- Employee/Appraiser Info -->
+            <div class="grid grid-cols-2 gap-6 pt-6">
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700">Employee</label>
+                    <div class="mt-1 bg-gray-50 px-3 py-2 rounded-md text-gray-700 border border-gray-200">
+                        {{ form.instance.employee.get_full_name }}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700">Appraiser</label>
+                    <div class="mt-1 bg-gray-50 px-3 py-2 rounded-md text-gray-700 border border-gray-200">
+                        {{ form.instance.appraiser.get_full_name }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Personal Information -->
+            <div class="space-y-6 pt-6">
+                <div class="grid grid-cols-3 gap-6">
+                    {% for field in form %}
+                        {% if field.name in 'ic_no,ic_colour,date_of_birth' %}
+                            <div class="form-group">
+                                <label class="block text-sm font-medium text-gray-700">
+                                    {{ field.label }}
+                                </label>
+                                <div class="mt-1 bg-gray-50 px-3 py-2 rounded-md text-gray-700 border border-gray-200">
+                                    {{ field.value|default:"Not provided" }}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Appointments -->
+            <div class="rounded-lg bg-white shadow mt-6">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-base font-semibold leading-6 text-gray-900">Appointments</h3>
+                    <div class="mt-4 overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead>
+                                <tr>
+                                    <th class="w-48 px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Appointment Type</th>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">First Post</th>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Faculty/Programme</th>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">From</th>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">To</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white">
+                                <!-- Government Service Row -->
+                                <tr>
+                                    <td class="px-3 py-4 text-sm font-medium text-gray-900">
+                                        <div class="break-words max-w-[200px]">
+                                            First appointment in Brunei Government service, if applicable
+                                        </div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        <div class="px-3 py-2 bg-gray-50 rounded-md">{{ form.instance.first_post_govt|default:"Not provided" }}</div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        <div class="px-3 py-2 bg-gray-50 rounded-md">{{ form.instance.faculty_programme_govt|default:"Not provided" }}</div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        <div class="px-3 py-2 bg-gray-50 rounded-md">{{ form.instance.date_from_govt|date:"d M Y"|default:"Not provided" }}</div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        <div class="px-3 py-2 bg-gray-50 rounded-md">{{ form.instance.date_to_govt|date:"d M Y"|default:"Not provided" }}</div>
+                                    </td>
+                                </tr>
+                                <!-- UBD Row -->
+                                <tr>
+                                    <td class="px-3 py-4 text-sm font-medium text-gray-900">
+                                        <div class="break-words max-w-[200px]">
+                                            First appointment in Universiti Brunei Darussalam
+                                        </div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        <div class="px-3 py-2 bg-gray-50 rounded-md">{{ form.instance.first_post_ubd|default:"Not provided" }}</div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        <div class="px-3 py-2 bg-gray-50 rounded-md">{{ form.instance.faculty_programme_ubd|default:"Not provided" }}</div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        <div class="px-3 py-2 bg-gray-50 rounded-md">{{ form.instance.date_from_ubd|date:"d M Y"|default:"Not provided" }}</div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        <div class="px-3 py-2 bg-gray-50 rounded-md">{{ form.instance.date_to_ubd|date:"d M Y"|default:"Not provided" }}</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Position Information -->
+            <div class="grid grid-cols-2 gap-6 mt-6">
+                {% for field in form %}
+                    {% if field.name in 'present_post,salary_scale_division' %}
+                        <div class="form-group">
+                            <label class="block text-sm font-medium text-gray-700">
+                                {{ field.label }}
+                            </label>
+                            <div class="mt-1 bg-gray-50 px-3 py-2 rounded-md text-gray-700 border border-gray-200">
+                                {{ field.value|default:"Not provided" }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Dates Information -->
+            <div class="grid grid-cols-2 gap-6 mt-6">
+                {% for field in form %}
+                    {% if field.name in 'incremental_date_of_present_post,date_of_last_appraisal' %}
+                        <div class="form-group">
+                            <label class="block text-sm font-medium text-gray-700">
+                                {{ field.label }}
+                            </label>
+                            <div class="mt-1 bg-gray-50 px-3 py-2 rounded-md text-gray-700 border border-gray-200">
+                                {{ field.value|date:"d M Y"|default:"Not provided" }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            
+            <!-- Academic Qualifications -->
+            <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 mt-6">
+                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-6">Academic Qualifications</h3>
+                {% if qualifications %}
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Degree/Diploma</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">University/College</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">From Date</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">To Date</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white">
+                                {% for qualification in qualifications %}
+                                    <tr>
+                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900">{{ qualification.degree_diploma }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ qualification.university_college }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ qualification.from_date|date:"d M Y" }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ qualification.to_date|date:"d M Y" }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-sm text-gray-500">No qualifications recorded.</p>
+                {% endif %}
+            </div>
+            
+            <!-- Current Enrollment Details -->
+            <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 mt-6">
+                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Current Enrollment in Higher Degree/Professional Qualification(s)</h3>
+                <div class="mt-1 bg-gray-50 px-4 py-3 rounded-md text-gray-700 border border-gray-200 whitespace-pre-wrap">
+                    {{ form.instance.current_enrollment_details|default:"No current enrollment details provided." }}
+                </div>
+            </div>
+            
+            <!-- Teaching Modules -->
+            <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 mt-6">
+                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-6">Teaching Modules</h3>
+                {% if modules %}
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Code</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Title</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Level</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Language</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Students</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">% Taught</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Hours/Week</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white">
+                                {% for module in modules %}
+                                    <tr>
+                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900">{{ module.code }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ module.title }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ module.level }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ module.languageMedium }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ module.no_of_students }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ module.percentage_jointly_taught }}%</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">{{ module.hrs_weekly }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-sm text-gray-500">No teaching modules recorded.</p>
+                {% endif %}
+                
+                <!-- Higher Degree Students -->
+                <div class="mt-6">
+                    <label class="block text-sm font-medium text-gray-700">
+                        No. and details of higher degree students supervised, if any
+                    </label>
+                    <div class="mt-1 bg-gray-50 px-4 py-3 rounded-md text-gray-700 border border-gray-200 whitespace-pre-wrap">
+                        {{ form.instance.higher_degree_students_supervised|default:"No information provided." }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Research and Publications -->
+            <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 mt-6">
+                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Research Details</h3>
+                
+                <!-- Last Research -->
+                <div class="space-y-4 mb-6">
+                    <label class="block text-sm font-medium text-gray-700">
+                        Title of last research undertaken and date project completed
+                    </label>
+                    <div class="bg-gray-50 px-4 py-3 rounded-md text-gray-700 border border-gray-200 whitespace-pre-wrap">
+                        {{ form.instance.last_research|default:"No information provided." }}
+                    </div>
+                </div>
+                
+                <!-- Ongoing Research -->
+                <div class="space-y-4 mb-6">
+                    <label class="block text-sm font-medium text-gray-700">
+                        Title of ongoing research undertaken and period of research project
+                    </label>
+                    <div class="bg-gray-50 px-4 py-3 rounded-md text-gray-700 border border-gray-200 whitespace-pre-wrap">
+                        {{ form.instance.ongoing_research|default:"No information provided." }}
+                    </div>
+                </div>
+                
+                <!-- Publications -->
+                <div class="space-y-4">
+                    <h4 class="text-md font-medium text-gray-900">Publications</h4>
+                    <div class="bg-gray-50 px-4 py-3 rounded-md text-gray-700 border border-gray-200 whitespace-pre-wrap">
+                        {{ form.instance.publications|default:"No publications listed." }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Attendance at conferences, seminars, workshops -->
+            <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 mt-6">
+                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Attendance at Conferences, Seminars, Workshops and Role Played</h3>
+                <div class="bg-gray-50 px-4 py-3 rounded-md text-gray-700 border border-gray-200 whitespace-pre-wrap">
+                    {{ form.instance.attendance|default:"No information provided." }}
+                </div>
+            </div>
+            
+            <!-- Conference papers -->
+            <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 mt-6">
+                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Conference Papers</h3>
+                <div class="bg-gray-50 px-4 py-3 rounded-md text-gray-700 border border-gray-200 whitespace-pre-wrap">
+                    {{ form.instance.conference_papers|default:"No conference papers listed." }}
+                </div>
+            </div>
+            
+            <!-- Consultancy work -->
+            <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 mt-6">
+                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Consultancy and other outside professional work undertaken</h3>
+                <div class="bg-gray-50 px-4 py-3 rounded-md text-gray-700 border border-gray-200 whitespace-pre-wrap">
+                    {{ form.instance.consultancy_work|default:"No consultancy work listed." }}
+                </div>
+            </div>
+            
+            <!-- Administrative posts -->
+            <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 mt-6">
+                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Administrative posts held</h3>
+                <div class="bg-gray-50 px-4 py-3 rounded-md text-gray-700 border border-gray-200 whitespace-pre-wrap">
+                    {{ form.instance.administrative_posts|default:"No administrative posts listed." }}
+                </div>
+            </div>
+            
+            <!-- Participation in other activities -->
+            <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 mt-6">
+                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Participation in other activities</h3>
+                
+                <div class="space-y-4 mb-6">
+                    <label class="block text-sm font-medium text-gray-700">
+                        Within University
+                    </label>
+                    <div class="bg-gray-50 px-4 py-3 rounded-md text-gray-700 border border-gray-200 whitespace-pre-wrap">
+                        {{ form.instance.participation_other_activities_university|default:"No information provided." }}
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <label class="block text-sm font-medium text-gray-700">
+                        Outside University
+                    </label>
+                    <div class="bg-gray-50 px-4 py-3 rounded-md text-gray-700 border border-gray-200 whitespace-pre-wrap">
+                        {{ form.instance.participation_other_activities_outside|default:"No information provided." }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Objectives for next year -->
+            <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 mt-6">
+                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Teaching and research objectives for the following year</h3>
+                <div class="bg-gray-50 px-4 py-3 rounded-md text-gray-700 border border-gray-200 whitespace-pre-wrap">
+                    {{ form.instance.objectives_next_year|default:"No objectives listed." }}
+                </div>
+            </div>
+            
+            <!-- Appraiser comments -->
+            <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 mt-6">
+                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Comments of the appraiser if he does not aggree with any entry made by the appraisee in this Section</h3>
+                <div class="bg-gray-50 px-4 py-3 rounded-md text-gray-700 border border-gray-200 whitespace-pre-wrap">
+                    {{ form.instance.appraiser_comments|default:"No comments." }}
+                </div>
+            </div>
+
+            <!-- Wizard navigation buttons -->
+            <div class="flex justify-end space-x-3 mt-6">
+                {% if wizard.steps.prev %}
+                    <button type="submit" name="wizard_goto_step" value="{{ wizard.steps.prev }}" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Previous
+                    </button>
+                {% endif %}
+                
+                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Continue to Next Section
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+<style>
+
+.readonly-field {
+    background-color: #f9fafb;
+    border-color: #e5e7eb;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+</style>

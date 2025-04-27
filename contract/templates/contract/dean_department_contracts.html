@@ -8,8 +8,24 @@
         <p class="text-gray-600 mt-2">As a Dean, you can review and provide comments on contract submissions from employees in your department.</p>
     </div>
 
+    <!-- Tabs Navigation -->
+    <div class="border-b border-gray-200 mb-6">
+        <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+            <button id="pendingTab" 
+                    onclick="switchTab('pending')"
+                    class="border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                Waiting for Review
+            </button>
+            <button id="allTab" 
+                    onclick="switchTab('all')"
+                    class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                All Department Contracts
+            </button>
+        </nav>
+    </div>
+
     <!-- Contracts Waiting for Dean Review -->
-    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <div id="pendingContracts" class="bg-white shadow overflow-hidden sm:rounded-lg">
         <div class="px-4 py-5 sm:px-6 bg-blue-50">
             <h2 class="text-lg leading-6 font-medium text-gray-900">Contracts Waiting for Your Review</h2>
             <p class="mt-1 max-w-2xl text-sm text-gray-500">These contracts require your comments before being forwarded to HR and SMT.</p>
@@ -75,7 +91,9 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <a href="{% url 'contract:dean_review' contract_id=contract.pk %}" 
-                           class="text-indigo-600 hover:text-indigo-900 font-medium">Review & Comment</a>
+                           class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150 shadow-sm">
+                            Review & Comment
+                        </a>
                     </td>
                 </tr>
                 {% empty %}
@@ -88,5 +106,115 @@
             </tbody>
         </table>
     </div>
+
+    <!-- All Department Contracts -->
+    <div id="allContracts" class="bg-white shadow overflow-hidden sm:rounded-lg hidden">
+        <div class="px-4 py-5 sm:px-6 bg-gray-50">
+            <h2 class="text-lg leading-6 font-medium text-gray-900">All Department Contracts</h2>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">Complete list of all contract submissions from your department.</p>
+        </div>
+        
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Contract ID
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Employee Name
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Position
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Months Remaining
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Submission Date
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for contract in all_department_contracts %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {{ contract.contract_id }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">
+                            {{ contract.employee.get_full_name }}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ contract.present_post }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            {% if contract.months_remaining <= 3 %}
+                                bg-red-100 text-red-800
+                            {% elif contract.months_remaining <= 6 %}
+                                bg-yellow-100 text-yellow-800
+                            {% else %}
+                                bg-green-100 text-green-800
+                            {% endif %}">
+                            {{ contract.months_remaining }} months
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ contract.submission_date|date:"Y-m-d" }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <a href="{% url 'contract:review' pk=contract.pk %}" 
+                           class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150 shadow-sm">
+                            View
+                        </a>
+                        
+                        {% if contract.status == 'dean_review' %}
+                        <a href="{% url 'contract:dean_review' contract_id=contract.pk %}" 
+                           class="ml-3 inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150 shadow-sm">
+                            Review
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
+                        No contracts found in your department
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
+
+<script>
+    function switchTab(tabName) {
+        // Hide all content divs
+        document.getElementById('pendingContracts').classList.add('hidden');
+        document.getElementById('allContracts').classList.add('hidden');
+        
+        // Remove active class from all tabs
+        document.getElementById('pendingTab').classList.remove('border-indigo-500', 'text-indigo-600');
+        document.getElementById('pendingTab').classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        document.getElementById('allTab').classList.remove('border-indigo-500', 'text-indigo-600');
+        document.getElementById('allTab').classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+        
+        // Show selected content and activate tab
+        if (tabName === 'pending') {
+            document.getElementById('pendingContracts').classList.remove('hidden');
+            document.getElementById('pendingTab').classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+            document.getElementById('pendingTab').classList.add('border-indigo-500', 'text-indigo-600');
+        } else if (tabName === 'all') {
+            document.getElementById('allContracts').classList.remove('hidden');
+            document.getElementById('allTab').classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+            document.getElementById('allTab').classList.add('border-indigo-500', 'text-indigo-600');
+        }
+    }
+</script>
 {% endblock %} 

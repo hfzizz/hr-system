@@ -6,6 +6,7 @@
     <!-- Header with Title and Button -->
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold text-gray-900">Contract Renewals</h1>
+        {% if contract_enabled %}
         <a href="{% url 'contract:submission' %}" 
            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
             <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -13,13 +14,14 @@
             </svg>
             Create Contract Renewal Form
         </a>
+        {% endif %}
     </div>
 
     <!-- Tab Navigation -->
     <div class="mb-4 border-b border-gray-200">
-        <ul class="flex -mb-px" role="tablist">
+        <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist">
             <li class="mr-2" role="presentation">
-                <button class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 tab-button active" 
+                <button class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 tab-button" 
                         id="previous-tab" 
                         data-target="previous-content"
                         type="button">
@@ -27,7 +29,7 @@
                 </button>
             </li>
             <li class="mr-2" role="presentation">
-                <button class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 tab-button" 
+                <button class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 tab-button active" 
                         id="current-tab" 
                         data-target="current-content"
                         type="button">
@@ -69,10 +71,12 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                {% if contract.status == 'approved' %}bg-green-100 text-green-800
-                                {% elif contract.status == 'rejected' %}bg-red-100 text-red-800
+                                {% if contract.status == 'smt_approved' %}bg-green-100 text-green-800
+                                {% elif contract.status == 'smt_rejected' %}bg-red-100 text-red-800
                                 {% elif contract.status == 'smt_review' %}bg-blue-100 text-blue-800
                                 {% elif contract.status == 'sent_back' %}bg-orange-100 text-orange-800
+                                {% elif contract.status == 'moe_approved' %}bg-green-100 text-green-800
+                                {% elif contract.status == 'moe_rejected' %}bg-red-100 text-red-800
                                 {% else %}bg-yellow-100 text-yellow-800{% endif %}">
                                 {{ contract.get_status_display }}
                             </span>
@@ -81,12 +85,15 @@
                             {{ contract.submission_date|date:"Y-m-d" }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <a href="{% url 'contract:contract_detail' pk=contract.pk %}" class="text-indigo-600 hover:text-indigo-900">Review Form</a>
+                            <a href="{% url 'contract:contract_detail' pk=contract.pk %}" 
+                               class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150 shadow-sm">
+                                Review Form
+                            </a>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No previous contracts found</td>
+                        <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No previous contracts found</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -125,8 +132,8 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                {% if contract.status == 'approved' %}bg-green-100 text-green-800
-                                {% elif contract.status == 'rejected' %}bg-red-100 text-red-800
+                                {% if contract.status == 'smt_approved' %}bg-green-100 text-green-800
+                                {% elif contract.status == 'smt_rejected' %}bg-red-100 text-red-800
                                 {% elif contract.status == 'smt_review' %}bg-blue-100 text-blue-800
                                 {% elif contract.status == 'sent_back' %}bg-orange-100 text-orange-800
                                 {% else %}bg-yellow-100 text-yellow-800{% endif %}">
@@ -140,19 +147,25 @@
                             {% if contract.status == 'sent_back' %}
                                 <div class="flex space-x-2">
                                     <a href="{% url 'contract:edit_submission' pk=contract.pk %}" 
-                                       class="text-yellow-600 hover:text-yellow-900">Edit Submission</a>
+                                       class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150 shadow-sm">
+                                        Edit Submission
+                                    </a>
                                     <a href="#" onclick="viewHRComments({{ contract.pk }})"
-                                       class="text-blue-600 hover:text-blue-900">View HR Comments</a>
+                                       class="inline-flex items-center px-4 py-2 border border-orange-500 text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 transition-colors duration-150 shadow-sm">
+                                        View HR Comments
+                                    </a>
                                 </div>
                             {% else %}
                                 <a href="{% url 'contract:contract_detail' pk=contract.pk %}" 
-                                   class="text-indigo-600 hover:text-indigo-900">Review Form</a>
+                                   class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150 shadow-sm">
+                                    Review Form
+                                </a>
                             {% endif %}
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No current contracts found</td>
+                        <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No current contracts found</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -167,24 +180,50 @@
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabContents = document.querySelectorAll('.tab-content');
 
+        // Function to switch tabs
+        function switchTab(targetId) {
+            // Remove active state from all buttons and hide all contents
+            tabButtons.forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.remove('border-indigo-600');
+                btn.classList.remove('text-indigo-600');
+            });
+            tabContents.forEach(content => content.classList.add('hidden'));
+
+            // Find the button corresponding to the target and activate it
+            const activeButton = document.querySelector(`[data-target="${targetId}"]`);
+            if (activeButton) {
+                activeButton.classList.add('active');
+                activeButton.classList.add('border-indigo-600');
+                activeButton.classList.add('text-indigo-600');
+                
+                // Show the corresponding content
+                const content = document.getElementById(targetId);
+                if (content) {
+                    content.classList.remove('hidden');
+                }
+                
+                // Store active tab in session storage
+                sessionStorage.setItem('activeContractTab', targetId);
+            }
+        }
+
+        // Add click event to all tab buttons
         tabButtons.forEach(button => {
             button.addEventListener('click', () => {
-                // Remove active state from all buttons and hide all contents
-                tabButtons.forEach(btn => {
-                    btn.classList.remove('active');
-                    btn.classList.remove('border-indigo-600');
-                    btn.classList.remove('text-indigo-600');
-                });
-                tabContents.forEach(content => content.classList.add('hidden'));
-
-                // Add active state to clicked button and show corresponding content
-                button.classList.add('active');
-                button.classList.add('border-indigo-600');
-                button.classList.add('text-indigo-600');
                 const targetId = button.getAttribute('data-target');
-                document.getElementById(targetId).classList.remove('hidden');
+                switchTab(targetId);
             });
         });
+
+        // Check if there's a stored active tab
+        const storedTab = sessionStorage.getItem('activeContractTab');
+        if (storedTab && document.getElementById(storedTab)) {
+            switchTab(storedTab);
+        } else {
+            // Default to the "current" tab
+            switchTab('current-content');
+        }
     });
 
     async function viewHRComments(contractId) {

@@ -1,0 +1,1216 @@
+{% extends 'base_print.html' %}
+{% load static %}
+
+{% block title %}Contract Form - {{ contract.contract_id }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 print:px-0">
+    <div class="flex justify-between items-center mb-8 print:hidden">
+        <div class="flex items-center space-x-4">
+            <button onclick="window.history.back()" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back
+            </button>
+            <h1 class="text-2xl font-bold">Contract Form - {{ contract.contract_id }}</h1>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'contract:download_merged_contract' contract.id %}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Download with Documents
+            </a>
+        <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Print Form
+        </button>
+    </div>
+    </div>
+
+    <!-- Add PDF.js library in the head section -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script>
+        // Set PDF.js worker source
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+    </script>
+
+    <!-- Combined University Header and CV Format to keep them together -->
+    <div class="no-break-wrapper">
+        <!-- University Header - PDF-like header -->
+        <div class="print-header pdf-header">
+            <div class="university-logo">
+                <img src="{% static 'images/logo.png' %}" alt="University Logo" class="logo-img">
+            </div>
+            <div class="university-header-text">
+                <h1 class="text-xl font-bold uppercase">University Contract Renewal Form</h1>
+                <p class="text-sm">Human Resources Department</p>
+                <p class="text-sm">Contract ID: <span class="pdf-highlight">{{ contract.contract_id }}</span></p>
+                <p class="text-sm">Submission Date: {{ contract.submission_date|date:"F d, Y" }}</p>
+            </div>
+        </div>
+
+        <!-- PDF Document Title -->
+        <div class="pdf-document-title">
+            <h1>{{ first_name }} {{ last_name }}</h1>
+            <p class="pdf-subtitle">Contract Renewal Application</p>
+    </div>
+
+    <!-- University Header -->
+        <div class="text-center print-header">
+        <h1 class="text-xl font-bold uppercase">University Contract Renewal Form</h1>
+        <p class="text-sm">Human Resources Department</p>
+        <p class="text-sm">Contract ID: {{ contract.contract_id }}</p>
+        <p class="text-sm">Submission Date: {{ contract.submission_date|date:"F d, Y" }}</p>
+    </div>
+
+        <!-- CV Format - Professional styling -->
+        <div class="print-cv-section">
+            <h1 class="text-2xl font-bold text-center mb-4">{{ first_name }} {{ last_name }}</h1>
+            
+            <!-- Basic Information Summary Card -->
+            <div class="cv-summary-card mb-6 p-3">
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                    <div><span class="font-semibold">Position:</span> {{ contract.present_post }}</div>
+                    <div><span class="font-semibold">Department:</span> {{ department }}</div>
+                    <div><span class="font-semibold">IC Number:</span> {{ ic_no }} ({{ ic_colour }})</div>
+                    <div><span class="font-semibold">Phone:</span> {{ phone_number }}</div>
+                    <div><span class="font-semibold">Salary Scale:</span> {{ contract.salary_scale_division }}</div>
+                    <div><span class="font-semibold">Past Contracts:</span> {{ contract_count }}</div>
+        </div>
+    </div>
+
+            <!-- 2. Education -->
+            <div class="cv-section">
+                <h2 class="cv-section-title">Education</h2>
+                <div class="cv-section-content">
+                    {% if academic_qualifications %}
+                        <table class="cv-table">
+                    <thead>
+                        <tr>
+                                    <th>Year</th>
+                                    <th>Degree/Diploma</th>
+                                    <th>Institution</th>
+                        </tr>
+                    </thead>
+                            <tbody>
+                            {% for qual in academic_qualifications %}
+                                <tr>
+                                    <td>{{ qual.to_date }}</td>
+                                    <td>{{ qual.degree_diploma }}</td>
+                                    <td>{{ qual.university_college }}</td>
+                                </tr>
+                            {% endfor %}
+                    </tbody>
+                </table>
+                    {% else %}
+                    <p class="cv-no-data">No academic qualifications provided</p>
+                    {% endif %}
+
+                    {% if contract.current_enrollment %}
+                        <div class="mt-2">
+                            <p class="font-medium">Currently Enrolled:</p>
+                            <p>{{ contract.current_enrollment }}</p>
+            </div>
+                    {% endif %}
+        </div>
+    </div>
+
+            <!-- 3. Employment History -->
+            <div class="cv-section">
+                <h2 class="cv-section-title">Employment History</h2>
+                <div class="cv-section-content">
+                    {% if administrative_positions %}
+                        <table class="cv-table">
+                    <thead>
+                        <tr>
+                                    <th>Period</th>
+                                    <th>Position</th>
+                                    <th>Details</th>
+                        </tr>
+                    </thead>
+                            <tbody>
+                                {% for position in administrative_positions %}
+                                <tr>
+                                    <td>{{ position.from_date|date:"Y-m-d" }} to {{ position.to_date|date:"Y-m-d" }}</td>
+                                    <td>{{ position.title }}</td>
+                                    <td>{{ position.details }}</td>
+                                </tr>
+                            {% endfor %}
+                    </tbody>
+                </table>
+                    {% else %}
+                    <p class="cv-no-data">No employment history provided</p>
+                    {% endif %}
+            </div>
+            </div>
+            
+            <!-- 4. Administrative Positions -->
+            <div class="cv-section">
+                <h2 class="cv-section-title">Administrative Positions & Appointments</h2>
+                <div class="cv-section-content">
+                    {% if administrative_positions %}
+                        <table class="cv-table">
+                    <thead>
+                        <tr>
+                                    <th>Date</th>
+                                    <th>Position</th>
+                        </tr>
+                    </thead>
+                            <tbody>
+                                {% for position in administrative_positions %}
+                                <tr>
+                                    <td>{{ position.from_date|date:"Y-m-d" }}</td>
+                                    <td>{{ position.title }}</td>
+                                </tr>
+                            {% endfor %}
+                    </tbody>
+                </table>
+                    {% else %}
+                    <p class="cv-no-data">No administrative positions recorded</p>
+                    {% endif %}
+            </div>
+            </div>
+            
+            <!-- 5. Academic / Social / Community Service -->
+            <div class="cv-section">
+                <h2 class="cv-section-title">Academic, Social & Community Service</h2>
+                <div class="cv-section-content">
+                    {% if university_committees %}
+                        <h3 class="cv-subsection-title">University Committees</h3>
+                        <table class="cv-table">
+                     <thead>
+                        <tr>
+                                    <th>Date</th>
+                                    <th>Committee</th>
+                                    <th>Position</th>
+                        </tr>
+                    </thead>
+                            <tbody>
+                                {% for committee in university_committees %}
+                                <tr>
+                                    <td>{{ committee.from_date }}</td>
+                                    <td>{{ committee.name }}</td>
+                                    <td>{{ committee.position }}</td>
+                                </tr>
+                            {% endfor %}
+                    </tbody>
+                </table>
+                    {% endif %}
+                    
+                    {% if external_committees %}
+                        <h3 class="cv-subsection-title mt-3">External Committees</h3>
+                        <table class="cv-table">
+                    <thead>
+                        <tr>
+                                    <th>Date</th>
+                                    <th>Organization</th>
+                                    <th>Position</th>
+                        </tr>
+                    </thead>
+                            <tbody>
+                                {% for committee in external_committees %}
+                                <tr>
+                                    <td>{{ committee.from_date }}</td>
+                                    <td>{{ committee.organization }}</td>
+                                    <td>{{ committee.position }}</td>
+                                </tr>
+                            {% endfor %}
+                    </tbody>
+                </table>
+                    {% endif %}
+                    
+                    {% if not university_committees and not external_committees %}
+                        <p class="cv-no-data">No committee positions recorded</p>
+                    {% endif %}
+        </div>
+    </div>
+
+            <!-- 6. Fellowships and Awards -->
+            <div class="cv-section">
+                <h2 class="cv-section-title">Fellowships and Awards</h2>
+                <div class="cv-section-content">
+                    {% if fellowships_awards %}
+                        <table class="cv-table">
+            <thead>
+                <tr>
+                                    <th>Date</th>
+                                    <th>Award</th>
+                                    <th>Organization</th>
+                </tr>
+            </thead>
+                            <tbody>
+                                {% for award in fellowships_awards %}
+                                <tr>
+                                    <td>{{ award.date }}</td>
+                                    <td>{{ award.title }}</td>
+                                    <td>{{ award.organization }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+                {% else %}
+                        <p class="cv-no-data">No fellowships or awards provided</p>
+                    {% endif %}
+        </div>
+        </div>
+            
+            <!-- 7. Current Research Area / Interest -->
+            <div class="cv-section">
+                <h2 class="cv-section-title">Current Research Areas & Interests</h2>
+                <div class="cv-section-content">
+                    {% if ongoing_research %}
+                        <table class="cv-table">
+                <thead>
+                    <tr>
+                                    <th>Research Title</th>
+                    </tr>
+                </thead>
+                            <tbody>
+                                {% for research in ongoing_research %}
+                            <tr>
+                                    <td>{{ research.title }}</td>
+                            </tr>
+                        {% endfor %}
+            </tbody>
+        </table>
+                    {% else %}
+                        <p class="cv-no-data">No current research areas provided</p>
+                {% endif %}
+    </div>
+    </div>
+            
+            <!-- 8. Research Experience and Grants -->
+            <div class="cv-section">
+                <h2 class="cv-section-title">Research Experience & Grants</h2>
+                <div class="cv-section-content">
+                    {% if research_history %}
+                        <table class="cv-table">
+            <thead>
+                <tr>
+                                    <th>Period</th>
+                                    <th>Project</th>
+                                    <th>Funding Agency</th>
+                </tr>
+            </thead>
+                            <tbody>
+                                {% for research in research_history %}
+                                <tr>
+                                    <td>{{ research.startDate }} - {{ research.endDate }}</td>
+                                    <td>{{ research.title }}</td>
+                                    <td>{{ research.fundingAgency }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+                {% else %}
+                        <p class="cv-no-data">No research experience records provided</p>
+                    {% endif %}
+        </div>
+        </div>
+            
+            <!-- 9. Teaching Areas / Interests -->
+            <div class="cv-section">
+                <h2 class="cv-section-title">Teaching Areas & Interests</h2>
+                <div class="cv-section-content">
+                    {% if teaching_modules %}
+                        <table class="cv-table">
+                <thead>
+                    <tr>
+                                    <th>Module</th>
+                    </tr>
+                </thead>
+                            <tbody>
+                                {% for module in teaching_modules %}
+                                <tr>
+                                    <td>{{ module.title }}</td>
+                            </tr>
+                        {% endfor %}
+            </tbody>
+        </table>
+                    {% else %}
+                        <p class="cv-no-data">No teaching areas provided</p>
+                    {% endif %}
+                    
+                    {% if contract.teaching_future_plan %}
+                        <div class="mt-3">
+                            <h3 class="cv-subsection-title">Future Teaching Plans</h3>
+                            <div class="cv-text-block">{{ contract.teaching_future_plan }}</div>
+                        </div>
+                {% endif %}
+        </div>
+    </div>
+
+            <!-- 10. Teaching History / Modules Taught -->
+            <div class="cv-section">
+                <h2 class="cv-section-title">Teaching History & Modules Taught</h2>
+                <div class="cv-section-content">
+                    {% if teaching_modules %}
+                        <table class="cv-table">
+            <thead>
+                <tr>
+                                    <th>Module</th>
+                                    <th>Level</th>
+                                    <th>Language</th>
+                </tr>
+            </thead>
+                            <tbody>
+                                {% for module in teaching_modules %}
+                                <tr>
+                                    <td>{{ module.title }}</td>
+                                    <td>{{ module.level }}</td>
+                                    <td>{{ module.language }}</td>
+                    </tr>
+                    {% endfor %}
+            </tbody>
+        </table>
+                    {% else %}
+                        <p class="cv-no-data">No teaching modules provided</p>
+                    {% endif %}
+    </div>
+    </div>
+            
+            <!-- 11. Consultancy -->
+            <div class="cv-section">
+                <h2 class="cv-section-title">Consultancy</h2>
+                <div class="cv-section-content">
+                    {% if consultancy_work %}
+                        <table class="cv-table">
+                <thead>
+                    <tr>
+                                    <th>Date</th>
+                                    <th>Company</th>
+                                    <th>Project</th>
+                    </tr>
+                </thead>
+                            <tbody>
+                                {% for work in consultancy_work %}
+                                <tr>
+                                    <td>{{ work.startDate }}</td>
+                                    <td>{{ work.company }}</td>
+                                    <td>{{ work.title }}</td>
+                        </tr>
+                        {% endfor %}
+                </tbody>
+            </table>
+                    {% else %}
+                        <p class="cv-no-data">No consultancy work records provided</p>
+                    {% endif %}
+        </div>
+    </div>
+
+            <!-- 12. Publications -->
+            <div class="cv-section">
+                <h2 class="cv-section-title">Publications</h2>
+                
+                <!-- 12.6 Conference Papers -->
+                <div class="cv-subsection">
+                    <h3 class="cv-subsection-title">Conference Papers</h3>
+                    <div class="cv-section-content">
+                        {% if conference_papers %}
+                            <ul class="cv-publication-list">
+                                {% for paper in conference_papers %}
+                                <li>{{ paper.author }}, "<span class="cv-paper-title">{{ paper.title }}</span>", {{ paper.year }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="cv-no-data">No conference papers provided</p>
+                        {% endif %}
+                    </div>
+        </div>
+    </div>
+
+            <!-- 13. Mentorship -->
+            <div class="cv-section">
+                <h2 class="cv-section-title">Mentorship</h2>
+                <div class="cv-section-content">
+                    {% if mentorship_data %}
+                        <table class="cv-table">
+                <thead>
+                    <tr>
+                                    <th>Name</th>
+                                    <th>Programme</th>
+                                    <th>Period</th>
+                    </tr>
+                </thead>
+                            <tbody>
+                                {% for mentorship in mentorship_data %}
+                                <tr>
+                                    <td>{{ mentorship.name }}</td>
+                                    <td>{{ mentorship.programme }}</td>
+                                    <td>{{ mentorship.startDate }} to {{ mentorship.endDate }}</td>
+                            </tr>
+                        {% endfor %}
+                </tbody>
+            </table>
+                    {% else %}
+                        <p class="cv-no-data">No mentorship information provided</p>
+        {% endif %}
+        </div>
+    </div>
+
+            <!-- 14. Supervision of graduate students -->
+            <div class="cv-section">
+                <h2 class="cv-section-title">Supervision of Graduate Students</h2>
+                <div class="cv-section-content">
+                    {% if grad_supervision_data %}
+                        <table class="cv-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Programme</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for supervision in grad_supervision_data %}
+                                <tr>
+                                    <td>{{ supervision.name }}</td>
+                                    <td>{{ supervision.programme }}</td>
+                                    <td>{{ supervision.status }}</td>
+                                </tr>
+            {% endfor %}
+                            </tbody>
+                        </table>
+        {% else %}
+                        <p class="cv-no-data">No graduate student supervision information provided</p>
+        {% endif %}
+                </div>
+    </div>
+
+    <!-- Achievements Section -->
+            <div class="cv-section">
+                <h2 class="cv-section-title">Achievements and Future Plans</h2>
+                <div class="cv-section-content">
+                    <div class="mb-4">
+                        <h3 class="cv-subsection-title">Achievements in Last Contract (Teaching / Research / Admin)</h3>
+                        <div class="cv-text-block">{{ contract.achievements_last_contract|linebreaksbr|default:"N/A" }}</div>
+        </div>
+        <div>
+                        <h3 class="cv-subsection-title">Proposed Undertakings and Achievements if Renewed</h3>
+                        <div class="cv-text-block">{{ contract.achievements_proposal|linebreaksbr|default:"N/A" }}</div>
+                    </div>
+        </div>
+    </div>
+
+    <!-- Others Section -->
+            <div class="cv-section">
+                <h2 class="cv-section-title">Other Matters</h2>
+                <div class="cv-section-content">
+                    <div class="cv-text-block">{{ contract.other_matters|linebreaksbr|default:"N/A" }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dean's Comments Section -->
+    {% if contract.dean_reviews.exists %}
+    <div class="cv-section">
+        <h2 class="cv-section-title">Dean's Comments</h2>
+        <div class="cv-section-content">
+        {% for review in dean_reviews %}
+            <div class="review-item {% if not forloop.last %}mb-4 pb-4 border-b{% endif %}">
+                <div class="review-header">
+                    <span class="reviewer-name">{{ review.dean.get_full_name }}</span>
+                    <span class="review-date">{{ review.created_at|date:"F d, Y" }}</span>
+                </div>
+                <div class="cv-text-block mt-2">{{ review.comments }}</div>
+            {% if review.document_name %}
+                <div class="document-section">
+                    <h4 class="document-title">Supporting Document: {{ review.document_name }}</h4>
+                    <div class="document-preview" id="pdf-preview-{{ forloop.counter }}">
+                        {% if ".pdf" in review.document_name|lower %}
+                        <div class="pdf-container">
+                            <!-- PDF will be rendered here -->
+                            <div class="pdf-pages-container" data-document-url="{{ review.document.url }}"></div>
+                            <div class="pdf-placeholder print-only">
+                                <div class="pdf-icon">PDF</div>
+                                <p>{{ review.document_name }}</p>
+                                <p class="pdf-note">PDF document attached to original application</p>
+                            </div>
+                        </div>
+                        {% elif ".doc" in review.document_name|lower or ".docx" in review.document_name|lower %}
+                        <div class="doc-placeholder">
+                            <div class="doc-icon">DOC</div>
+                            <p>{{ review.document_name }}</p>
+                            <p class="doc-note">Document available in original application</p>
+                        </div>
+                        {% else %}
+                        <div class="file-placeholder">
+                            <p>{{ review.document_name }}</p>
+                            <p class="file-note">Document available in original application</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <!-- Peer Reviews Section -->
+        {% if peer_reviews %}
+            <div class="mt-4 pt-3 border-t">
+                <h3 class="cv-subsection-title">Peer Reviews</h3>
+                <div class="peer-reviews-container">
+            {% for review in peer_reviews %}
+                    <div class="peer-review-item">
+                        <div class="review-header">
+                            <span class="reviewer-name">{{ review.name }}</span>
+                            <span class="review-date">{{ review.created_at|date:"F d, Y" }}</span>
+                        </div>
+                        <div class="document-section">
+                            <h4 class="document-title">{{ review.document_name }}</h4>
+                            <div class="document-preview" id="peer-pdf-preview-{{ forloop.counter }}">
+                                {% if ".pdf" in review.document_name|lower %}
+                                <div class="pdf-container">
+                                    <!-- PDF will be rendered here -->
+                                    <div class="pdf-pages-container" data-document-url="{{ review.document.url }}"></div>
+                                    <div class="pdf-placeholder print-only">
+                                        <div class="pdf-icon">PDF</div>
+                                        <p>{{ review.document_name }}</p>
+                                        <p class="pdf-note">PDF document attached to original application</p>
+                                    </div>
+                                </div>
+                                {% elif ".doc" in review.document_name|lower or ".docx" in review.document_name|lower %}
+                                <div class="doc-placeholder">
+                                    <div class="doc-icon">DOC</div>
+                                    <p>{{ review.document_name }}</p>
+                                    <p class="doc-note">Document available in original application</p>
+                                </div>
+                                {% else %}
+                                <div class="file-placeholder">
+                                    <p>{{ review.document_name }}</p>
+                                    <p class="file-note">Document available in original application</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+            </div>
+            {% endfor %}
+                </div>
+        </div>
+        {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- SMT Decision & Comments Section -->
+    {% if contract.smt_reviews.exists %}
+    <div class="cv-section">
+        <h2 class="cv-section-title">SMT Decision & Comments</h2>
+        <div class="cv-section-content">
+        {% for review in smt_reviews %}
+            <div class="review-item {% if not forloop.last %}mb-4 pb-4 border-b{% endif %}">
+                <div class="review-header">
+                    <span class="reviewer-name">{{ review.smt_member.get_full_name }}</span>
+                    <span class="review-date">{{ review.created_at|date:"F d, Y" }}</span>
+                </div>
+                <div class="decision-badge">{{ review.get_decision_display }}</div>
+                <div class="cv-text-block mt-2">{{ review.comments }}</div>
+            {% if review.document_name %}
+                <p class="document-note">Supporting Document: {{ review.document_name }} (Not printable here)</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- MOE Decision & Comments Section -->
+    {% if contract.moe_reviews.exists %}
+    <div class="cv-section">
+        <h2 class="cv-section-title">MOE Decision & Comments</h2>
+        <div class="cv-section-content">
+        {% for review in moe_reviews %}
+            <div class="review-item {% if not forloop.last %}mb-4 pb-4 border-b{% endif %}">
+                <div class="review-header">
+                    <span class="reviewer-name">{{ review.hr_officer.get_full_name }}</span>
+                    <span class="review-date">{{ review.created_at|date:"F d, Y" }}</span>
+                </div>
+                <div class="decision-badge">{{ review.get_decision_display }}</div>
+                <div class="cv-text-block mt-2">{{ review.comments }}</div>
+            {% if review.document_name %}
+                <p class="document-note">Supporting Document: {{ review.document_name }} (Not printable here)</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="footer pdf-footer">
+        <div class="pdf-footer-line"></div>
+        <p>This document is automatically generated by the HR Contract Management System.</p>
+        <p>Printed on: {{ today|date:"F d, Y" }}</p>
+        <div class="pdf-page-number">Page <span class="pdf-page"></span></div>
+    </div>
+</div>
+
+<script>
+    window.onload = function() {
+        // Function to render PDFs
+        function renderPDFs() {
+            const pdfContainers = document.querySelectorAll('.pdf-pages-container');
+            
+            pdfContainers.forEach(container => {
+                const url = container.getAttribute('data-document-url');
+                if (url) {
+                    // Load the PDF
+                    const loadingTask = pdfjsLib.getDocument(url);
+                    loadingTask.promise.then(pdf => {
+                        // Only render first 2 pages for preview
+                        const maxPages = Math.min(2, pdf.numPages);
+                        
+                        for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
+                            pdf.getPage(pageNum).then(page => {
+                                const viewport = page.getViewport({ scale: 1.0 });
+                                
+                                // Create canvas for rendering
+                                const canvas = document.createElement('canvas');
+                                container.appendChild(canvas);
+                                
+                                const context = canvas.getContext('2d');
+                                canvas.height = viewport.height;
+                                canvas.width = viewport.width;
+                                canvas.className = 'pdf-preview-canvas';
+                                
+                                // Render PDF page
+                                const renderContext = {
+                                    canvasContext: context,
+                                    viewport: viewport
+                                };
+                                
+                                page.render(renderContext);
+                            });
+                        }
+                        
+                        // Add a note if there are more pages
+                        if (pdf.numPages > 2) {
+                            const note = document.createElement('p');
+                            note.textContent = `+ ${pdf.numPages - 2} more pages`;
+                            note.className = 'more-pages-note';
+                            container.appendChild(note);
+                        }
+                    }).catch(error => {
+                        console.error('Error loading PDF:', error);
+                        container.innerHTML = '<p class="pdf-error">Unable to load PDF preview</p>';
+                    });
+                }
+            });
+        }
+
+        // Try to render PDFs on page load
+        try {
+            renderPDFs();
+        } catch (e) {
+            console.error('Error rendering PDFs:', e);
+        }
+        
+        // Prepare for printing by fixing any spacing issues
+        window.onbeforeprint = function() {
+            // Force content to be compressed together
+            const header = document.querySelector('.print-header');
+            const cvSection = document.querySelector('.print-cv-section');
+            
+            if (header && cvSection) {
+                // Remove any spacing between header and CV section
+                header.style.marginBottom = '0';
+                header.style.paddingBottom = '0';
+                cvSection.style.marginTop = '0';
+                cvSection.style.paddingTop = '0';
+                
+                // Ensure they're directly adjacent in the DOM
+                const wrapper = document.querySelector('.no-break-wrapper');
+                if (wrapper) {
+                    wrapper.style.display = 'block';
+                    wrapper.style.pageBreakInside = 'avoid';
+                    wrapper.style.breakInside = 'avoid';
+                }
+            }
+            
+            // Reduce overall spacing
+            const sections = document.querySelectorAll('.mb-8, .mb-6');
+            sections.forEach(section => {
+                section.style.marginBottom = '0.5rem';
+                section.style.paddingTop = '0';
+            });
+        };
+        
+        // Add page numbers functionality
+        let pageCounter = 1;
+        const pageElements = document.querySelectorAll('.pdf-page');
+        pageElements.forEach(element => {
+            element.textContent = pageCounter++;
+        });
+        
+        // Automatically trigger print
+        setTimeout(function() {
+        window.print();
+        }, 1000); // Delay to allow PDFs to render
+    }
+</script>
+
+<style>
+    /* PDF-inspired styles */
+    .pdf-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #2c5282;
+    }
+    
+    .university-logo {
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        background-color: transparent;
+    }
+    
+    .logo-img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+    
+    .university-header-text {
+        flex: 1;
+    }
+    
+    .pdf-document-title {
+        text-align: center;
+        margin: 1.5rem 0;
+    }
+    
+    .pdf-document-title h1 {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 0.25rem;
+        color: #2d3748;
+    }
+    
+    .pdf-subtitle {
+        font-size: 16px;
+        color: #4a5568;
+    }
+    
+    .pdf-highlight {
+        font-weight: bold;
+        color: #2c5282;
+    }
+    
+    .pdf-footer {
+        position: relative;
+        padding-top: 1rem;
+    }
+    
+    .pdf-footer-line {
+        border-top: 1px solid #cbd5e0;
+        margin-bottom: 0.5rem;
+    }
+    
+    .pdf-page-number {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        font-size: 0.8rem;
+        color: #718096;
+    }
+    
+    /* CV section styles */
+    .cv-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    .cv-section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        border-bottom: 2px solid #2c5282;
+        color: #2c5282;
+        padding-bottom: 0.2rem;
+        margin-bottom: 0.8rem;
+    }
+    
+    .cv-subsection-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #4a5568;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .cv-section-content {
+        padding-left: 0.2rem;
+    }
+    
+    .cv-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1rem;
+    }
+    
+    .cv-table th {
+        background-color: #f0f4f8;
+        color: #2d3748;
+        font-weight: 600;
+        text-align: left;
+        padding: 0.5rem;
+        border: 1px solid #cbd5e0;
+    }
+    
+    .cv-table td {
+        padding: 0.5rem;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .cv-table tr:nth-child(even) {
+        background-color: #f7fafc;
+    }
+    
+    .cv-summary-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.25rem;
+        background-color: #f8fafc;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .cv-no-data {
+        font-style: italic;
+        color: #718096;
+    }
+    
+    .cv-text-block {
+        padding: 0.8rem;
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.25rem;
+        white-space: pre-line;
+        line-height: 1.4;
+    }
+    
+    .cv-publication-list {
+        list-style-type: decimal;
+        padding-left: 1.5rem;
+        line-height: 1.4;
+    }
+    
+    .cv-publication-list li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .cv-paper-title {
+        font-style: italic;
+    }
+    
+    /* Document display styles */
+    .document-section {
+        margin-top: 0.75rem;
+    }
+    
+    .document-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #4a5568;
+    }
+    
+    .document-preview {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.25rem;
+        padding: 0.75rem;
+        background-color: #f9fafb;
+    }
+    
+    .pdf-placeholder, .doc-placeholder, .file-placeholder {
+        text-align: center;
+        padding: 1rem;
+    }
+    
+    .pdf-icon, .doc-icon {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        line-height: 40px;
+        text-align: center;
+        border-radius: 5px;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .pdf-icon {
+        background-color: #f56565;
+        color: white;
+    }
+    
+    .doc-icon {
+        background-color: #3182ce;
+        color: white;
+    }
+    
+    .pdf-note, .doc-note, .file-note {
+        font-style: italic;
+        color: #718096;
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+    }
+    
+    /* Review section styles */
+    .review-item {
+        margin-bottom: 1rem;
+    }
+    
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .reviewer-name {
+        font-weight: 600;
+        color: #2d3748;
+    }
+    
+    .review-date {
+        color: #718096;
+    }
+    
+    .decision-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #fff;
+        background-color: #2c5282;
+        border-radius: 0.25rem;
+        margin-top: 0.5rem;
+    }
+    
+    .document-note {
+        font-size: 0.75rem;
+        color: #718096;
+        font-style: italic;
+        margin-top: 0.5rem;
+    }
+    
+    .peer-reviews-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .peer-review-item {
+        border: 1px solid #e2e8f0;
+        padding: 0.75rem;
+        border-radius: 0.25rem;
+        background-color: #f8fafc;
+    }
+    
+    /* Footer styles */
+    .footer {
+        text-align: center;
+        font-size: 0.75rem;
+        color: #718096;
+        margin-top: 3rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    @media print {
+        /* Override page settings from base template */
+        @page {
+            margin: 1cm;
+            size: A4;
+        }
+        
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            line-height: 1.3;
+        }
+        
+        /* Wrapper to ensure University Header and CV Format stay together */
+        .no-break-wrapper {
+            display: block !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            position: relative;
+        }
+        
+        /* Critical - create a real connection between these elements */
+        .print-header {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+            position: relative;
+            display: block;
+        }
+        
+        .print-cv-section {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+            position: relative;
+            display: block;
+        }
+        
+        .university-logo {
+            width: 60px;
+            height: 60px;
+        }
+        
+        .pdf-document-title {
+            margin: 1rem 0;
+        }
+        
+        .pdf-document-title h1 {
+            font-size: 20px;
+        }
+        
+        .pdf-subtitle {
+            font-size: 14px;
+        }
+        
+        /* CV section styles for print */
+        .cv-section {
+            margin-bottom: 1.2rem;
+            break-inside: avoid;
+        }
+        
+        .cv-section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            padding-bottom: 0.2rem;
+            margin-bottom: 0.5rem;
+            break-after: avoid;
+        }
+        
+        .cv-subsection-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 0.8rem;
+            margin-bottom: 0.3rem;
+            break-after: avoid;
+        }
+        
+        .cv-table {
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .cv-table th {
+            padding: 0.3rem 0.5rem;
+        }
+        
+        .cv-table td {
+            padding: 0.3rem 0.5rem;
+        }
+        
+        .cv-text-block {
+            padding: 0.4rem;
+            font-size: 0.9rem;
+        }
+        
+        .cv-publication-list {
+            padding-left: 1.2rem;
+            margin-top: 0.2rem;
+            margin-bottom: 0.2rem;
+        }
+        
+        .cv-publication-list li {
+            margin-bottom: 0.3rem;
+            font-size: 0.9rem;
+        }
+        
+        .document-preview {
+            padding: 0.5rem;
+        }
+        
+        .pdf-icon, .doc-icon {
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+        }
+        
+        /* Keep section headers with their content */
+        h1, h2, h3 {
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+            margin-bottom: 0.2rem !important;
+        }
+        
+        /* Force items to stay on same page as their headers */
+        h2 + div, h3 + div {
+            page-break-before: avoid !important;
+            break-before: avoid !important;
+        }
+        
+        /* Add page numbers to all pages */
+        .pdf-footer {
+            position: running(footer);
+        }
+        
+        @page {
+            @bottom-right {
+                content: "Page " counter(page) " of " counter(pages);
+            }
+        }
+    }
+
+    /* Add these new styles for PDF rendering */
+    .pdf-container {
+        max-width: 100%;
+        overflow: hidden;
+    }
+    
+    .pdf-pages-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .pdf-preview-canvas {
+        max-width: 100%;
+        height: auto;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .more-pages-note {
+        text-align: center;
+        font-style: italic;
+        color: #718096;
+        font-size: 0.8rem;
+        margin-top: 5px;
+    }
+    
+    .pdf-error {
+        color: #e53e3e;
+        font-style: italic;
+        text-align: center;
+        padding: 10px;
+    }
+    
+    /* Show the PDF placeholders only when printing */
+    .print-only {
+        display: none;
+    }
+    
+    @media print {
+        .print-only {
+            display: block;
+        }
+        
+        /* Hide the rendered PDFs when printing */
+        .pdf-preview-canvas, .more-pages-note {
+            display: none;
+        }
+    }
+</style>
+
+{% endblock %} 

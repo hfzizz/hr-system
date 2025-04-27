@@ -5,6 +5,7 @@ from django.db import models
 from django.forms import  formset_factory, BaseModelFormSet, inlineformset_factory
 from django.urls import reverse_lazy
 
+
 class EmployeeProfileForm(forms.ModelForm):
     employee_id = forms.CharField(
         disabled=True,
@@ -271,3 +272,4 @@ PublicationFormSet = inlineformset_factory(
     can_delete=True,
     fields=['title', 'author', 'year', 'pub_type', 'additional_fields']
 )
+

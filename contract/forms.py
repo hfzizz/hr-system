@@ -52,6 +52,11 @@ class ContractRenewalForm(forms.ModelForm):
             'participation_within_text',
             'participation_outside_text',
             'teaching_future_plan',
+            'university_committees_text',
+            'external_committees_text',
+            'fellowships_awards_text',
+            'mentorship_text',
+            'grad_supervision_text',
         ]
         widgets = {
             'academic_qualifications_text': forms.Textarea(attrs={'rows': 4}),

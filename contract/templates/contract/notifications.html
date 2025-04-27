@@ -43,6 +43,16 @@
                             <!-- Use dean_review URL for dean users viewing contracts in dean_review status -->
                             <a href="{% url 'contract:dean_review' contract_id=notification.contract.id %}" 
                                class="text-blue-600 hover:underline">View Contract</a>
+                        {% elif user.groups.all.0.name == 'SMT' %}
+                            <!-- For SMT users -->
+                            <a href="{% url 'contract:smt_review' contract_id=notification.contract.id %}" 
+                               onclick="markAsRead({{ notification.id }})"
+                               class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800">
+                                <span>Review Contract</span>
+                                <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </a>
                         {% elif user.groups.all.0.name == 'HR' %}
                             <!-- For HR users -->
                             <a href="{% url 'contract:review' notification.contract.id %}" 

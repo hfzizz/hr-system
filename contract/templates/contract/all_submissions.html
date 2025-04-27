@@ -9,7 +9,7 @@
     <div class="mb-4 border-b border-gray-200">
         <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist">
             <li class="mr-2" role="presentation">
-                <button class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 tab-button active" 
+                <button class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 tab-button active text-blue-600 border-blue-600" 
                         id="pending-tab"
                         data-target="pending-content"
                         type="button"
@@ -24,6 +24,15 @@
                         type="button"
                         role="tab">
                     Contract Renewal In Process
+                </button>
+            </li>
+            <li class="mr-2" role="presentation">
+                <button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 tab-button" 
+                        id="moe-decision-tab"
+                        data-target="moe-decision-content"
+                        type="button"
+                        role="tab">
+                    MOE Approved/Rejected
                 </button>
             </li>
         </ul>
@@ -130,7 +139,9 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <a href="{% url 'contract:review' pk=contract.pk %}" 
-                                   class="text-indigo-600 hover:text-indigo-900">Review Form</a>
+                                   class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150 shadow-sm">
+                                    Review Form
+                                </a>
                             </td>
                         </tr>
                         {% empty %}
@@ -179,8 +190,8 @@
                     <select id="status-filter-in-process" class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
                         <option value="">All Status</option>
                         <option value="smt_review">Currently under SMT Review</option>
-                        <option value="approved">Approved</option>
-                        <option value="rejected">Rejected</option>
+                        <option value="smt_approved">Approved by SMT</option>
+                        <option value="smt_rejected">Rejected by SMT</option>
                         <option value="sent_back">Sent Back to Employee</option>
                     </select>
                 </div>
@@ -247,9 +258,9 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                    {% if contract.status == 'approved' %}
+                                    {% if contract.status == 'smt_approved' %}
                                         bg-green-100 text-green-800
-                                    {% elif contract.status == 'rejected' %}
+                                    {% elif contract.status == 'smt_rejected' %}
                                         bg-red-100 text-red-800
                                     {% elif contract.status == 'smt_review' %}
                                         bg-blue-100 text-blue-800
@@ -266,12 +277,14 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <a href="{% url 'contract:review' pk=contract.pk %}" 
-                                   class="text-indigo-600 hover:text-indigo-900">Review Form</a>
+                                   class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150 shadow-sm">
+                                    Review Form
+                                </a>
                             </td>
                             {% if is_smt and contract.status == 'smt_review' %}
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     <a href="{% url 'contract:smt_review' contract.id %}" 
-                                       class="text-blue-600 hover:underline">
+                                       class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150 shadow-sm">
                                         Review & Decide
                                     </a>
                                 </td>
@@ -281,6 +294,138 @@
                         <tr>
                             <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
                                 No contracts in process
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MOE Decision Section -->
+        <div id="moe-decision-content" class="tab-pane hidden">
+            <!-- Search and Filter Section for MOE Decision -->
+            <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <!-- Search Box -->
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        id="search-input-moe-decision"
+                        placeholder="Search by employee name..."
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    >
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Department Filter -->
+                <div>
+                    <select id="department-filter-moe-decision" class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                        <option value="">All Departments</option>
+                        {% for department in departments %}
+                        <option value="{{ department.name }}">{{ department.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div>
+                    <select id="status-filter-moe-decision" class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                        <option value="">All Status</option>
+                        <option value="moe_approved">Approved by MOE</option>
+                        <option value="moe_rejected">Rejected by MOE</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                <table class="min-w-full divide-y divide-gray-200" id="moe-decision-table">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Contract ID
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Employee ID
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                                Employee Name
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                                Department
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                                Months Remaining
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                                Status
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                                Decision Date
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for contract in moe_decision_contracts %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ contract.contract_id }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ contract.employee.employee_id }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">
+                                    {{ contract.employee.get_full_name }}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ contract.employee.department.name }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if contract.months_remaining <= 3 %}
+                                        bg-red-100 text-red-800
+                                    {% elif contract.months_remaining <= 6 %}
+                                        bg-yellow-100 text-yellow-800
+                                    {% else %}
+                                        bg-green-100 text-green-800
+                                    {% endif %}">
+                                    {{ contract.months_remaining }} months
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if contract.status == 'moe_approved' %}
+                                        bg-green-100 text-green-800
+                                    {% elif contract.status == 'moe_rejected' %}
+                                        bg-red-100 text-red-800
+                                    {% else %}
+                                        bg-gray-100 text-gray-800
+                                    {% endif %}">
+                                    {{ contract.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ contract.decision_date|date:"Y-m-d" }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <a href="{% url 'contract:review' pk=contract.pk %}" 
+                                   class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150 shadow-sm">
+                                    View Details
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="px-6 py-4 text-center text-sm text-gray-500">
+                                No contracts with MOE decisions
                             </td>
                         </tr>
                         {% endfor %}
@@ -303,10 +448,10 @@ document.addEventListener('DOMContentLoaded', function() {
         tabButtons.forEach(button => {
             if (button.dataset.target === targetId) {
                 button.classList.add('active', 'text-blue-600', 'border-blue-600');
-                button.classList.remove('hover:text-gray-600', 'hover:border-gray-300');
+                button.classList.remove('hover:text-gray-600', 'hover:border-gray-300', 'border-transparent');
             } else {
                 button.classList.remove('active', 'text-blue-600', 'border-blue-600');
-                button.classList.add('hover:text-gray-600', 'hover:border-gray-300');
+                button.classList.add('hover:text-gray-600', 'hover:border-gray-300', 'border-transparent');
             }
         });
 
@@ -318,6 +463,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 pane.classList.add('hidden');
             }
         });
+        
+        // Store the active tab in session storage
+        sessionStorage.setItem('activeContractTab', targetId);
     }
 
     tabButtons.forEach(button => {
@@ -325,6 +473,19 @@ document.addEventListener('DOMContentLoaded', function() {
             switchTab(button.dataset.target);
         });
     });
+    
+    // Check if there's a stored active tab and switch to it
+    const storedTab = sessionStorage.getItem('activeContractTab');
+    if (storedTab && document.getElementById(storedTab)) {
+        switchTab(storedTab);
+    } else {
+        // Default to first tab with explicit styling
+        const firstTab = tabButtons[0];
+        if (firstTab) {
+            firstTab.classList.add('active', 'text-blue-600', 'border-blue-600');
+            firstTab.classList.remove('hover:text-gray-600', 'hover:border-gray-300', 'border-transparent');
+        }
+    }
 
     // Your existing filterTable code
     function filterTable(tableId, searchInputId, departmentFilterId, statusFilterId) {
@@ -339,15 +500,25 @@ document.addEventListener('DOMContentLoaded', function() {
             const statusValue = statusFilter ? statusFilter.value.toLowerCase().trim() : '';
             const rows = table.querySelectorAll('tbody tr');
             
+            // Remove any existing "No results found" row
+            const existingNoResults = table.querySelector('tr[data-no-results]');
+            if (existingNoResults) {
+                existingNoResults.remove();
+            }
+            
+            let visibleCount = 0;
+            
             rows.forEach(row => {
                 if (row.querySelector('td[colspan]')) {
                     // Skip the "No submissions found" row
+                    row.style.display = 'none';
                     return;
                 }
 
-                const nameCell = row.querySelector('td:nth-child(2)');
-                const departmentCell = row.querySelector('td:nth-child(3)');
-                const statusCell = row.querySelector('td:nth-child(5)');
+                // Correct indices for cells - employee name is in column 3, department in column 4
+                const nameCell = row.querySelector('td:nth-child(3)');
+                const departmentCell = row.querySelector('td:nth-child(4)');
+                const statusCell = row.querySelector('td:nth-child(6)');
                 
                 // Get the text content and normalize it
                 const name = nameCell ? nameCell.textContent.toLowerCase().trim() : '';
@@ -360,10 +531,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Map status display text to values
                     if (statusText.includes('currently under smt review')) {
                         status = 'smt_review';
-                    } else if (statusText.includes('approved')) {
-                        status = 'approved';
-                    } else if (statusText.includes('rejected')) {
-                        status = 'rejected';
+                    } else if (statusText.includes('smt_approved')) {
+                        status = 'smt_approved';
+                    } else if (statusText.includes('smt_    rejected')) {
+                        status = 'smt_rejected';
                     } else if (statusText.includes('sent back to employee')) {
                         status = 'sent_back';
                     }
@@ -375,26 +546,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 const matchesStatus = !statusFilter || statusValue === '' || status === statusValue;
                 
                 // Show/hide the row based on all filters
-                row.style.display = (matchesSearch && matchesDepartment && matchesStatus) ? '' : 'none';
+                const shouldShow = matchesSearch && matchesDepartment && matchesStatus;
+                row.style.display = shouldShow ? '' : 'none';
+                
+                if (shouldShow) {
+                    visibleCount++;
+                }
             });
 
-            // Check if any rows are visible
-            const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
-            const noResultsRow = table.querySelector('tr[data-no-results]');
-            
-            // Show/hide the "No results found" message
-            if (visibleRows.length === 0) {
-                if (!noResultsRow) {
-                    const tbody = table.querySelector('tbody');
-                    const newRow = document.createElement('tr');
-                    newRow.setAttribute('data-no-results', 'true');
-                    newRow.innerHTML = `<td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No results found</td>`;
-                    tbody.appendChild(newRow);
-                } else {
-                    noResultsRow.style.display = '';
-                }
-            } else if (noResultsRow) {
-                noResultsRow.style.display = 'none';
+            // If no rows are visible, show the "No results found" message
+            if (visibleCount === 0) {
+                const tbody = table.querySelector('tbody');
+                const newRow = document.createElement('tr');
+                newRow.setAttribute('data-no-results', 'true');
+                newRow.innerHTML = `<td colspan="8" class="px-6 py-4 text-center text-sm text-gray-500">No results found</td>`;
+                tbody.appendChild(newRow);
             }
         }
 
@@ -422,6 +588,13 @@ document.addEventListener('DOMContentLoaded', function() {
         'department-filter-in-process',
         'status-filter-in-process'
     );
+    
+    filterTable(
+        'moe-decision-table', 
+        'search-input-moe-decision', 
+        'department-filter-moe-decision',
+        'status-filter-moe-decision'
+    );
 });
 </script>
 
@@ -429,6 +602,7 @@ document.addEventListener('DOMContentLoaded', function() {
 /* Add these styles for the tabs */
 .tab-button.active {
     @apply text-blue-600 border-blue-600;
+    border-bottom-width: 2px;
 }
 
 .tab-button {

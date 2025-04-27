@@ -79,10 +79,6 @@
             <!-- Existing Show/Hide Columns dropdown -->
         </div>
         <div class="flex gap-4">
-            <a href="{% url 'contract:view_all_submissions' %}" 
-               class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
-                View All Submissions
-            </a>
             <button id="enable-contract-btn" 
                     disabled
                     class="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 opacity-50 cursor-not-allowed"
@@ -481,9 +477,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Show/hide and enable/disable buttons based on selection
+        // Only show buttons when at least one employee is selected
         if (selectedCount > 0) {
+            // Show enable button only if there are disabled employees selected
             enableBtn.style.display = hasDisabled ? 'inline-flex' : 'none';
+            // Show disable button only if there are enabled employees selected
             disableBtn.style.display = hasEnabled ? 'inline-flex' : 'none';
             
             enableBtn.disabled = !hasDisabled;
@@ -494,6 +492,7 @@ document.addEventListener('DOMContentLoaded', function() {
             disableBtn.classList.toggle('opacity-50', !hasEnabled);
             disableBtn.classList.toggle('cursor-not-allowed', !hasEnabled);
         } else {
+            // Hide both buttons when no employees are selected
             enableBtn.style.display = 'none';
             disableBtn.style.display = 'none';
         }
@@ -556,9 +555,6 @@ document.addEventListener('DOMContentLoaded', function() {
         checkbox.addEventListener('change', updateButtonStates);
     });
 
-    // Initialize button states
-    updateButtonStates();
-
     // Initial sort function
     function initialSort() {
         const tbody = document.querySelector('#contract-table tbody');
@@ -575,29 +571,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show table after sorting
         document.getElementById('contract-table').style.visibility = 'visible';
         
-        // Show and initialize button after table is ready
-        const enableButton = document.getElementById('enable-contract-btn');
-        enableButton.style.display = 'block';
-        updateEnableButtonState();
-    }
-
-    // Update button state function
-    function updateEnableButtonState() {
-        const selectedEmployees = Array.from(document.querySelectorAll('.employee-checkbox'))
-            .filter(checkbox => checkbox.checked)
-            .map(checkbox => checkbox.value);
-        
-        const enableButton = document.getElementById('enable-contract-btn');
-        const isDisabled = selectedEmployees.length === 0;
-        
-        enableButton.disabled = isDisabled;
-        enableButton.classList.toggle('opacity-50', isDisabled);
-        enableButton.classList.toggle('cursor-not-allowed', isDisabled);
-        enableButton.classList.toggle('hover:bg-indigo-500', !isDisabled);
+        // Ensure buttons are hidden initially since no employees are selected
+        enableBtn.style.display = 'none';
+        disableBtn.style.display = 'none';
     }
 
     // Initialize table and button
     initialSort();
+    updateButtonStates(); // Make sure initial state is correct
 
     // Add notification functionality
     sendNotificationBtn.addEventListener('click', async function() {

@@ -56,6 +56,15 @@ from django.views.decorators.http import require_http_methods
 from django.template.response import TemplateResponse
 from django.contrib.auth.decorators import login_required
 from django.template import TemplateDoesNotExist
+from unstructured.partition.pdf import partition_pdf
+from transformers import pipeline
+import tempfile
+from PyPDF2 import PdfReader
+from io import BytesIO
+from unstructured.staging.base import convert_to_dict
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Formset Configurations
 QualificationFormSet = inlineformset_factory(
@@ -314,7 +323,7 @@ class EmployeeListView(LoginRequiredMixin, HRRequiredMixin, ListView):
 
         # Filter options - only include if they exist in your database
         context['departments'] = Department.objects.all()
-        context['posts'] = Employee.objects.values_list('post', flat=True).distinct()
+        context['posts'] = Employee.POST_CHOICES
         context['appointment_types'] = Employee.objects.values_list('appointment_type', flat=True).distinct()
         context['ic_colours'] = dict(Employee.ICColour.choices)
         context['statuses'] = dict(Employee.Status.choices)
@@ -1040,3 +1049,4 @@ def employee_delete(request, employee_id):
         messages.error(request, 'Employee not found.')
     
     return redirect('employees:employee_list')
+

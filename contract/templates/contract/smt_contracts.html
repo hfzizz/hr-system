@@ -10,42 +10,22 @@
     <!-- Tabs for SMT -->
     <div class="border-b border-gray-200 mb-6">
         <nav class="-mb-px flex space-x-8">
-            <a href="{% url 'contract:smt_contracts' %}" 
+            <button onclick="switchTab('pending')" id="pending-tab"
                class="{% if not filter %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
                 Pending Reviews
-            </a>
-            <a href="{% url 'contract:smt_contracts' %}?filter=approved" 
-               class="{% if filter == 'approved' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
-                Approved Contracts
-            </a>
-            <a href="{% url 'contract:smt_contracts' %}?filter=rejected" 
-               class="{% if filter == 'rejected' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
-                Rejected Contracts
-            </a>
+            </button>
+            <button onclick="switchTab('processed')" id="processed-tab"
+               class="{% if filter == 'smt_approved' or filter == 'smt_rejected' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
+                Processed Contracts
+            </button>
         </nav>
     </div>
 
-    <!-- Contracts Awaiting SMT Review -->
-    <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+    <!-- Pending Contracts Tab -->
+    <div id="pending-tab-content" class="bg-white shadow overflow-hidden sm:rounded-lg mb-8 {% if filter %}hidden{% endif %}">
         <div class="px-4 py-5 sm:px-6 bg-blue-50">
-            <h2 class="text-lg leading-6 font-medium text-gray-900">
-                {% if not filter %}
-                    Contracts Awaiting SMT Review
-                {% elif filter == 'approved' %}
-                    Approved Contracts
-                {% elif filter == 'rejected' %}
-                    Rejected Contracts
-                {% endif %}
-            </h2>
-            <p class="mt-1 max-w-2xl text-sm text-gray-500">
-                {% if not filter %}
-                    Review and make decisions on contract renewals forwarded by HR.
-                {% elif filter == 'approved' %}
-                    Contracts that have been approved by SMT.
-                {% elif filter == 'rejected' %}
-                    Contracts that have been rejected by SMT.
-                {% endif %}
-            </p>
+            <h2 class="text-lg leading-6 font-medium text-gray-900">Contracts Awaiting SMT Review</h2>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">Review and make decisions on contract renewals forwarded by HR.</p>
         </div>
 
         <!-- Search and Filter Section -->
@@ -55,7 +35,7 @@
                 <div class="relative">
                     <input 
                         type="text" 
-                        id="search-input"
+                        id="search-input-pending"
                         placeholder="Search by employee name..."
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                     >
@@ -68,7 +48,7 @@
 
                 <!-- Department Filter -->
                 <div>
-                    <select id="department-filter" class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                    <select id="department-filter-pending" class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
                         <option value="">All Departments</option>
                         {% for department in departments %}
                         <option value="{{ department.name }}">{{ department.name }}</option>
@@ -79,7 +59,7 @@
         </div>
 
         <!-- Contracts Table -->
-        <table class="min-w-full divide-y divide-gray-200" id="contracts-table">
+        <table class="min-w-full divide-y divide-gray-200" id="pending-contracts-table">
             <thead class="bg-gray-50">
                 <tr>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -105,9 +85,10 @@
                     </th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody class="bg-white divide-y divide-gray-200" id="pending-contracts-body">
                 {% for contract in contracts %}
-                <tr class="hover:bg-gray-50">
+                    {% if not contract.has_smt_review and contract.status == 'smt_review' %}
+                        <tr class="hover:bg-gray-50 pending-contract-row">
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {{ contract.contract_id }}
                     </td>
@@ -138,30 +119,170 @@
                         {{ contract.submission_date|date:"Y-m-d" }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {% if not filter %}
-                            <a href="{% url 'contract:smt_review' contract.id %}" class="text-indigo-600 hover:text-indigo-900">
+                        <a href="{% url 'contract:smt_review' contract.id %}" 
+                           class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150 shadow-sm">
                                 Review & Decide
                             </a>
-                        {% else %}
-                            <a href="{% url 'contract:contract_detail' contract.id %}" class="text-indigo-600 hover:text-indigo-900">
+                    </td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const pendingRows = document.querySelectorAll('.pending-contract-row');
+                const pendingBody = document.getElementById('pending-contracts-body');
+                
+                if (pendingRows.length === 0) {
+                    const emptyRow = document.createElement('tr');
+                    emptyRow.innerHTML = `
+                        <td colspan="7" class="px-6 py-8 text-center">
+                            <div class="text-center">
+                                <h3 class="mt-2 text-sm font-medium text-gray-900">No Pending Reviews</h3>
+                                <p class="mt-1 text-sm text-gray-500">There are no contracts currently awaiting your review.</p>
+                            </div>
+                        </td>
+                    `;
+                    pendingBody.appendChild(emptyRow);
+                }
+            });
+        </script>
+    </div>
+
+    <!-- Processed Contracts Tab (Combined Approved & Rejected) -->
+    <div id="processed-tab-content" class="bg-white shadow overflow-hidden sm:rounded-lg mb-8 {% if filter != 'smt_approved' and filter != 'smt_rejected' %}hidden{% endif %}">
+        <div class="px-4 py-5 sm:px-6 bg-blue-50">
+            <h2 class="text-lg leading-6 font-medium text-gray-900">Processed Contracts</h2>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">Contracts that have been processed by SMT.</p>
+        </div>
+
+        <!-- Search and Filter Section -->
+        <div class="px-4 py-3 sm:px-6 bg-gray-50 border-t border-gray-200">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <!-- Search Box -->
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        id="search-input-processed"
+                        placeholder="Search by employee name..."
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    >
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Decision Filter -->
+                <div>
+                    <select id="decision-filter" onchange="filterDecision(this.value)" class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                        <option value="all" {% if not filter or filter == 'processed' %}selected{% endif %}>All Decisions</option>
+                        <option value="smt_approved" {% if filter == 'smt_approved' %}selected{% endif %}>Approved Only</option>
+                        <option value="smt_rejected" {% if filter == 'smt_rejected' %}selected{% endif %}>Rejected Only</option>
+                    </select>
+                </div>
+
+                <!-- Department Filter -->
+                <div>
+                    <select id="department-filter-processed" class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                        <option value="">All Departments</option>
+                        {% for department in departments %}
+                        <option value="{{ department.name }}">{{ department.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contracts Table -->
+        <table class="min-w-full divide-y divide-gray-200" id="processed-contracts-table">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Contract ID
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Employee ID
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Employee Name
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Department
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Decision
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Submission Date
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for contract in contracts %}
+                {% if contract.has_smt_review %}
+                <tr class="hover:bg-gray-50 contract-row" data-decision="{{ contract.smt_decision }}">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {{ contract.contract_id }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ contract.employee.employee_id }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">
+                            {{ contract.employee.get_full_name }}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ contract.employee.department.name }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            {% if contract.is_smt_approved %}
+                                bg-green-100 text-green-800
+                            {% elif contract.is_smt_rejected %}
+                                bg-red-100 text-red-800
+                            {% elif contract.is_sent_back %}
+                                bg-yellow-100 text-yellow-800
+                            {% endif %}">
+                            {% if contract.is_smt_approved %}
+                                Approved by SMT
+                            {% elif contract.is_smt_rejected %}
+                                Rejected by SMT
+                            {% elif contract.is_sent_back %}
+                                Sent Back for Revision
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ contract.smt_review_date|date:"Y-m-d" }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <a href="{% url 'contract:review' pk=contract.pk %}" 
+                           class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150 shadow-sm">
                                 View Details
                             </a>
-                        {% endif %}
                     </td>
                 </tr>
+                {% endif %}
                 {% empty %}
                 <tr>
                     <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
-                        {% if not filter %}
-                            No contracts awaiting SMT review
-                        {% elif filter == 'approved' %}
-                            No approved contracts
-                        {% elif filter == 'rejected' %}
-                            No rejected contracts
-                        {% endif %}
+                        No processed contracts
                     </td>
                 </tr>
                 {% endfor %}
+                <tr id="no-processed-contracts" class="no-contracts-message" style="display: none;">
+                    <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
+                        No processed contracts match your filter criteria
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -169,55 +290,190 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('search-input');
-    const departmentFilter = document.getElementById('department-filter');
-    const table = document.getElementById('contracts-table');
+    // Check for tab state in URL or sessionStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    const filterParam = urlParams.get('filter');
+    const savedTab = sessionStorage.getItem('smtContractsActiveTab');
+    
+    // Determine which tab to show initially
+    let initialTab = 'pending';
+    // Initialize with the appropriate tab
+    switchTab(initialTab);
+    
+    // Set up filter functionality for each table
+    setupTableFilter('pending');
+    setupTableFilter('processed');
+    
+    // Apply decision filter if there's one in the URL
+    if (filterParam === 'smt_approved' || filterParam === 'smt_rejected') {
+        document.getElementById('decision-filter').value = filterParam;
+        filterDecision(filterParam);
+    }
+    
+    // Initialize counters and empty messages
+    updateEmptyMessage();
+});
+
+function switchTab(tabName) {
+    // Hide all tabs
+    document.getElementById('pending-tab-content').classList.add('hidden');
+    document.getElementById('processed-tab-content').classList.add('hidden');
+    
+    // Deactivate all tab buttons
+    document.getElementById('pending-tab').classList.remove('border-indigo-500', 'text-indigo-600');
+    document.getElementById('pending-tab').classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+    
+    document.getElementById('processed-tab').classList.remove('border-indigo-500', 'text-indigo-600');
+    document.getElementById('processed-tab').classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+    
+    // Show the selected tab
+    document.getElementById(`${tabName}-tab-content`).classList.remove('hidden');
+    
+    // Activate the selected tab button
+    document.getElementById(`${tabName}-tab`).classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+    document.getElementById(`${tabName}-tab`).classList.add('border-indigo-500', 'text-indigo-600');
+    
+    // Save the active tab in session storage
+    sessionStorage.setItem('smtContractsActiveTab', tabName);
+    
+    // Update URL without reloading the page
+    const newUrl = new URL(window.location.href);
+    
+    if (tabName === 'pending') {
+        newUrl.searchParams.delete('filter');
+    } else if (tabName === 'processed') {
+        const currentDecision = document.getElementById('decision-filter').value;
+        if (currentDecision === 'all') {
+            newUrl.searchParams.set('filter', 'processed');
+        } else {
+            newUrl.searchParams.set('filter', currentDecision);
+        }
+    }
+    
+    history.pushState({}, '', newUrl.toString());
+    
+    // Update the empty message
+    updateEmptyMessage();
+}
+
+function setupTableFilter(tabName) {
+    const searchInput = document.getElementById(`search-input-${tabName}`);
+    const departmentFilter = document.getElementById(`department-filter-${tabName}`);
+    const table = document.getElementById(`${tabName}-contracts-table`);
     
     function filterTable() {
         const searchTerm = searchInput.value.toLowerCase().trim();
         const departmentValue = departmentFilter.value.toLowerCase().trim();
-        const rows = table.querySelectorAll('tbody tr');
+        const rows = table.querySelectorAll('tbody tr.contract-row');
+        let visibleCount = 0;
         
         rows.forEach(row => {
-            if (row.querySelector('td[colspan]')) {
-                // Skip the "No contracts found" row
+            // For processed contracts, respect the decision filter
+            if (tabName === 'processed') {
+                const decisionFilter = document.getElementById('decision-filter').value;
+                const rowDecision = row.getAttribute('data-decision');
+                
+                if (decisionFilter !== 'all' && decisionFilter !== rowDecision) {
+                    row.style.display = 'none';
                 return;
+                }
             }
             
             const nameCell = row.querySelector('td:nth-child(3)');
             const departmentCell = row.querySelector('td:nth-child(4)');
             
-            const name = nameCell ? nameCell.textContent.toLowerCase().trim() : '';
-            const department = departmentCell ? departmentCell.textContent.toLowerCase().trim() : '';
+            if (!nameCell || !departmentCell) {
+                return;
+            }
+            
+            const name = nameCell.textContent.toLowerCase().trim();
+            const department = departmentCell.textContent.toLowerCase().trim();
             
             const matchesSearch = searchTerm === '' || name.includes(searchTerm);
             const matchesDepartment = departmentValue === '' || department.includes(departmentValue);
             
-            row.style.display = (matchesSearch && matchesDepartment) ? '' : 'none';
+            if (matchesSearch && matchesDepartment) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
         });
         
-        // Check if any rows are visible
-        const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none' && !row.querySelector('td[colspan]'));
-        const noResultsRow = table.querySelector('tr[data-no-results]');
-        
-        if (visibleRows.length === 0) {
-            if (!noResultsRow) {
-                const tbody = table.querySelector('tbody');
-                const newRow = document.createElement('tr');
-                newRow.setAttribute('data-no-results', 'true');
-                newRow.innerHTML = `<td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No results found</td>`;
-                tbody.appendChild(newRow);
-            } else {
-                noResultsRow.style.display = '';
+        // Show or hide the "No results" message
+        if (tabName === 'processed') {
+            const noResultsRow = document.getElementById('no-processed-contracts');
+            if (noResultsRow) {
+                noResultsRow.style.display = visibleCount === 0 ? '' : 'none';
             }
-        } else if (noResultsRow) {
-            noResultsRow.style.display = 'none';
         }
     }
     
     // Add event listeners
-    searchInput.addEventListener('input', filterTable);
-    departmentFilter.addEventListener('change', filterTable);
-});
+    if (searchInput) searchInput.addEventListener('input', filterTable);
+    if (departmentFilter) departmentFilter.addEventListener('change', filterTable);
+}
+
+function filterDecision(decision) {
+    // Update the URL to reflect the filter
+    const newUrl = new URL(window.location.href);
+    if (decision === 'all') {
+        newUrl.searchParams.set('filter', 'processed');
+    } else {
+        newUrl.searchParams.set('filter', decision);
+    }
+    history.pushState({}, '', newUrl.toString());
+    
+    // Apply the filter
+    const rows = document.querySelectorAll('#processed-contracts-table tbody tr.contract-row');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        const rowDecision = row.getAttribute('data-decision');
+        
+        if (decision === 'all' || decision === rowDecision) {
+            // This row matches the decision filter, now check if it passes the other filters
+            const searchTerm = document.getElementById('search-input-processed').value.toLowerCase().trim();
+            const departmentValue = document.getElementById('department-filter-processed').value.toLowerCase().trim();
+            
+            const nameCell = row.querySelector('td:nth-child(3)');
+            const departmentCell = row.querySelector('td:nth-child(4)');
+            
+            if (nameCell && departmentCell) {
+                const name = nameCell.textContent.toLowerCase().trim();
+                const department = departmentCell.textContent.toLowerCase().trim();
+                
+                const matchesSearch = searchTerm === '' || name.includes(searchTerm);
+                const matchesDepartment = departmentValue === '' || department.includes(departmentValue);
+                
+                if (matchesSearch && matchesDepartment) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    // Show or hide the "No results" message
+    const noResultsRow = document.getElementById('no-processed-contracts');
+    if (noResultsRow) {
+        noResultsRow.style.display = visibleCount === 0 ? '' : 'none';
+    }
+}
+
+function updateEmptyMessage() {
+    // Check if there are any visible rows in the processed tab
+    const visibleProcessedRows = document.querySelectorAll('#processed-contracts-table tbody tr.contract-row:not([style*="display: none"])').length;
+    const noProcessedMsg = document.getElementById('no-processed-contracts');
+    
+    if (noProcessedMsg) {
+        noProcessedMsg.style.display = visibleProcessedRows === 0 ? '' : 'none';
+    }
+}
+
 </script>
 {% endblock %} 

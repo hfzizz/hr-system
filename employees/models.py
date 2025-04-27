@@ -40,6 +40,12 @@ class Employee(models.Model):
         MONTH_TO_MONTH = 'Month-to-Month', _('Month-to-Month')
         DAILY_RATED = 'Daily-Rated', _('Daily-Rated')
 
+    POST_CHOICES = [
+        ('prof', 'Professor'),
+        ('assoc_prof', 'Associate Professor'),
+        # ... other choices ...
+    ]
+
     employee_id = models.CharField(max_length=10, unique=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     first_name = models.CharField(max_length=100)
@@ -95,7 +101,8 @@ class Employee(models.Model):
         blank=True
     )
     post = models.CharField(
-        max_length=100,
+        max_length=50,
+        choices=POST_CHOICES,
         help_text=_('Employee position/job title'),
         blank=True,
         null=True
