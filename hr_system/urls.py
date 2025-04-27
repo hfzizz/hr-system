@@ -38,6 +38,7 @@ urlpatterns = [
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('settings/', views.SettingsView.as_view(), name='settings'),
     path('roles/', include('roles.urls')),
+    path('teaching_portfolio/', include('teaching_portfolio.urls', namespace='teaching_portfolio')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class AppraisalsConfig(AppConfig):
+class TeachingPortfolioConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'appraisals'
+    name = 'teaching_portfolio'

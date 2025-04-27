@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Teaching Portfolio</h1>
+<div class="w-full px-8">
+    <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+        <form id="portfolioPdfUploadForm" class="flex items-center space-x-2 w-full" enctype="multipart/form-data">
+            {% csrf_token %}
+            <label for="portfolioPdfFile" class="text-lg font-semibold mr-2">Autofill with PDF</label>
+            <input type="file" id="portfolioPdfFile" name="pdf" accept=".pdf" class="block text-sm text-gray-500
+                file:mr-2 file:py-2 file:px-4
+                file:rounded-full file:border-0
+                file:text-sm file:font-semibold
+                file:bg-blue-50 file:text-blue-700
+                hover:file:bg-blue-100">
+            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Autofill
+            </button>
+        </form>
+    </div>
+</div>
+<div class="bg-[#f8fbfa] min-h-screen py-8 px-8">
+    <form method="post" action="">
+        {% csrf_token %}
+        <div class="w-full px-8">
+            <!-- Tab Navigation -->
+            <div class="border-b border-gray-200 mb-8">
+                <nav class="-mb-px flex space-x-8" aria-label="Tabs" id="teaching-tabs">
+                    <a href="#philosophy" onclick="showTab(event, 'philosophy')" class="tab-link text-gray-500 py-4 px-1 border-b-2 font-medium text-sm border-transparent active-tab" id="tab-philosophy">Teaching Philosophy</a>
+                    <a href="#strategies" onclick="showTab(event, 'strategies')" class="tab-link text-gray-500 py-4 px-1 border-b-2 font-medium text-sm border-transparent" id="tab-strategies">Strategies, Objectives, Methodology</a>
+                    <a href="#history" onclick="showTab(event, 'history')" class="tab-link text-gray-500 py-4 px-1 border-b-2 font-medium text-sm border-transparent" id="tab-history">Teaching History</a>
+                    <a href="#indicators" onclick="showTab(event, 'indicators')" class="tab-link text-gray-500 py-4 px-1 border-b-2 font-medium text-sm border-transparent" id="tab-indicators">Teaching Performance Indicators</a>
+                    <a href="#future" onclick="showTab(event, 'future')" class="tab-link text-gray-500 py-4 px-1 border-b-2 font-medium text-sm border-transparent" id="tab-future">Future Plan</a>
+                </nav>
+            </div>
+
+            <!-- Tab Contents -->
+            <div id="philosophy" class="tab-content">
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Full Teaching Philosophy</h3>
+                    {{ form.teaching_philosophy_full }}
+                </div>
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+                    <h3 class="text-lg font-semibold mb-4">Teaching Philosophy Summary</h3>
+                    {{ form.teaching_philosophy_summary }}
+                </div>
+            </div>
+            <div id="strategies" class="tab-content hidden">
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Learning Outcome</h3>
+                    {{ form.learning_outcome_full }}
+                    <label class="block text-sm font-medium text-gray-700 mb-1 mt-4">Summary</label>
+                    {{ form.learning_outcome_summary }}
+                </div>
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Instructional Methodology</h3>
+                    {{ form.instructional_methodology_full }}
+                    <label class="block text-sm font-medium text-gray-700 mb-1 mt-4">Summary</label>
+                    {{ form.instructional_methodology_summary }}
+                </div>
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+                    <h3 class="text-lg font-semibold mb-4">Other Means to Enhance Learning</h3>
+                    {{ form.other_means_to_enhance_learning_full }}
+                    <label class="block text-sm font-medium text-gray-700 mb-1 mt-4">Summary</label>
+                    {{ form.other_means_to_enhance_learning_summary }}
+                </div>
+            </div>
+            <div id="history" class="tab-content hidden">
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mb-8">
+                    <h3 class="text-lg font-semibold mb-4">Teaching</h3>
+                    <hr class="mb-4">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 mb-4">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Title of Module</th>
+                                    <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Level</th>
+                                    <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Language Medium</th>
+                                    <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">No of Students</th>
+                                    <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Percentage if Jointly Taught</th>
+                                    <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Hrs Weekly</th>
+                                    <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teaching-modules-table">
+                                <tr>
+                                    <td class="px-4 py-2"><input type="text" class="form-input w-full" placeholder="Module Title"></td>
+                                    <td class="px-4 py-2"><input type="text" class="form-input w-full" placeholder="Level"></td>
+                                    <td class="px-4 py-2"><input type="text" class="form-input w-full" placeholder="Language Medium"></td>
+                                    <td class="px-4 py-2"><input type="number" class="form-input w-full" placeholder="Number of Students"></td>
+                                    <td class="px-4 py-2"><input type="number" class="form-input w-full" placeholder="Percentage"></td>
+                                    <td class="px-4 py-2"><input type="number" class="form-input w-full" placeholder="Hours Weekly"></td>
+                                    <td class="px-4 py-2 text-center">
+                                        <button type="button" class="text-red-600 font-semibold" onclick="deleteTeachingModuleRow(this)">Delete</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded transition" onclick="addTeachingModuleRow()">Add Teaching Module</button>
+                </div>
+                <!-- Research Students Supervised Table -->
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+                    <h3 class="text-lg font-semibold mb-4">Research Students Supervised</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 mb-4 border border-gray-300">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" class="bg-yellow-100 px-4 py-2 text-left text-xs font-semibold text-gray-700 align-middle border border-gray-300">Number of students</th>
+                                    <th colspan="2" class="bg-blue-100 px-4 py-2 text-center text-xs font-semibold text-gray-700 border border-gray-300">Main Supervision</th>
+                                    <th colspan="2" class="bg-green-100 px-4 py-2 text-center text-xs font-semibold text-gray-700 border border-gray-300">Co-Supervision</th>
+                                </tr>
+                                <tr>
+                                    <th class="bg-blue-50 px-4 py-2 text-center text-xs font-semibold text-gray-700 border border-gray-300">On-going</th>
+                                    <th class="bg-blue-50 px-4 py-2 text-center text-xs font-semibold text-gray-700 border border-gray-300">Successful</th>
+                                    <th class="bg-green-50 px-4 py-2 text-center text-xs font-semibold text-gray-700 border border-gray-300">On-going</th>
+                                    <th class="bg-green-50 px-4 py-2 text-center text-xs font-semibold text-gray-700 border border-gray-300">Successful</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="px-4 py-2 border border-gray-300">1. Undergraduate [including thesis]</td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="ug_main_ongoing" value="0" min="0"></td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="ug_main_successful" value="0" min="0"></td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="ug_co_ongoing" value="0" min="0"></td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="ug_co_successful" value="0" min="0"></td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 border border-gray-300">2. Masters by coursework</td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="mcw_main_ongoing" value="0" min="0"></td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="mcw_main_successful" value="0" min="0"></td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="mcw_co_ongoing" value="0" min="0"></td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="mcw_co_successful" value="0" min="0"></td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 border border-gray-300">3. Masters by research</td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="mr_main_ongoing" value="0" min="0"></td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="mr_main_successful" value="0" min="0"></td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="mr_co_ongoing" value="0" min="0"></td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="mr_co_successful" value="0" min="0"></td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 border border-gray-300">4. Ph.D</td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="phd_main_ongoing" value="0" min="0"></td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="phd_main_successful" value="0" min="0"></td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="phd_co_ongoing" value="0" min="0"></td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="phd_co_successful" value="0" min="0"></td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 border border-gray-300">5. Others (internships)</td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="other_main_ongoing" value="0" min="0"></td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="other_main_successful" value="0" min="0"></td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="other_co_ongoing" value="0" min="0"></td>
+                                    <td class="px-2 py-2 border border-gray-300"><input type="number" class="form-input w-20" name="other_co_successful" value="0" min="0"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- Other Teaching (e.g., Internal Examiner) -->
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mt-8">
+                    <h3 class="text-lg font-semibold mb-4">Other Teaching (e.g., Internal Examiner)</h3>
+                    {{ form.other_teaching_full }}
+                </div>
+            </div>
+            <div id="indicators" class="tab-content hidden">
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mb-8">
+                    <h3 class="text-lg font-semibold mb-4">Academic Leadership Roles</h3>
+                    {{ form.academic_leadership_full }}
+                    <label class="block text-sm font-medium text-gray-700 mb-1 mt-4">Summary</label>
+                    {{ form.academic_leadership_summary }}
+                </div>
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+                    <h3 class="text-lg font-semibold mb-4">Contribution to Development of Teaching Materials</h3>
+                    {{ form.contribution_teaching_materials_full }}
+                    <label class="block text-sm font-medium text-gray-700 mb-1 mt-4">Summary</label>
+                    {{ form.contribution_teaching_materials_summary }}
+                </div>
+            </div>
+            <div id="future" class="tab-content hidden">
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mb-8">
+                    <h3 class="text-lg font-semibold mb-4">Teaching Goals for the Next 3 Years</h3>
+                    {{ form.future_teaching_goals_full }}
+                    <label class="block text-sm font-medium text-gray-700 mb-1 mt-4">Summary</label>
+                    {{ form.future_teaching_goals_summary }}
+                </div>
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+                    <h3 class="text-lg font-semibold mb-4">Steps Taken to Improve Teaching</h3>
+                    {{ form.future_steps_improve_teaching_full }}
+                    <label class="block text-sm font-medium text-gray-700 mb-1 mt-4">Summary</label>
+                    {{ form.future_steps_improve_teaching_summary }}
+                </div>
+            </div>
+        </div>
+        <div class="flex justify-end mt-8">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-8 rounded transition">
+                Save
+            </button>
+        </div>
+    </form>
+</div>
+<style>
+.tab-link.active-tab, .tab-link:focus {
+    color: #3730a3;
+    border-color: #6366f1;
+    background: #fff;
+}
+</style>
+<script>
+function showTab(evt, tabId) {
+    evt.preventDefault();
+    document.querySelectorAll('.tab-content').forEach(function(tab) {
+        tab.classList.add('hidden');
+    });
+    document.querySelectorAll('.tab-link').forEach(function(tab) {
+        tab.classList.remove('active-tab');
+    });
+    document.getElementById(tabId).classList.remove('hidden');
+    evt.currentTarget.classList.add('active-tab');
+}
+window.onload = function() {
+    document.getElementById('philosophy').classList.remove('hidden');
+    document.getElementById('tab-philosophy').classList.add('active-tab');
+};
+function addTeachingModuleRow() {
+    const table = document.getElementById('teaching-modules-table');
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td class="px-4 py-2"><input type="text" class="form-input w-full" placeholder="Module Title"></td>
+        <td class="px-4 py-2"><input type="text" class="form-input w-full" placeholder="Level"></td>
+        <td class="px-4 py-2"><input type="text" class="form-input w-full" placeholder="Language Medium"></td>
+        <td class="px-4 py-2"><input type="number" class="form-input w-full" placeholder="Number of Students"></td>
+        <td class="px-4 py-2"><input type="number" class="form-input w-full" placeholder="Percentage"></td>
+        <td class="px-4 py-2"><input type="number" class="form-input w-full" placeholder="Hours Weekly"></td>
+        <td class="px-4 py-2 text-center">
+            <button type="button" class="text-red-600 font-semibold" onclick="deleteTeachingModuleRow(this)">Delete</button>
+        </td>
+    `;
+    table.appendChild(row);
+}
+function deleteTeachingModuleRow(btn) {
+    btn.closest('tr').remove();
+}
+document.getElementById('portfolioPdfUploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+
+    fetch('/teaching_portfolio/parse_pdf/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            document.getElementById('id_teaching_philosophy_full').value = data.data.teaching_philosophy_full || '';
+            document.getElementById('id_learning_outcome_full').value = data.data.learning_outcome_full || '';
+            document.getElementById('id_instructional_methodology_full').value = data.data.instructional_methodology_full || '';
+            document.getElementById('id_other_means_to_enhance_learning_full').value = data.data.other_means_to_enhance_learning_full || '';
+            document.getElementById('id_other_teaching_full').value = data.data.other_teaching_full || '';
+            document.getElementById('id_academic_leadership_full').value = data.data.academic_leadership_full || '';
+            document.getElementById('id_contribution_teaching_materials_full').value = data.data.contribution_teaching_materials_full || '';
+            document.getElementById('id_future_teaching_goals_full').value = data.data.future_teaching_goals_full || '';
+            document.getElementById('id_future_steps_improve_teaching_full').value = data.data.future_steps_improve_teaching_full || '';
+            alert('PDF parsed and fields autofilled!');
+        } else {
+            alert('Error parsing PDF: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('An error occurred while parsing the PDF.');
+        console.error(error);
+    });
+});
+</script>
+{% endblock %}

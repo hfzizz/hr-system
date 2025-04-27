@@ -38,7 +38,6 @@ from django.forms import modelformset_factory
 from django.forms import inlineformset_factory
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Count, Q
-from appraisals.models import Appraisal, AppraisalPeriod
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from employees.resume_parser import parse_resume
 from django.http import JsonResponse
@@ -63,6 +62,9 @@ from PyPDF2 import PdfReader
 from io import BytesIO
 from unstructured.staging.base import convert_to_dict
 import logging
+import pdfplumber
+import re
+from django.views.decorators.csrf import csrf_exempt
 
 logger = logging.getLogger(__name__)
 
@@ -201,7 +203,7 @@ class CustomLoginView(LoginView):
 
 class CustomLogoutView(LogoutView):
     next_page = reverse_lazy('login')
-    
+
     def dispatch(self, request, *args, **kwargs):
         messages.success(request, 'You have been successfully logged out.')
         return super().dispatch(request, *args, **kwargs)
@@ -412,36 +414,13 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             'appointment_count': Employee.objects.values('appointment_type').distinct().count(),
         })
 
-        # Appraisal analytics
-        active_period = AppraisalPeriod.objects.filter(is_active=True).first()
-        if active_period:
-            context['ongoing_appraisals'] = Appraisal.objects.filter(
-                status='in_progress'
-            ).count()
-            context['pending_reviews'] = Appraisal.objects.filter(
-                status='pending'
-            ).count()
-        else:
-            context['ongoing_appraisals'] = 0
-            context['pending_reviews'] = 0
+        # Appraisal analytics (removed actual queries, just set to 0 or empty for display)
+        context['ongoing_appraisals'] = 0
+        context['pending_reviews'] = 0
+        context['recent_appraisals'] = []
 
         # Get recent employees (last 5)
         context['recent_employees'] = Employee.objects.select_related('department').order_by('-hire_date')[:5]
-
-        # Get recent appraisals - Removed period from select_related
-        if self.request.user.groups.filter(name='HR').exists():
-            # HR sees all recent appraisals
-            context['recent_appraisals'] = Appraisal.objects.select_related(
-                'employee', 'appraiser'
-            ).order_by('-date_created')[:5]
-        else:
-            # Regular users see only their appraisals and ones they need to review
-            context['recent_appraisals'] = Appraisal.objects.filter(
-                Q(employee=self.request.user.employee) |
-                Q(appraiser=self.request.user.employee)  # Changed from reviewer to appraiser
-            ).select_related(
-                'employee', 'appraiser'
-            ).order_by('-date_created')[:5]
 
         # Get status counts
         status_counts = Employee.objects.values('employee_status').annotate(
@@ -499,7 +478,7 @@ class ProfileDetailView(LoginRequiredMixin, DetailView):
             ("Hire date", self.object.hire_date),
         ]
         return context
-
+    
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = Employee
@@ -544,7 +523,7 @@ class EmployeeCreateView(LoginRequiredMixin, HRRequiredMixin, CreateView):
     form_class = EmployeeProfileForm
     template_name = 'employees/employee_create.html'
     success_url = reverse_lazy('employees:employee_list')
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Create Employee'
@@ -561,7 +540,7 @@ class EmployeeCreateView(LoginRequiredMixin, HRRequiredMixin, CreateView):
                 prefix='document_set'
             )
         return context
-
+    
     def form_valid(self, form):
         context = self.get_context_data()
         document_formset = context['document_formset']
@@ -572,13 +551,11 @@ class EmployeeCreateView(LoginRequiredMixin, HRRequiredMixin, CreateView):
                 password = form.cleaned_data.get('password')
                 if not password:
                     password = self.generate_random_password()
-
                 # Create the User instance first
                 username = form.cleaned_data['username']
                 email = form.cleaned_data['email']
                 first_name = form.cleaned_data['first_name']
                 last_name = form.cleaned_data['last_name']
-
                 user = User.objects.create_user(
                     username=username,
                     email=email,
@@ -586,25 +563,21 @@ class EmployeeCreateView(LoginRequiredMixin, HRRequiredMixin, CreateView):
                     first_name=first_name,
                     last_name=last_name
                 )
-
                 # Save employee
                 employee = form.save(commit=False)
                 employee.user = user
                 employee.save()
                 form.save_m2m()
-
                 # Save documents
                 document_formset.instance = employee
                 document_instances = document_formset.save(commit=False)
                 for document in document_instances:
                     document.employee = employee
                     document.save()
-
                 messages.success(
                     self.request, 
                     f'Employee created successfully. Username: {user.username}. Please securely share the credentials with the employee.'
                 )
-                
                 return super().form_valid(form)
             except Exception as e:
                 print(f"Error creating employee: {str(e)}")
@@ -656,12 +629,12 @@ class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMes
         context = super().get_context_data(**kwargs)
         if self.request.POST:
             context['qualification_formset'] = QualificationFormSet(
-                self.request.POST,
+                self.request.POST, 
                 instance=self.object,
                 prefix='qualification_set'
             )
             context['document_formset'] = DocumentFormSet(
-                self.request.POST,
+                self.request.POST, 
                 self.request.FILES,
                 instance=self.object,
                 prefix='document_set'
@@ -743,7 +716,7 @@ class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMes
                 messages.error(self.request, "Please correct the errors in the documents section.")
             if not publication_formset.is_valid():
                     messages.error(self.request, "Please correct the errors in the publications section.")
-            return self.form_invalid(form)
+        return self.form_invalid(form)
 
     def form_invalid(self, form):
         messages.error(self.request, "There was an error updating the employee.")
@@ -898,36 +871,31 @@ class ResumeParserView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         print("\n=== Resume Parser View Debug ===")
         print("Received POST request")
-        
         if 'resume' not in request.FILES:
             print("No file in request")
             return JsonResponse({
                 'status': 'error',
                 'message': 'No resume file provided'
             }, status=400)
-            
+        full_path = None
         try:
             resume_file = request.FILES['resume']
             print(f"Processing file: {resume_file.name}")
             print(f"File size: {resume_file.size} bytes")
             print(f"Content type: {resume_file.content_type}")
-            
             # Verify file type
             if not resume_file.name.lower().endswith('.pdf'):
                 return JsonResponse({
                     'status': 'error',
                     'message': 'Only PDF files are allowed'
                 }, status=400)
-
             # Create a unique filename
             fs = FileSystemStorage(location=settings.TEMP_UPLOAD_DIR)
             filename = fs.get_valid_name(resume_file.name)
-            
             # Save the file temporarily
             file_path = fs.save(filename, resume_file)
             full_path = fs.path(file_path)
             print(f"Saved file to: {full_path}")
-            
             try:
                 # Parse the resume
                 print("\n=== Resume Parsing ===")
@@ -936,7 +904,6 @@ class ResumeParserView(LoginRequiredMixin, View):
                 print(f"Raw parsed data keys: {parsed_data.keys() if isinstance(parsed_data, dict) else 'Not a dictionary'}")
                 print("Raw parsed data content:")
                 print(json.dumps(parsed_data, indent=2))
-                
                 # Transform the parsed data into form-compatible format
                 print("\n=== Data Transformation ===")
                 form_data = {
@@ -955,54 +922,41 @@ class ResumeParserView(LoginRequiredMixin, View):
                     'hire_date': parsed_data.get('employment', {}).get('hire_date', ''),
                     'salary': parsed_data.get('employment', {}).get('salary', '')
                 }
-                
                 # Generate a username from email or name
                 if form_data['email']:
                     form_data['username'] = form_data['email'].split('@')[0]
                 elif form_data['first_name'] and form_data['last_name']:
                     form_data['username'] = f"{form_data['first_name']}{form_data['last_name']}".lower()
-                
                 print("\nTransformed form data:")
                 print(json.dumps(form_data, indent=2))
                 print(f"Form data type: {type(form_data)}")
-                
                 # Check which fields have values
                 populated_fields = {k: v for k, v in form_data.items() if v}
                 print(f"\nFields with values ({len(populated_fields)}):")
                 for key, value in populated_fields.items():
                     print(f"- {key}: {value}")
-                
                 # Prepare the response
                 response_data = {
                     'status': 'success',
                     'data': form_data,
                     'jsonb_data': parsed_data
                 }
-                
                 print("\n=== Response Data ===")
                 print(f"Response structure: {list(response_data.keys())}")
                 print(f"Response data type: {type(response_data)}")
                 print(f"Form data in response type: {type(response_data['data'])}")
                 print(f"JSONB data in response type: {type(response_data['jsonb_data'])}")
-                
                 return JsonResponse(response_data)
-                    
             except Exception as e:
                 print(f"\nError parsing resume: {str(e)}")
                 print(f"Error type: {type(e)}")
-                import traceback
-                print("Traceback:")
-                print(traceback.format_exc())
-                return JsonResponse({
-                    'status': 'error',
-                    'message': str(e)
-                }, status=400)
-            finally:
-                # Clean up: remove the temporary file
-                if os.path.exists(full_path):
-                    os.remove(full_path)
-                    print(f"\nCleaned up temporary file: {full_path}")
-                
+            import traceback
+            print("Traceback:")
+            print(traceback.format_exc())
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
         except Exception as e:
             print(f"\nError handling file: {str(e)}")
             print(f"Error type: {type(e)}")
@@ -1050,3 +1004,48 @@ def employee_delete(request, employee_id):
     
     return redirect('employees:employee_list')
 
+@csrf_exempt
+@require_POST
+def parse_pdf(request):
+    if 'pdf' not in request.FILES:
+        return JsonResponse({'status': 'error', 'message': 'No PDF file provided'}, status=400)
+    pdf_file = request.FILES['pdf']
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+        for chunk in pdf_file.chunks():
+            tmp.write(chunk)
+        tmp_path = tmp.name
+
+    try:
+        # Extract all text from the PDF
+        text = ""
+        with pdfplumber.open(tmp_path) as pdf:
+            for page in pdf.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text + "\n"
+
+        # Helper function to extract section by keyword
+        def extract_section(keyword, text):
+            # Adjust the pattern as needed for your PDF's formatting
+            pattern = rf"{re.escape(keyword)}\n(.*?)(?=\n\d+\.\s|$)"
+            match = re.search(pattern, text, re.DOTALL)
+            return match.group(1).strip() if match else ""
+
+        # Map your form fields to keywords in the PDF (adjust these to match your actual PDF)
+        parsed_data = {
+            'teaching_philosophy_full': extract_section("1. Teaching Philosophy", text),
+            'learning_outcome_full': extract_section("2. Strategies, Objective, Methodology", text),
+            'instructional_methodology_full': extract_section("b) Instructional methodology (including the use of e-learning or experiential learning projects).", text),
+            'other_means_to_enhance_learning_full': extract_section("c) Other means to enhance learning.", text),
+            'other_teaching_full': extract_section("c) Other teaching (e.g. Lifelong Learning, in-service, EDPMMO, EDPSGO, etc). Please provide details.", text),
+            'academic_leadership_full': extract_section("4. Teaching Achievement and Academic Leadership", text),
+            'contribution_teaching_materials_full': extract_section("b) Contribution to development of teaching materials (including published cases, textbooks, production of teaching materials, software, pedagogical articles, teaching methodologies, etc)", text),
+            'future_teaching_goals_full': extract_section("a) Teaching goals for the next 3 years", text),
+            'future_steps_improve_teaching_full': extract_section("b) Steps taken to improve teaching", text),
+        }
+
+        return JsonResponse({'status': 'success', 'data': parsed_data})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    finally:
+        os.remove(tmp_path)

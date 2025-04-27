@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'contract',
     'hr_system',
     'employee_promotion',
+    'teaching_portfolio',
     'widget_tweaks',
     'roles',
     'components',

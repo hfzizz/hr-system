@@ -575,5 +575,38 @@
             alert('An error occurred while parsing the resume.');
         });
     });
-    </script>
-{% endblock %}
+
+    document.getElementById('portfolioPdfUploadForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        fetch('/teaching_portfolio/parse_pdf/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Explicitly set each field
+                document.getElementById('id_teaching_philosophy_full').value = data.data.teaching_philosophy_full || '';
+                document.getElementById('id_learning_outcome_full').value = data.data.learning_outcome_full || '';
+                document.getElementById('id_instructional_methodology_full').value = data.data.instructional_methodology_full || '';
+                document.getElementById('id_other_means_to_enhance_learning_full').value = data.data.other_means_to_enhance_learning_full || '';
+                document.getElementById('id_other_teaching_full').value = data.data.other_teaching_full || '';
+                document.getElementById('id_academic_leadership_full').value = data.data.academic_leadership_full || '';
+                document.getElementById('id_contribution_teaching_materials_full').value = data.data.contribution_teaching_materials_full || '';
+                document.getElementById('id_future_teaching_goals_full').value = data.data.future_teaching_goals_full || '';
+                document.getElementById('id_future_steps_improve_teaching_full').value = data.data.future_steps_improve_teaching_full || '';
+                alert('PDF parsed and fields autofilled!');
+            } else {
+                alert('Error parsing PDF: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('An error occurred while parsing the PDF.');
+            console.error(error);
+        });
+    });
