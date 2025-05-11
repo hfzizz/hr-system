@@ -13,9 +13,15 @@ import tempfile
 import re
 import logging
 import pdfplumber
+from transformers import pipeline
+import json
+from .nlp_utils import summarize_text
 
 logger = logging.getLogger(__name__)
 logger.warning("parse_pdf view called")
+
+# Load the summarization pipeline once (at module level for efficiency)
+summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 
 class TeachingFormView(LoginRequiredMixin, TemplateView):
     template_name = 'teaching_portfolio/form.html'
@@ -97,3 +103,16 @@ def extract_text_pdfplumber(pdf_path):
         for page in pdf.pages:
             text += page.extract_text() or ""
     return text
+
+@csrf_exempt
+@require_POST
+def summarize_text_view(request):
+    try:
+        data = json.loads(request.body)
+        text = data.get('text', '')
+        if not text:
+            return JsonResponse({'status': 'error', 'message': 'No text provided'}, status=400)
+        summary = summarize_text(text)
+        return JsonResponse({'status': 'success', 'summary': summary})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

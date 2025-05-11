@@ -489,7 +489,6 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
         return reverse_lazy('employees:profile', kwargs={'pk': self.request.user.pk}) 
     
     def get_object(self):
-        """Return the employee instance for the logged-in user."""
         try:
             return self.request.user.employee
         except Employee.DoesNotExist:
@@ -580,7 +579,7 @@ class EmployeeCreateView(LoginRequiredMixin, HRRequiredMixin, CreateView):
                 )
                 return super().form_valid(form)
             except Exception as e:
-                print(f"Error creating employee: {str(e)}")
+                logger.error(f"Error creating employee: {str(e)}")
                 messages.error(self.request, f"Error creating employee: {str(e)}")
                 return super().form_invalid(form)
         else:
@@ -950,13 +949,6 @@ class ResumeParserView(LoginRequiredMixin, View):
             except Exception as e:
                 print(f"\nError parsing resume: {str(e)}")
                 print(f"Error type: {type(e)}")
-            import traceback
-            print("Traceback:")
-            print(traceback.format_exc())
-            return JsonResponse({
-                'status': 'error',
-                'message': str(e)
-            }, status=400)
         except Exception as e:
             print(f"\nError handling file: {str(e)}")
             print(f"Error type: {type(e)}")

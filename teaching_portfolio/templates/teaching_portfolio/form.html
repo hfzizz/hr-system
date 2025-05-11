@@ -43,27 +43,80 @@
                 </div>
                 <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
                     <h3 class="text-lg font-semibold mb-4">Teaching Philosophy Summary</h3>
-                    {{ form.teaching_philosophy_summary }}
+                    <div class="summary-section">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-semibold text-gray-700">Summary</span>
+                            <button type="button"
+                                    class="generate-summary-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded"
+                                    data-source="id_teaching_philosophy_full"
+                                    data-target="id_teaching_philosophy_summary">
+                                Generate Summary
+                            </button>
+                        </div>
+                        <textarea id="id_teaching_philosophy_summary"
+                                  name="teaching_philosophy_summary"
+                                  class="w-full rounded border border-gray-300 p-2"
+                                  rows="3"></textarea>
+                    </div>
                 </div>
             </div>
             <div id="strategies" class="tab-content hidden">
                 <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mb-6">
                     <h3 class="text-lg font-semibold mb-4">Learning Outcome</h3>
                     {{ form.learning_outcome_full }}
-                    <label class="block text-sm font-medium text-gray-700 mb-1 mt-4">Summary</label>
-                    {{ form.learning_outcome_summary }}
+                    <div class="summary-section">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-semibold text-gray-700">Summary</span>
+                            <button type="button"
+                                    class="generate-summary-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded"
+                                    data-source="id_learning_outcome_full"
+                                    data-target="id_learning_outcome_summary">
+                                Generate Summary
+                            </button>
+                        </div>
+                        <textarea id="id_learning_outcome_summary"
+                                  name="learning_outcome_summary"
+                                  class="w-full rounded border border-gray-300 p-2"
+                                  rows="3"></textarea>
+                    </div>
                 </div>
                 <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mb-6">
                     <h3 class="text-lg font-semibold mb-4">Instructional Methodology</h3>
                     {{ form.instructional_methodology_full }}
-                    <label class="block text-sm font-medium text-gray-700 mb-1 mt-4">Summary</label>
-                    {{ form.instructional_methodology_summary }}
+                    <div class="summary-section">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-semibold text-gray-700">Summary</span>
+                            <button type="button"
+                                    class="generate-summary-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded"
+                                    data-source="id_instructional_methodology_full"
+                                    data-target="id_instructional_methodology_summary">
+                                Generate Summary
+                            </button>
+                        </div>
+                        <textarea id="id_instructional_methodology_summary"
+                                  name="instructional_methodology_summary"
+                                  class="w-full rounded border border-gray-300 p-2"
+                                  rows="3"></textarea>
+                    </div>
                 </div>
                 <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
                     <h3 class="text-lg font-semibold mb-4">Other Means to Enhance Learning</h3>
                     {{ form.other_means_to_enhance_learning_full }}
-                    <label class="block text-sm font-medium text-gray-700 mb-1 mt-4">Summary</label>
-                    {{ form.other_means_to_enhance_learning_summary }}
+                    <div class="summary-section">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-semibold text-gray-700">Summary</span>
+                            <button type="button"
+                                    class="generate-summary-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded"
+                                    data-source="id_other_means_to_enhance_learning_full"
+                                    data-target="id_other_means_to_enhance_learning_summary">
+                                Generate Summary
+                            </button>
+                        </div>
+                        <textarea id="id_other_means_to_enhance_learning_summary"
+                                  name="other_means_to_enhance_learning_summary"
+                                  class="w-full rounded border border-gray-300 p-2"
+                                  rows="3"></textarea>
+                    </div>
                 </div>
             </div>
             <div id="history" class="tab-content hidden">
@@ -168,28 +221,80 @@
                 <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mb-8">
                     <h3 class="text-lg font-semibold mb-4">Academic Leadership Roles</h3>
                     {{ form.academic_leadership_full }}
-                    <label class="block text-sm font-medium text-gray-700 mb-1 mt-4">Summary</label>
-                    {{ form.academic_leadership_summary }}
+                    <div class="summary-section">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-semibold text-gray-700">Summary</span>
+                            <button type="button"
+                                    class="generate-summary-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded"
+                                    data-source="id_academic_leadership_full"
+                                    data-target="id_academic_leadership_summary">
+                                Generate Summary
+                            </button>
+                        </div>
+                        <textarea id="id_academic_leadership_summary"
+                                  name="academic_leadership_summary"
+                                  class="w-full rounded border border-gray-300 p-2"
+                                  rows="3"></textarea>
+                    </div>
                 </div>
                 <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
                     <h3 class="text-lg font-semibold mb-4">Contribution to Development of Teaching Materials</h3>
                     {{ form.contribution_teaching_materials_full }}
-                    <label class="block text-sm font-medium text-gray-700 mb-1 mt-4">Summary</label>
-                    {{ form.contribution_teaching_materials_summary }}
+                    <div class="summary-section">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-semibold text-gray-700">Summary</span>
+                            <button type="button"
+                                    class="generate-summary-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded"
+                                    data-source="id_contribution_teaching_materials_full"
+                                    data-target="id_contribution_teaching_materials_summary">
+                                Generate Summary
+                            </button>
+                        </div>
+                        <textarea id="id_contribution_teaching_materials_summary"
+                                  name="contribution_teaching_materials_summary"
+                                  class="w-full rounded border border-gray-300 p-2"
+                                  rows="3"></textarea>
+                    </div>
                 </div>
             </div>
             <div id="future" class="tab-content hidden">
                 <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mb-8">
                     <h3 class="text-lg font-semibold mb-4">Teaching Goals for the Next 3 Years</h3>
                     {{ form.future_teaching_goals_full }}
-                    <label class="block text-sm font-medium text-gray-700 mb-1 mt-4">Summary</label>
-                    {{ form.future_teaching_goals_summary }}
+                    <div class="summary-section">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-semibold text-gray-700">Summary</span>
+                            <button type="button"
+                                    class="generate-summary-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded"
+                                    data-source="id_future_teaching_goals_full"
+                                    data-target="id_future_teaching_goals_summary">
+                                Generate Summary
+                            </button>
+                        </div>
+                        <textarea id="id_future_teaching_goals_summary"
+                                  name="future_teaching_goals_summary"
+                                  class="w-full rounded border border-gray-300 p-2"
+                                  rows="3"></textarea>
+                    </div>
                 </div>
                 <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
                     <h3 class="text-lg font-semibold mb-4">Steps Taken to Improve Teaching</h3>
                     {{ form.future_steps_improve_teaching_full }}
-                    <label class="block text-sm font-medium text-gray-700 mb-1 mt-4">Summary</label>
-                    {{ form.future_steps_improve_teaching_summary }}
+                    <div class="summary-section">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-semibold text-gray-700">Summary</span>
+                            <button type="button"
+                                    class="generate-summary-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded"
+                                    data-source="id_future_steps_improve_teaching_full"
+                                    data-target="id_future_steps_improve_teaching_summary">
+                                Generate Summary
+                            </button>
+                        </div>
+                        <textarea id="id_future_steps_improve_teaching_summary"
+                                  name="future_steps_improve_teaching_summary"
+                                  class="w-full rounded border border-gray-300 p-2"
+                                  rows="3"></textarea>
+                    </div>
                 </div>
             </div>
         </div>
@@ -273,6 +378,42 @@ document.getElementById('portfolioPdfUploadForm').addEventListener('submit', fun
     .catch(error => {
         alert('An error occurred while parsing the PDF.');
         console.error(error);
+    });
+});
+document.querySelectorAll('.generate-summary-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const sourceId = this.getAttribute('data-source');
+        const targetId = this.getAttribute('data-target');
+        const text = document.getElementById(sourceId).value;
+        if (!text.trim()) {
+            alert('Please enter content to summarize.');
+            return;
+        }
+        this.disabled = true;
+        this.textContent = 'Summarizing...';
+        fetch('/teaching_portfolio/summarize/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ text: text })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                document.getElementById(targetId).value = data.summary;
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(err => {
+            alert('An error occurred: ' + err);
+        })
+        .finally(() => {
+            this.disabled = false;
+            this.textContent = 'Generate Summary';
+        });
     });
 });
 </script>
