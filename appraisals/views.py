@@ -16,7 +16,7 @@ import logging
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 import json
-from .forms import ModuleFormSet, SectionAForm, SectionBForm
+from .forms import ModuleFormSet, SectionAForm, SectionBForm, SectionCForm, SectionDForm, SectionEForm
 from employees.forms import QualificationFormSet
 from django.forms import inlineformset_factory
 from django.core.exceptions import PermissionDenied
@@ -163,15 +163,17 @@ class AppraiserWizard(BaseAppraisalWizard):
     form_list = [
         ('section_a_readonly', SectionAForm),  # Employee Information
         ('section_b', SectionBForm),  # General Traits
-        # ('section_c', SectionCForm),  # Local Staff Appraisal
-        # ('section_d', SectionDForm),  # Adverse Appraisal
+        ('section_c', SectionCForm),  # Local Staff Appraisal
+        ('section_d', SectionDForm),  # Adverse Appraisal
+        ('section_e', SectionEForm)
     ]
     
     templates = {
         'section_a_readonly': 'appraisals/wizard/section_a_readonly.html',
         'section_b': 'appraisals/wizard/section_b.html',
-        # 'section_c': 'appraisals/wizard/section_c.html',
-        # 'section_d': 'appraisals/wizard/section_d.html',
+        'section_c': 'appraisals/wizard/section_c.html',
+        'section_d': 'appraisals/wizard/section_d.html',
+        'section_e': 'appraisals/wizard/section_e.html',
     }
 
     def get_context_data(self, form, **kwargs):
@@ -269,6 +271,33 @@ def appraisal_wizard_section_c(request, appraisal_id):
     return render(request, 'appraisals/wizard/section_c.html', {
         'appraisal': appraisal,
     })
+
+@login_required
+def appraisal_wizard_section_d(request, appraisal_id):
+    """Render section D of the appraisal wizard"""
+    appraisal = get_object_or_404(Appraisal, appraisal_id=appraisal_id)
+    
+    # Check permissions
+    if not (appraisal.appraiser.user == request.user or request.user.groups.filter(name='HR').exists()):
+        raise PermissionDenied("You are not authorized to review this appraisal")
+        
+    return render(request, 'appraisals/wizard/section_d.html', {
+        'appraisal': appraisal,
+    })
+
+@login_required
+def appraisal_wizard_section_e(request, appraisal_id):
+    """Render section E of the appraisal wizard"""
+    appraisal = get_object_or_404(Appraisal, appraisal_id=appraisal_id)
+    
+    # Check permissions
+    if not (appraisal.appraiser.user == request.user or request.user.groups.filter(name='HR').exists()):
+        raise PermissionDenied("You are not authorized to review this appraisal")
+        
+    return render(request, 'appraisals/wizard/section_e.html', {
+        'appraisal': appraisal,
+    })
+    
     
 @require_POST
 @login_required
@@ -1300,3 +1329,68 @@ def get_section_data(request):
             
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+    
+@require_POST
+@login_required
+@csrf_protect
+def update_appraisal_status(request):
+    """Update the status of an appraisal based on the current appraiser role"""
+    try:
+        # Parse the request data
+        if request.content_type and 'application/json' in request.content_type:
+            data = json.loads(request.body)
+            appraisal_id = data.get('appraisal_id')
+            is_final_submit = data.get('is_final_submit', False)
+        else:
+            appraisal_id = request.POST.get('appraisal_id')
+            is_final_submit = request.POST.get('is_final_submit') == 'true'
+        
+        if not appraisal_id:
+            return JsonResponse({'status': 'error', 'message': 'Missing appraisal_id'}, status=400)
+        
+        # Get the appraisal
+        appraisal = get_object_or_404(Appraisal, appraisal_id=appraisal_id)
+        
+        # Get the current user's employee record
+        current_employee = request.user.employee
+        
+        # Determine what status to set based on who is submitting
+        new_status = appraisal.status  # Default to keeping current status
+        
+        if is_final_submit:
+            # Primary appraiser submitting
+            if appraisal.appraiser == current_employee:
+                if appraisal.appraiser_secondary:
+                    # If there's a secondary appraiser, move to secondary_review
+                    new_status = 'secondary_review'
+                else:
+                    # No secondary appraiser, mark as completed
+                    new_status = 'completed'
+                    
+            # Secondary appraiser submitting
+            elif appraisal.appraiser_secondary == current_employee:
+                # Secondary appraiser is done, mark as completed
+                new_status = 'completed'
+                
+            # HR submitting (or other case)
+            else:
+                if request.user.groups.filter(name='HR').exists():
+                    # HR can complete the appraisal
+                    new_status = 'completed'
+        
+        # Update the appraisal status
+        appraisal.status = new_status
+        appraisal.save()
+        
+        # Return the new status and a redirect URL
+        return JsonResponse({
+            'status': new_status,
+            'message': f'Appraisal status updated to {new_status}',
+            'redirect_url': reverse('appraisals:form_detail', kwargs={'pk': appraisal_id})
+        })
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        logger.error(f"Error in update_appraisal_status: {str(e)}\n{error_details}")
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
