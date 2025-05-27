@@ -66,6 +66,7 @@ import pdfplumber
 import re
 from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime
+import csv
 
 logger = logging.getLogger(__name__)
 
@@ -578,6 +579,7 @@ class EmployeeCreateView(LoginRequiredMixin, HRRequiredMixin, CreateView):
                     self.request, 
                     f'Employee created successfully. Username: {user.username}. Please securely share the credentials with the employee.'
                 )
+                request.session['created_credentials'] = [{'email': email, 'password': password}]
                 return super().form_valid(form)
             except Exception as e:
                 logger.error(f"Error creating employee: {str(e)}")
@@ -1075,9 +1077,11 @@ def bulk_confirm_create(request):
     if not employees_data:
         messages.error(request, "No employees to add. Please upload and parse files first.")
         return redirect('employees:bulk_add')
+    created_credentials = []
     for data in employees_data:
         # Generate a username (e.g., from email or name)
-        username = data['employee_id'] or (data['first_name'] + data['last_name']).lower()
+        username = (data.get('first_name', '') or '') + (data.get('last_name', '') or '')
+        username = username.lower() or data.get('ic_no') or None
         password = User.objects.make_random_password()
         user = User.objects.create_user(
             username=username,
@@ -1089,9 +1093,11 @@ def bulk_confirm_create(request):
         data['user'] = user
         employee = Employee(**data)
         employee.save()
+        created_credentials.append({'email': data['email'], 'password': password})
+    request.session['created_credentials'] = created_credentials
     del request.session['bulk_employees']
     messages.success(request, "Employees created successfully!")
-    return redirect('employees:employee_list')
+    return render(request, 'employees/bulk_add.html', {'created_credentials': created_credentials})
 
 def bulk_cancel(request):
     if 'bulk_employees' in request.session:
@@ -1254,3 +1260,16 @@ def create_user_for_employee(employee_data):
         last_name=employee_data['last_name']
     )
     return user
+
+def download_credentials_csv(request):
+    credentials = request.session.get('created_credentials')
+    if not credentials:
+        messages.error(request, "No credentials to download.")
+        return redirect('employees:bulk_add')
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename=\"bulk_employee_credentials.csv\"'
+    writer = csv.writer(response)
+    writer.writerow(['Email', 'Password'])
+    for cred in credentials:
+        writer.writerow([cred['email'], cred['password']])
+    return response

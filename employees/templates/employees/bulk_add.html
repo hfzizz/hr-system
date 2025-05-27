@@ -70,6 +70,30 @@
             </button>
         </form>
     </div>
+
+    {% if created_credentials %}
+        <div class="bg-green-50 border border-green-200 rounded p-4 my-6">
+            <h2 class="text-lg font-semibold mb-2">Bulk Created Employee Credentials</h2>
+            <a href="{% url 'employees:download_credentials_csv' %}" class="inline-block mb-2 rounded bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Download as CSV</a>
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr>
+                        <th class="px-4 py-2 text-left">Email</th>
+                        <th class="px-4 py-2 text-left">Password</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cred in created_credentials %}
+                    <tr>
+                        <td class="px-4 py-2">{{ cred.email }}</td>
+                        <td class="px-4 py-2 font-mono">{{ cred.password }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <p class="mt-2 text-sm text-gray-600">Please securely share these credentials with the new employees.</p>
+        </div>
+    {% endif %}
 </div>
 
 <script>

@@ -26,4 +26,5 @@ urlpatterns = [
     path('bulk_upload_parse/', views.bulk_upload_parse, name='bulk_upload_parse'),
     path('bulk_confirm_create/', views.bulk_confirm_create, name='bulk_confirm_create'),
     path('bulk_cancel/', views.bulk_cancel, name='bulk_cancel'),
+    path('download_credentials_csv/', views.download_credentials_csv, name='download_credentials_csv'),
 ]
