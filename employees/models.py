@@ -53,6 +53,8 @@ class Employee(models.Model):
     email = models.EmailField(unique=True)
     phone_number = models.CharField(
         max_length=15,
+        null=True,
+        blank=True,
     )
     gender = models.CharField(
         max_length=1,
@@ -60,8 +62,8 @@ class Employee(models.Model):
         blank=True,
         null=True,
     )
-    date_of_birth = models.DateField()
-    hire_date = models.DateField(help_text=_('Date of hiring'))
+    date_of_birth = models.DateField(null=True, blank=True)
+    hire_date = models.DateField(help_text=_('Date of hiring'), null=True, blank=True)
     department = models.ForeignKey(
         Department, 
         on_delete=models.SET_NULL, 
@@ -80,7 +82,7 @@ class Employee(models.Model):
         default=Status.ACTIVE
     )
     roles = models.ManyToManyField('auth.Group', blank=True)
-    address = models.TextField()
+    address = models.TextField(null=True, blank=True)
     profile_picture = models.ImageField(
         upload_to='employee_pics/', 
         blank=True, 

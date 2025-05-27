@@ -22,4 +22,8 @@ urlpatterns = [
     path('publications/<int:pk>/delete/', views.delete_publication, name='delete_publication'),
     path('publications/fetch-metadata/', views.fetch_publication_metadata, name='fetch_publication_metadata'),
     path('publications/load-type-fields/', views.load_type_fields_publication, name='load_type_fields_publication'),
+    path('bulk_add/', views.bulk_add, name='bulk_add'),
+    path('bulk_upload_parse/', views.bulk_upload_parse, name='bulk_upload_parse'),
+    path('bulk_confirm_create/', views.bulk_confirm_create, name='bulk_confirm_create'),
+    path('bulk_cancel/', views.bulk_cancel, name='bulk_cancel'),
 ]

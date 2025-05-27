@@ -65,6 +65,7 @@ import logging
 import pdfplumber
 import re
 from django.views.decorators.csrf import csrf_exempt
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -1041,3 +1042,215 @@ def parse_pdf(request):
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     finally:
         os.remove(tmp_path)
+
+def bulk_add(request):
+    return render(request, 'employees/bulk_add.html')
+
+@csrf_exempt
+def bulk_upload_parse(request):
+    if request.method == 'POST':
+        files = request.FILES.getlist('resume_folder')
+        parsed_employees = []
+        for f in files:
+            # Save file temporarily
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+                for chunk in f.chunks():
+                    tmp.write(chunk)
+                tmp_path = tmp.name
+            # Parse PDF (use your parse_pdf logic)
+            employee_data = parse_employee_from_pdf(tmp_path)
+            print("Parsed employee data:", employee_data)
+            if employee_data and any(employee_data.values()):
+                parsed_employees.append(employee_data)
+            os.remove(tmp_path)
+        # Store in session for validation
+        request.session['bulk_employees'] = parsed_employees
+        return render(request, 'employees/bulk_add.html', {'employees': parsed_employees})
+    else:
+        return render(request, 'employees/bulk_add.html')
+
+@require_POST
+def bulk_confirm_create(request):
+    employees_data = request.session.get('bulk_employees')
+    if not employees_data:
+        messages.error(request, "No employees to add. Please upload and parse files first.")
+        return redirect('employees:bulk_add')
+    for data in employees_data:
+        # Generate a username (e.g., from email or name)
+        username = data['employee_id'] or (data['first_name'] + data['last_name']).lower()
+        password = User.objects.make_random_password()
+        user = User.objects.create_user(
+            username=username,
+            email=data['email'],
+            password=password,
+            first_name=data['first_name'],
+            last_name=data['last_name']
+        )
+        data['user'] = user
+        employee = Employee(**data)
+        employee.save()
+    del request.session['bulk_employees']
+    messages.success(request, "Employees created successfully!")
+    return redirect('employees:employee_list')
+
+def bulk_cancel(request):
+    if 'bulk_employees' in request.session:
+        del request.session['bulk_employees']
+    return redirect('employees:employee_list')
+
+def parse_date(date_str):
+    if not date_str:
+        return None
+    date_str = date_str.strip()
+    # Try several common formats
+    for fmt in ("%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d", "%d/%m/%y", "%d-%m-%y"):
+        try:
+            return datetime.strptime(date_str, fmt).date()
+        except Exception:
+            continue
+    return None
+
+def parse_employee_from_pdf(pdf_path):
+    import pdfplumber
+    import re
+    from employees.models import Department
+
+    text = ""
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\n"
+
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+
+    # Name
+    name = None
+    for line in lines:
+        if line.startswith("A1. Name"):
+            name = line.split(":", 1)[-1].strip()
+            break
+    name_parts = name.split() if name else []
+    first_name = name_parts[0] if name_parts else None
+    last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else None
+
+    # IC No & Colour (robust extraction)
+    ic_no, ic_colour = None, None
+    ic_pattern = re.compile(r"([0-9\-]+)[,\s]+(Yellow|Purple|Green|Red)", re.IGNORECASE)
+    for line in lines:
+        if "IC. No & colour: " in line:
+            # Try to extract using regex
+            match = ic_pattern.search(line)
+            if match:
+                ic_no = match.group(1).strip()
+                ic_colour = match.group(2).capitalize()
+                break
+            # Fallback: split by ':' and ','
+            val = line.split(":", 1)[-1].strip() if ":" in line else line
+            if "," in val:
+                parts = [x.strip() for x in val.split(",", 1)]
+                if len(parts) == 2:
+                    ic_no, ic_colour = parts[0], parts[1].capitalize()
+                    break
+            elif val:
+                ic_no = val
+                ic_colour = None
+                break
+
+    # Date of Birth
+    date_of_birth = None
+    for line in lines:
+        if "Date of Birth" in line:
+            date_of_birth = line.split(":", 1)[-1].strip()
+            break
+    date_of_birth = parse_date(date_of_birth) if date_of_birth else None
+
+    # Table row for appointment
+    department, hire_date = None, None
+    for line in lines:
+        if "First appointment in Universiti Brunei Darussalam" in line:
+            parts = re.split(r'\s{2,}', line)
+            if len(parts) >= 4:
+                department = parts[2] if parts[2] else None
+                hire_date = parts[3] if parts[3] else None
+            break
+    hire_date = parse_date(hire_date) if hire_date else None
+
+    # Present Post
+    post = None
+    for line in lines:
+        if "Present Post" in line:
+            # Extract only the job title (e.g., "Professor", "Assistant Professor", etc.)
+            match = re.search(r"Present Post\\s*(.*?)(?:\\s*A5\\.i|$)", line)
+            if match:
+                post = match.group(1).strip()
+            else:
+                # Fallback: just take the first word after "Present Post"
+                post = line.split("Present Post")[-1].strip().split()[0] if line.split("Present Post")[-1].strip() else None
+            break
+
+    # Appointment Type (Type of Service)
+    appointment_type = None
+    for line in lines:
+        if "Type of Service" in line:
+            if "Contract" in line and "√" in line:
+                appointment_type = "Contract"
+            elif "Permanent" in line and "√" in line:
+                appointment_type = "Permanent"
+            elif "Month-to-Month" in line and "√" in line:
+                appointment_type = "Month-to-Month"
+            elif "Daily Rated" in line and "√" in line:
+                appointment_type = "Daily-Rated"
+
+    # Salary
+    salary = None
+    for line in lines:
+        if "Salary scale/ Division" in line:
+            salary = line.split("Salary scale/ Division")[-1].strip()
+            break
+    try:
+        salary = float(salary)
+    except:
+        salary = None
+
+    # Department object
+    department_obj = None
+    if department:
+        department_obj, _ = Department.objects.get_or_create(name=department)
+
+    # Generate username/email/phone/address
+    username = ((first_name or "") + (last_name or "")).lower() or ic_no or None
+    email = f"{username}@example.com" if username else None
+    phone_number = None
+    address = None
+
+    employee_data = {
+        "employee_id": None,
+        "ic_no": ic_no if ic_no else None,
+        "first_name": first_name if first_name else None,
+        "last_name": last_name if last_name else None,
+        "date_of_birth": date_of_birth if date_of_birth else None,
+        "department": department_obj if department_obj else None,
+        "post": post if post else None,
+        "appointment_type": appointment_type if appointment_type else None,
+        "salary": salary if salary is not None else None,
+        "ic_colour": ic_colour if ic_colour else None,
+        "hire_date": hire_date if hire_date else None,
+        "employee_status": "active",
+        "address": address,
+        "email": email,
+        "phone_number": phone_number,
+    }
+    return employee_data
+
+def create_user_for_employee(employee_data):
+    username = employee_data['employee_id'] or (employee_data['first_name'] + employee_data['last_name']).lower()
+    password = User.objects.make_random_password()
+    user = User.objects.create_user(
+        username=username,
+        email=employee_data['email'],
+        password=password,
+        first_name=employee_data['first_name'],
+        last_name=employee_data['last_name']
+    )
+    return user
