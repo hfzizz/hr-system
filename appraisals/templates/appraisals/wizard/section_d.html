@@ -15,6 +15,60 @@
     });
 
     document.addEventListener('DOMContentLoaded', function(){
+        // Get reference to the form and the Next button
+        const form = document.getElementById('section-d-form');
+        const nextButton = form.querySelector('button[type="submit"]:not([name="wizard_goto_step"])');
+        
+        if (nextButton) {
+            nextButton.addEventListener('click', function(event) {
+                // Prevent default form submission
+                event.preventDefault();
+                
+                // Show saving indicator
+                const saveIndicator = document.getElementById('save-indicator');
+                saveIndicator.classList.remove('htmx-indicator');
+                saveIndicator.style.display = 'flex';
+                
+                // Create form data
+                const formData = new FormData(form);
+                formData.append('is_draft', 'true');
+                formData.append('auto_save', 'true');
+                
+                // Use fetch API to save the draft
+                fetch('{% url "appraisals:save_section_data" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                })
+                .then(response => {
+                    console.log("Auto-save response status:", response.status);
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`Server error: ${response.status} - ${text || 'No error message'}`);
+                        });
+                    }
+                    return response.text();
+                })
+                .then(() => {
+                    console.log('Form auto-saved before navigation');
+                    // After successful save, submit the form to proceed to next step
+                    form.submit();
+                })
+                .catch(error => {
+                    console.error('Error auto-saving form:', error);
+                    showSaveMessage('Auto-save failed, but continuing navigation', 'error');
+                    // Continue with form submission even if auto-save fails
+                    form.submit();
+                })
+                .finally(() => {
+                    // Hide the saving indicator (though form will likely have navigated away by now)
+                    saveIndicator.style.display = 'none';
+                    saveIndicator.classList.add('htmx-indicator');
+                });
+            });
+        }
         // Load saved data for the form
         loadSavedData();
     });

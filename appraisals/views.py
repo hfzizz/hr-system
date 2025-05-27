@@ -100,11 +100,23 @@ class AppraisalListView(LoginRequiredMixin, ListView):
         # Common data
         context['departments'] = Department.objects.all()
         
-        # My Appraisals tab - show only appraisals where user is the employee
+        # My Appraisals tab - show appraisals where user is the employee
+        # Add appraisee_review status to show appraisals waiting for employee review
         context['my_appraisals'] = Appraisal.objects.filter(
             employee__user=user,
-            status='pending',
-        ).select_related('employee__user', 'appraiser__user', 'appraiser_secondary')  # Add select_related
+            status__in=['pending', 'appraisee_review'],
+        ).select_related('employee__user', 'appraiser__user', 'appraiser_secondary')
+        
+        # To help UI distinguish between pending forms and those needing review
+        context['pending_appraisal_ids'] = list(Appraisal.objects.filter(
+            employee__user=user,
+            status='pending'
+        ).values_list('appraisal_id', flat=True))
+        
+        context['appraisee_review_ids'] = list(Appraisal.objects.filter(
+            employee__user=user,
+            status='appraisee_review'
+        ).values_list('appraisal_id', flat=True))
         
         # Review tab - show appraisals where user is the primary or secondary appraiser
         context['review_appraisals'] = Appraisal.objects.filter(
@@ -228,7 +240,7 @@ class AppraiserWizard(BaseAppraisalWizard):
             # Only use appraisal_id field, not id since it doesn't exist
             appraisal = Appraisal.objects.filter(
                 appraisal_id=appraisal_id
-            ).select_related('employee', 'appraiser').first()
+            ).select_related('employee', 'appraiser', 'appraiser_secondary').first()
             
             if not appraisal:
                 raise Http404(f"Appraisal with ID {appraisal_id} not found")
@@ -238,13 +250,24 @@ class AppraiserWizard(BaseAppraisalWizard):
                 logger.error(f"Appraisal {appraisal_id} has no associated employee")
                 raise Http404(f"Appraisal {appraisal_id} is incomplete (missing employee)")
                 
-            if appraisal.appraiser.user != request.user and not request.user.groups.filter(name=HR_GROUP_NAME).exists():
+            # Check if user is authorized to review this appraisal
+            # Add check for secondary appraiser
+            is_primary_appraiser = appraisal.appraiser.user == request.user
+            is_secondary_appraiser = appraisal.appraiser_secondary and appraisal.appraiser_secondary.user == request.user
+            is_hr = request.user.groups.filter(name=HR_GROUP_NAME).exists()
+            
+            if not (is_primary_appraiser or is_secondary_appraiser or is_hr):
+                # Correctly raise PermissionDenied instead of converting it to Http404
                 raise PermissionDenied("You are not authorized to review this appraisal")
-                
+                    
             return super().dispatch(request, *args, **kwargs)
+        except PermissionDenied as e:
+            # Properly handle permission errors
+            logger.warning(f"Permission denied: {str(e)}")
+            raise  # Re-raise the PermissionDenied exception to trigger the 403 page
         except Exception as e:
             logger.error(f"Error in dispatch: {str(e)}")
-        raise Http404(f"Error loading appraisal with ID {appraisal_id}: {str(e)}")
+            raise Http404(f"Error loading appraisal with ID {appraisal_id}: {str(e)}")
 
 @login_required
 def appraisal_wizard_section_a(request, appraisal_id):
@@ -1314,20 +1337,44 @@ def get_section_data(request):
     
     try:
         appraisal = get_object_or_404(Appraisal, appraisal_id=appraisal_id)
-        current_employee = request.user.employee
         
-        # Get the section data if it exists
+        # Check permissions - Add check for employee/appraisee
+        is_appraiser = appraisal.appraiser.user == request.user
+        is_secondary_appraiser = appraisal.appraiser_secondary and appraisal.appraiser_secondary.user == request.user
+        is_hr = request.user.groups.filter(name='HR').exists()
+        is_employee = appraisal.employee.user == request.user
+        
+        if not (is_appraiser or is_secondary_appraiser or is_hr or is_employee):
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+        
+        # First try to get data filled by the primary appraiser
         try:
             section_obj = AppraisalSection.objects.get(
                 appraisal=appraisal,
                 section_name=section,
-                appraiser=current_employee
+                appraiser=appraisal.appraiser
             )
             return JsonResponse({'data': section_obj.data})
         except AppraisalSection.DoesNotExist:
-            return JsonResponse({'data': {}})
+            # If no data from primary appraiser, check if current user is secondary appraiser
+            current_employee = request.user.employee
+            if current_employee == appraisal.appraiser_secondary:
+                # Check if secondary appraiser has filled any data
+                try:
+                    section_obj = AppraisalSection.objects.get(
+                        appraisal=appraisal,
+                        section_name=section,
+                        appraiser=current_employee
+                    )
+                    return JsonResponse({'data': section_obj.data})
+                except AppraisalSection.DoesNotExist:
+                    return JsonResponse({'data': {}})
+            else:
+                # No data found for this section
+                return JsonResponse({'data': {}})
             
     except Exception as e:
+        logger.error(f"Error in get_section_data: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
     
 @require_POST
@@ -1341,9 +1388,11 @@ def update_appraisal_status(request):
             data = json.loads(request.body)
             appraisal_id = data.get('appraisal_id')
             is_final_submit = data.get('is_final_submit', False)
+            appraisee_agrees = data.get('appraisee_agrees', None)
         else:
             appraisal_id = request.POST.get('appraisal_id')
             is_final_submit = request.POST.get('is_final_submit') == 'true'
+            appraisee_agrees = request.POST.get('appraisee_agrees')
         
         if not appraisal_id:
             return JsonResponse({'status': 'error', 'message': 'Missing appraisal_id'}, status=400)
@@ -1360,23 +1409,117 @@ def update_appraisal_status(request):
         if is_final_submit:
             # Primary appraiser submitting
             if appraisal.appraiser == current_employee:
-                if appraisal.appraiser_secondary:
+                # Check if this is a reassigned review
+                if appraisal.status == 'reassigned_review':
+                    # Reassigned appraiser is done, send directly to HR review
+                    new_status = 'hr_review'
+                    
+                    # Log completion of reassigned review
+                    section, created = AppraisalSection.objects.get_or_create(
+                        appraisal=appraisal,
+                        section_name='reassignment_history',
+                        appraiser=current_employee
+                    )
+                    data = section.data or {}
+                    data['completed_at'] = timezone.now().isoformat()
+                    section.data = data
+                    section.save()
+                    
+                elif appraisal.appraiser_secondary:
                     # If there's a secondary appraiser, move to secondary_review
                     new_status = 'secondary_review'
                 else:
-                    # No secondary appraiser, mark as completed
-                    new_status = 'completed'
+                    # No secondary appraiser, send to appraisee for review
+                    new_status = 'appraisee_review'
                     
             # Secondary appraiser submitting
             elif appraisal.appraiser_secondary == current_employee:
-                # Secondary appraiser is done, mark as completed
-                new_status = 'completed'
+                # Secondary appraiser is done, send to appraisee for review
+                new_status = 'appraisee_review'
+                
+            # Appraisee submitting after review
+            elif appraisal.employee == current_employee and appraisal.status == 'appraisee_review':
+                # Check if appraisee agrees or disagrees
+                if appraisee_agrees is not None:
+                    if appraisee_agrees == 'true' or appraisee_agrees == True:
+                        # Appraisee agrees, send to HR for final review
+                        new_status = 'hr_review'
+                    else:
+                        # Appraisee disagrees, mark as disagreed
+                        new_status = 'disagreed'
+                        
+                        # Log the dispute in a section
+                        section, created = AppraisalSection.objects.get_or_create(
+                            appraisal=appraisal,
+                            section_name='dispute',
+                            appraiser=current_employee
+                        )
+                        data = section.data or {}
+                        data['disputed_at'] = timezone.now().isoformat()
+                        data['reason'] = request.POST.get('dispute_reason', '')
+                        section.data = data
+                        section.save()
                 
             # HR submitting (or other case)
-            else:
-                if request.user.groups.filter(name='HR').exists():
-                    # HR can complete the appraisal
+            elif request.user.groups.filter(name=HR_GROUP_NAME).exists():
+                current_status = appraisal.status
+                
+                if current_status in ['hr_review', 'reassigned_review']:
+                    # HR finalizing after review
                     new_status = 'completed'
+                elif current_status == 'disagreed':
+                    # HR handling a disagreement - check if they're assigning a new appraiser
+                    new_appraiser_id = request.POST.get('new_appraiser_id')
+                    if new_appraiser_id:
+                        try:
+                            new_appraiser = Employee.objects.get(employee_id=new_appraiser_id)
+                            
+                            # Store the original appraisers for reference
+                            section, created = AppraisalSection.objects.get_or_create(
+                                appraisal=appraisal,
+                                section_name='dispute_history',
+                                appraiser=current_employee
+                            )
+                            data = section.data or {}
+                            
+                            # Add the original appraisers to history
+                            if 'previous_appraisers' not in data:
+                                data['previous_appraisers'] = []
+                                
+                            data['previous_appraisers'].append({
+                                'primary_id': appraisal.appraiser.employee_id,
+                                'primary_name': appraisal.appraiser.get_full_name(),
+                                'secondary_id': appraisal.appraiser_secondary.employee_id if appraisal.appraiser_secondary else None,
+                                'secondary_name': appraisal.appraiser_secondary.get_full_name() if appraisal.appraiser_secondary else None,
+                                'reassigned_at': timezone.now().isoformat()
+                            })
+                            
+                            section.data = data
+                            section.save()
+                            
+                            # Assign the new appraiser (making sure they're not the same as before)
+                            if (new_appraiser != appraisal.appraiser and 
+                                (not appraisal.appraiser_secondary or new_appraiser != appraisal.appraiser_secondary)):
+                                appraisal.appraiser = new_appraiser
+                                appraisal.appraiser_secondary = None  # Clear secondary appraiser
+                                new_status = 'reassigned'  # Mark as reassigned
+                            else:
+                                return JsonResponse({
+                                    'status': 'error', 
+                                    'message': 'New appraiser must be different from previous appraisers'
+                                }, status=400)
+                        except Employee.DoesNotExist:
+                            return JsonResponse({
+                                'status': 'error', 
+                                'message': 'Selected employee not found'
+                            }, status=404)
+                    else:
+                        # HR can override and complete without reassignment
+                        if request.POST.get('hr_override') == 'true':
+                            new_status = 'completed'
+                elif current_status == 'reassigned':
+                    # HR has reassigned, now it should go to reassigned_review 
+                    new_status = 'reassigned_review'
         
         # Update the appraisal status
         appraisal.status = new_status
@@ -1394,3 +1537,227 @@ def update_appraisal_status(request):
         error_details = traceback.format_exc()
         logger.error(f"Error in update_appraisal_status: {str(e)}\n{error_details}")
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+class AppraiseeWizard(SessionWizardView):
+    """
+    Wizard view for appraisee to review the appraisal and provide response.
+    All sections are read-only except for section E (appraisee's response).
+    """
+    form_list = [ 
+        ('section_b', SectionBForm),  # Read-only
+        ('section_c', SectionCForm),  # Read-only
+        ('section_d', SectionDForm),  # Read-only
+        ('section_e', SectionEForm),  # Editable
+    ]
+    
+    templates = {
+        'section_b': 'appraisals/appraisee/section_b_readonly.html',
+        'section_c': 'appraisals/appraisee/section_c_readonly.html',
+        'section_d': 'appraisals/appraisee/section_d_readonly.html',
+        'section_e': 'appraisals/appraisee/section_e_appraisee.html',
+    }
+    
+    def get_template_names(self):
+        return [self.templates[self.steps.current]]
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Get the appraisal ID from the URL
+        self.appraisal_id = kwargs.get('appraisal_id')
+        
+        # Get the appraisal object
+        self.appraisal = get_object_or_404(Appraisal, appraisal_id=self.appraisal_id)
+        
+        # Check if the logged-in user is the appraisee
+        if request.user.employee != self.appraisal.employee:
+            messages.error(request, "You don't have permission to review this appraisal.")
+            return redirect('appraisals:list')
+            
+        # Check if the appraisal is in the correct state
+        if self.appraisal.status != 'appraisee_review':
+            messages.error(request, "This appraisal is not currently available for your review.")
+            return redirect('appraisals:list')
+            
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_form_initial(self, step):
+        """Pre-populate forms with existing data from the database"""
+        initial = {}
+        
+        # Get the appraisal sections
+        try:
+            if step == 'section_b':
+                section = AppraisalSection.objects.get(
+                    appraisal=self.appraisal,
+                    section_name='goals'
+                )
+                if section.data and 'goals' in section.data:
+                    initial['goals'] = section.data.get('goals', [])
+                
+            elif step == 'section_c':
+                section = AppraisalSection.objects.get(
+                    appraisal=self.appraisal,
+                    section_name='performance'
+                )
+                if section.data:
+                    initial['rating'] = section.data.get('rating', '')
+                    initial['comments'] = section.data.get('comments', '')
+                
+            elif step == 'section_d':
+                strengths_section = AppraisalSection.objects.filter(
+                    appraisal=self.appraisal,
+                    section_name='strengths'
+                ).first()
+                
+                improvements_section = AppraisalSection.objects.filter(
+                    appraisal=self.appraisal,
+                    section_name='areas_for_improvement'
+                ).first()
+                
+                training_section = AppraisalSection.objects.filter(
+                    appraisal=self.appraisal,
+                    section_name='training'
+                ).first()
+                
+                if strengths_section and strengths_section.data:
+                    initial['strengths'] = strengths_section.data.get('content', '')
+                
+                if improvements_section and improvements_section.data:
+                    initial['areas_for_improvement'] = improvements_section.data.get('content', '')
+                
+                if training_section and training_section.data:
+                    initial['training'] = training_section.data.get('content', '')
+                    
+            elif step == 'section_e':
+                # For section E, check if there's an existing response
+                response_section = AppraisalSection.objects.filter(
+                    appraisal=self.appraisal,
+                    section_name='appraisee_response'
+                ).first()
+                
+                if response_section and response_section.data:
+                    initial['agrees'] = response_section.data.get('agrees', True)
+                    initial['comments'] = response_section.data.get('comments', '')
+        
+        except AppraisalSection.DoesNotExist:
+            # If section doesn't exist, use empty initial data
+            pass
+            
+        return initial
+    
+    def get_context_data(self, form, **kwargs):
+        context = super().get_context_data(form, **kwargs)
+        
+        # Add appraisal object to the context
+        context['appraisal'] = self.appraisal
+        
+        # Add a flag to indicate this is an appraisee review
+        context['is_appraisee_review'] = True
+        
+        # Add step titles
+        context['step_titles'] = {
+            'section_b': 'Step 1: Goals & Objectives Review',
+            'section_c': 'Step 2: Performance Review',
+            'section_d': 'Step 3: Feedback Review',
+            'section_e': 'Step 4: Your Response',
+        }
+        
+        # Add section data directly to context so it can be displayed in read-only templates
+        if self.steps.current == 'section_b':
+            try:
+                section = AppraisalSection.objects.get(
+                    appraisal=self.appraisal,
+                    section_name='goals'
+                )
+                if section.data:
+                    context['goals_data'] = section.data.get('goals', [])
+            except AppraisalSection.DoesNotExist:
+                context['goals_data'] = []
+                
+        elif self.steps.current == 'section_c':
+            try:
+                section = AppraisalSection.objects.get(
+                    appraisal=self.appraisal,
+                    section_name='performance'
+                )
+                if section.data:
+                    context['performance_data'] = section.data
+            except AppraisalSection.DoesNotExist:
+                context['performance_data'] = {}
+                
+        elif self.steps.current == 'section_d':
+            feedback_data = {}
+            
+            try:
+                strengths_section = AppraisalSection.objects.filter(
+                    appraisal=self.appraisal,
+                    section_name='strengths'
+                ).first()
+                
+                if strengths_section and strengths_section.data:
+                    feedback_data['strengths'] = strengths_section.data.get('content', '')
+            except:
+                feedback_data['strengths'] = ''
+                
+            try:
+                improvements_section = AppraisalSection.objects.filter(
+                    appraisal=self.appraisal,
+                    section_name='areas_for_improvement'
+                ).first()
+                
+                if improvements_section and improvements_section.data:
+                    feedback_data['areas_for_improvement'] = improvements_section.data.get('content', '')
+            except:
+                feedback_data['areas_for_improvement'] = ''
+                
+            try:
+                training_section = AppraisalSection.objects.filter(
+                    appraisal=self.appraisal,
+                    section_name='training'
+                ).first()
+                
+                if training_section and training_section.data:
+                    feedback_data['training'] = training_section.data.get('content', '')
+            except:
+                feedback_data['training'] = ''
+                
+            context['feedback_data'] = feedback_data
+        
+        return context
+    
+    def done(self, form_list, **kwargs):
+        """Process the completed wizard and save data to the database"""
+        # Extract the form data - we only need section_e
+        section_e_form = None
+        for form in form_list:
+            if isinstance(form, SectionEForm):
+                section_e_form = form
+                break
+        
+        if section_e_form:
+            # Extract appraisee's response
+            agrees = section_e_form.cleaned_data.get('agrees', True)
+            comments = section_e_form.cleaned_data.get('comments', '')
+            
+            # Save the appraisee's response
+            response_section, created = AppraisalSection.objects.get_or_create(
+                appraisal=self.appraisal,
+                section_name='appraisee_response',
+                appraiser=self.request.user.employee
+            )
+            
+            response_data = response_section.data or {}
+            response_data['agrees'] = agrees
+            response_data['comments'] = comments
+            response_data['responded_at'] = timezone.now().isoformat()
+            response_section.data = response_data
+            response_section.save()
+            
+            # Update the appraisal status based on agreement
+            self.appraisal.status = 'hr_review' if agrees else 'disagreed'
+            self.appraisal.save()
+            
+            messages.success(self.request, "Your response has been submitted successfully.")
+        else:
+            messages.error(self.request, "Error processing your response.")
+            
+        return redirect('appraisals:list')

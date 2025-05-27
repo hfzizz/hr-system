@@ -10,7 +10,6 @@ urlpatterns = [
     path('periods/<int:period_id>/', views.set_default_period, name='set_default_period'),
     path('periods/<int:period_id>/create/', views.create_period, name='period_create'),
 
-
     # Appraisers
     path('appraisers/', views.AppraiserListView.as_view(), name='appraiser_list'),
     path('appraisers/assign/<str:employee_id>/', views.AppraisalAssignView.as_view(), name='appraiser_assign'),
@@ -24,6 +23,7 @@ urlpatterns = [
     path('forms/<int:pk>/', views.AppraisalDetailView.as_view(), name='form_detail'),
     path('forms/<int:appraisal_id>/fill/', views.AppraiseeUpdateView.as_view(), name='appraisal_fill'),
     path('forms/<int:appraisal_id>/review/', views.AppraiserWizard.as_view(), name='appraisal_review'),
+    path('forms/<int:appraisal_id>/appraisee-review/', views.AppraiseeWizard.as_view(), name='appraisee_review'),
     # path('forms/<int:pk>/review/', views.AppraisalReviewView.as_view(), name='form_review'),
 
     path('api/appraisers/', views.get_appraisers, name='get_appraisers'),
@@ -42,7 +42,7 @@ urlpatterns = [
     path('save-section-data/', views.save_section_data, name='save_section_data'),
     path('get-section-data/', views.get_section_data, name='get_section_data'),
 
-        # Add these URL patterns for the wizard sections
+    # Add these URL patterns for the wizard sections
     path('forms/<int:appraisal_id>/review/section-a/', views.appraisal_wizard_section_a, name='appraisal_wizard_section_a'),
     path('forms/<int:appraisal_id>/review/section-c/', views.appraisal_wizard_section_c, name='appraisal_wizard_section_c'),
     path('update-appraisal-status/', views.update_appraisal_status, name='update_appraisal_status'),
