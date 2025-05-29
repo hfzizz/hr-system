@@ -201,3 +201,11 @@ OPENAI_API_KEY = 'sk-proj-ncVSARp5e1xGwrvyTQwXHwCPaZEDQhbDaoHVJp-TkOcEwS1c7QILX1
 
 # Add this near the top of the file
 SCOPUS_API_KEY = "b00d238c0e21d681e480dfec863bbb9f"
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'rosmesukaimi@gmail.com'
+EMAIL_HOST_PASSWORD = 'pkuj zltl sopt obfa'
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = 'HR Department <rosmesukaimi@gmail.com>'

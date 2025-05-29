@@ -68,6 +68,7 @@ from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime
 import csv
 from django.db import IntegrityError
+from django.core.mail import send_mail
 
 logger = logging.getLogger(__name__)
 
@@ -1120,6 +1121,25 @@ def bulk_confirm_create(request):
                 first_name=data.get('first_name', ''),
                 last_name=data.get('last_name', '')
             )
+            # Send credentials email
+            if data.get('email'):
+                try:
+                    send_mail(
+                        subject='Your Employee Account Credentials',
+                        message=(
+                            f"Dear {data.get('first_name', '')},\n\n"
+                            f"Your employee account has been created.\n"
+                            f"Username: {username}\n"
+                            f"Password: {password}\n\n"
+                            "Please log in and change your password as soon as possible.\n\n"
+                            "Best regards,\nHR Department"
+                        ),
+                        from_email=None,  # Uses DEFAULT_FROM_EMAIL
+                        recipient_list=[data.get('email')],
+                        fail_silently=False,
+                    )
+                except Exception as e:
+                    print(f"Failed to send email to {data.get('email')}: {e}")
         except IntegrityError:
             already_exists.append({
                 'first_name': data.get('first_name', ''),
