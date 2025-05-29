@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}HR Review - Appraisal {{ appraisal.appraisal_id }}{% endblock %}
+
+{% block content %}
+<div class="container max-w-6xl mx-auto px-4 py-6">
+    <!-- Wizard Navigation -->
+    <div class="flex justify-center mb-8">
+        <div class="flex items-center w-full max-w-4xl">
+            {% for step_name, step_title in step_titles.items %}
+            <div class="flex-1 relative">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center
+                        {% if wizard.steps.index == forloop.counter0 %}
+                            bg-blue-600 text-white
+                        {% elif wizard.steps.index > forloop.counter0 %}
+                            bg-blue-400 text-white
+                        {% else %}
+                            bg-gray-200 text-gray-600
+                        {% endif %}">
+                        {{ forloop.counter }}
+                    </div>
+                    <div class="ml-2 text-sm font-medium {% if wizard.steps.index == forloop.counter0 %}text-blue-600{% else %}text-gray-600{% endif %}">
+                        {{ step_title }}
+                    </div>
+                </div>
+                {% if not forloop.last %}
+                <div class="absolute left-5 top-5 h-0.5 w-full bg-gray-200">
+                    {% if wizard.steps.index > forloop.counter0 %}
+                    <div class="absolute left-0 top-0 h-0.5 bg-blue-400" style="width: 100%;"></div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Appraisal Information Header -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">
+                    HR Review: Appraisal #{{ appraisal.appraisal_id }}
+                </h1>
+                <p class="text-sm text-gray-600 mt-1">
+                    {{ appraisal.employee.get_full_name }} | {{ appraisal.get_appraisal_period_display }}
+                </p>
+            </div>
+            <div class="flex items-center">
+                <span class="px-3 py-1 rounded-full text-sm font-medium
+                    {% if appraisal.status == 'hr_review' %}
+                        bg-orange-100 text-orange-800
+                    {% elif appraisal.status == 'disagreed' %}
+                        bg-red-100 text-red-800
+                    {% else %}
+                        bg-gray-100 text-gray-800
+                    {% endif %}">
+                    {{ appraisal.get_status_display }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <form id="hr-review-form" method="post" class="bg-white rounded-lg shadow-md p-6">
+        {% csrf_token %}
+        {{ wizard.management_form }}
+
+        <!-- Appraisee Response Summary -->
+        <div class="mb-8">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+                Appraisee Response Summary
+            </h2>
+            
+            <div class="bg-gray-50 p-4 rounded-md mb-4">
+                <div class="mb-4">
+                    <h3 class="font-medium text-gray-700">Agreement Status:</h3>
+                    <div class="mt-1 p-3 bg-white rounded border">
+                        {% if appraisee_response.r_agreement_status == 'agree' %}
+                            <p class="text-green-600 font-medium">The appraisee agrees with the evaluation</p>
+                        {% else %}
+                            <p class="text-red-600 font-medium">The appraisee disagrees with the evaluation</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h3 class="font-medium text-gray-700">Appraisee Comments:</h3>
+                    <div class="mt-1 p-3 bg-white rounded border">
+                        {% if appraisee_response.r_appraisee_comments %}
+                            <p>{{ appraisee_response.r_appraisee_comments }}</p>
+                        {% else %}
+                            <p class="text-gray-500 italic">No comments provided</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="font-medium text-gray-700">Response Date:</h3>
+                    <div class="mt-1 p-3 bg-white rounded border">
+                        <p>{{ appraisee_response.r_response_date|default:"Not specified" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HR Actions -->
+        <div class="mb-8">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+                HR Action
+            </h2>
+
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-blue-600">
+                            As an HR reviewer, you can either complete this appraisal or reassign it to a different appraiser for further evaluation.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Selection -->
+            <div class="mb-6">
+                <label class="block text-gray-700 font-medium mb-2">Select an action:</label>
+                <div class="space-y-2">
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="hr_action" value="complete" class="h-5 w-5 text-blue-600" {% if appraisal.status == 'hr_review' %}checked{% endif %}>
+                        <span class="ml-2 text-gray-700">Complete the appraisal process</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="hr_action" value="reassign" class="h-5 w-5 text-blue-600" {% if appraisal.status == 'disagreed' %}checked{% endif %}>
+                        <span class="ml-2 text-gray-700">Reassign to a different appraiser</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Appraiser Selection (hidden by default, shown when "Reassign" is selected) -->
+            <div id="reassign-section" class="mb-6 {% if not appraisal.status == 'disagreed' %}hidden{% endif %}">
+                <label for="new_appraiser_id" class="block text-gray-700 font-medium mb-2">
+                    Select new appraiser:
+                </label>
+                <select id="new_appraiser_id" 
+                        name="new_appraiser_id" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">-- Select an appraiser --</option>
+                    {% for appraiser in appraisers %}
+                    <option value="{{ appraiser.employee_id }}">
+                        {{ appraiser.get_full_name }} - {{ appraiser.department.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <p class="mt-1 text-sm text-gray-500">
+                    The selected appraiser will take over this appraisal process.
+                </p>
+            </div>
+
+            <!-- HR Comments -->
+            <div class="mb-6">
+                <label for="hr_comments" class="block text-gray-700 font-medium mb-2">
+                    HR Comments:
+                </label>
+                <textarea id="hr_comments" 
+                          name="hr_comments" 
+                          rows="4" 
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Provide your comments or reasoning..."></textarea>
+                <p class="mt-1 text-sm text-gray-500">
+                    These comments will be visible to all parties involved in the appraisal.
+                </p>
+            </div>
+        </div>
+
+        <!-- Form Navigation -->
+        <div class="flex justify-between items-center mt-8 pt-4 border-t border-gray-200">
+            <!-- Previous button -->
+            {% if wizard.steps.prev %}
+            <button type="submit" 
+                    name="wizard_goto_step" 
+                    value="{{ wizard.steps.prev }}"
+                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                <span class="flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    Previous
+                </span>
+            </button>
+            {% else %}
+            <div></div>
+            {% endif %}
+
+            <div class="flex space-x-3">
+                <!-- Cancel Button -->
+                <a href="{% url 'appraisals:form_list' %}" 
+                   class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                    <span class="flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        Cancel
+                    </span>
+                </a>
+                
+                <!-- Submit Button -->
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <span class="flex items-center">
+                        Submit Decision
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle reassign section visibility based on selected action
+        const actionRadios = document.querySelectorAll('input[name="hr_action"]');
+        const reassignSection = document.getElementById('reassign-section');
+        const newAppraiserSelect = document.getElementById('new_appraiser_id');
+        const hrComments = document.getElementById('hr_comments');
+        
+        function toggleReassignSection() {
+            const selectedAction = document.querySelector('input[name="hr_action"]:checked').value;
+            
+            if (selectedAction === 'reassign') {
+                reassignSection.classList.remove('hidden');
+                newAppraiserSelect.setAttribute('required', 'required');
+                hrComments.setAttribute('required', 'required');
+            } else {
+                reassignSection.classList.add('hidden');
+                newAppraiserSelect.removeAttribute('required');
+                hrComments.removeAttribute('required');
+            }
+        }
+        
+        // Set initial state
+        toggleReassignSection();
+        
+        // Add change event listeners to radio buttons
+        actionRadios.forEach(radio => {
+            radio.addEventListener('change', toggleReassignSection);
+        });
+        
+        // Form validation
+        document.getElementById('hr-review-form').addEventListener('submit', function(event) {
+            const selectedAction = document.querySelector('input[name="hr_action"]:checked').value;
+            
+            if (selectedAction === 'reassign' && !newAppraiserSelect.value) {
+                event.preventDefault();
+                alert('Please select a new appraiser for reassignment.');
+                return false;
+            }
+            
+            if (hrComments.value.trim() === '') {
+                event.preventDefault();
+                alert('Please provide HR comments.');
+                return false;
+            }
+            
+            return true;
+        });
+    });
+</script>
+{% endblock %}

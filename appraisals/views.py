@@ -1905,3 +1905,289 @@ def save_appraisee_response(request):
         "redirect_url": redirect_url,
         "is_final": is_final_submit
     })
+
+class HRWizard(SessionWizardView):
+    """
+    Wizard view for HR to review appraisals that were disagreed with by appraisees.
+    Allows HR to review all sections and take action (reassign or complete).
+    """
+    form_list = [
+        ('section_a_readonly', SectionAForm),  # Read-only employee information
+        ('section_b', SectionBForm),           # Read-only goals & objectives
+        ('section_c', SectionCForm),           # Read-only performance ratings
+        ('section_d', SectionDForm),           # Read-only feedback
+        ('section_e', SectionEForm),           # HR actions (reassign, complete)
+    ]
+    
+    templates = {
+        'section_a_readonly': 'appraisals/wizard/section_a_readonly.html',
+        'section_b': 'appraisals/appraisee/section_b_readonly.html',
+        'section_c': 'appraisals/appraisee/section_c_readonly.html',
+        'section_d': 'appraisals/appraisee/section_d_readonly.html',
+        'section_e': 'appraisals/hr/section_e_hr.html',  # HR-specific template
+    }
+    
+    def get_template_names(self):
+        return [self.templates[self.steps.current]]
+    
+    def dispatch(self, request, *args, **kwargs):
+        """Check permissions and validate appraisal status"""
+        # Get the appraisal ID from the URL
+        self.appraisal_id = kwargs.get('appraisal_id')
+        
+        # Get the appraisal object
+        self.appraisal = get_object_or_404(Appraisal, appraisal_id=self.appraisal_id)
+        
+        # Check if the logged-in user is part of HR group
+        if not request.user.groups.filter(name=HR_GROUP_NAME).exists():
+            messages.error(request, "Only HR personnel can access this review.")
+            return redirect('appraisals:form_list')
+            
+        # Check if the appraisal is in the correct state for HR review
+        if self.appraisal.status not in ['hr_review', 'disagreed']:
+            messages.error(request, "This appraisal is not currently in a state for HR review.")
+            return redirect('appraisals:form_list')
+            
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_context_data(self, form, **kwargs):
+        context = super().get_context_data(form=form, **kwargs)
+        
+        # Get the appraisal instance
+        context['appraisal'] = self.appraisal
+        
+        # Add a flag to indicate this is an HR review
+        context['is_hr_review'] = True
+        
+        # Add step titles
+        context['step_titles'] = {
+            'section_a_readonly': 'Step 1: Employee Information',
+            'section_b': 'Step 2: Goals & Objectives',
+            'section_c': 'Step 3: Performance Evaluation',
+            'section_d': 'Step 4: Feedback & Development',
+            'section_e': 'Step 5: HR Decision',
+        }
+        
+        # For section E (HR actions), add all appraisers for the reassignment dropdown
+        if self.steps.current == 'section_e':
+            current_appraiser_id = self.appraisal.appraiser.employee_id
+            context['appraisers'] = Employee.objects.filter(
+                roles__name='Appraiser'
+            ).exclude(
+                employee_id=current_appraiser_id
+            ).select_related('user', 'department')
+            
+            # Get appraisee response to show in the HR review form
+            try:
+                response_section = AppraisalSection.objects.get(
+                    appraisal=self.appraisal,
+                    section_name='response'
+                )
+                if isinstance(response_section.data, str):
+                    context['appraisee_response'] = json.loads(response_section.data)
+                else:
+                    context['appraisee_response'] = response_section.data
+            except AppraisalSection.DoesNotExist:
+                context['appraisee_response'] = {}
+                
+        # For section A, use the same context format as in AppraiserWizard
+        if self.steps.current == 'section_a_readonly':
+            # Employee information directly from appraisal and employee objects
+            context['employee_data'] = {
+                'employee_id': self.appraisal.employee.employee_id,
+                'full_name': self.appraisal.employee.get_full_name(),
+                'department': self.appraisal.employee.department.name if self.appraisal.employee.department else '',
+                'post': self.appraisal.employee.post,
+            }
+        
+        # For other read-only sections, add section data directly to context
+        if self.steps.current == 'section_b':
+            try:
+                section = AppraisalSection.objects.get(
+                    appraisal=self.appraisal,
+                    section_name='goals'
+                )
+                if section.data:
+                    context['goals_data'] = section.data.get('goals', [])
+            except AppraisalSection.DoesNotExist:
+                context['goals_data'] = []
+                
+        elif self.steps.current == 'section_c':
+            try:
+                section = AppraisalSection.objects.get(
+                    appraisal=self.appraisal,
+                    section_name='performance'
+                )
+                if section.data:
+                    context['performance_data'] = section.data
+            except AppraisalSection.DoesNotExist:
+                context['performance_data'] = {}
+                
+        elif self.steps.current == 'section_d':
+            feedback_data = {}
+            
+            try:
+                strengths_section = AppraisalSection.objects.filter(
+                    appraisal=self.appraisal,
+                    section_name='strengths'
+                ).first()
+                
+                if strengths_section and strengths_section.data:
+                    feedback_data['strengths'] = strengths_section.data.get('content', '')
+            except:
+                feedback_data['strengths'] = ''
+                
+            try:
+                improvements_section = AppraisalSection.objects.filter(
+                    appraisal=self.appraisal,
+                    section_name='areas_for_improvement'
+                ).first()
+                
+                if improvements_section and improvements_section.data:
+                    feedback_data['areas_for_improvement'] = improvements_section.data.get('content', '')
+            except:
+                feedback_data['areas_for_improvement'] = ''
+                
+            try:
+                training_section = AppraisalSection.objects.filter(
+                    appraisal=self.appraisal,
+                    section_name='training'
+                ).first()
+                
+                if training_section and training_section.data:
+                    feedback_data['training'] = training_section.data.get('content', '')
+            except:
+                feedback_data['training'] = ''
+                
+            context['feedback_data'] = feedback_data
+        
+        context.update({
+            'can_save_draft': True,
+            'appraisal_id': self.appraisal_id,
+            'is_edit': self.kwargs.get('is_edit', False)
+        })
+        
+        return context
+    
+    def get_form_instance(self, step):
+        """Initialize form instance with existing appraisal data - same as AppraiserWizard"""
+        if step == 'section_a_readonly':
+            # Only use appraisal_id field
+            try:
+                appraisal = Appraisal.objects.filter(
+                    appraisal_id=self.appraisal_id
+                ).select_related('employee', 'appraiser').first()
+                
+                if appraisal:
+                    # Verify the appraisal has all required related objects
+                    if not hasattr(appraisal, 'employee') or appraisal.employee is None:
+                        logger.error(f"Appraisal {self.appraisal_id} has no associated employee")
+                        raise Http404(f"Appraisal {self.appraisal_id} is incomplete (missing employee)")
+                    
+                    return appraisal
+            except Exception as e:
+                logger.error(f"Error fetching appraisal: {str(e)}")
+                
+        return None
+    
+    def done(self, form_list, **kwargs):
+        """Process HR action (complete or reassign)"""
+        # Extract the section E form data (HR actions)
+        section_e_form = None
+        for form in form_list:
+            if isinstance(form, SectionEForm):
+                section_e_form = form
+                break
+        
+        if not section_e_form:
+            messages.error(self.request, "Error processing form data.")
+            return redirect('appraisals:form_list')
+        
+        # Process HR action
+        hr_action = self.request.POST.get('hr_action')
+        hr_comments = self.request.POST.get('hr_comments')
+        
+        # Get the current user's employee record
+        try:
+            hr_employee = self.request.user.employee
+        except:
+            messages.error(self.request, "HR user does not have an associated employee record.")
+            return redirect('appraisals:form_list')
+        
+        # Save HR comments
+        hr_section, created = AppraisalSection.objects.get_or_create(
+            appraisal=self.appraisal,
+            section_name='hr_review',
+            defaults={'data': {}}
+        )
+        
+        hr_data = hr_section.data if hr_section.data else {}
+        hr_data['action'] = hr_action
+        hr_data['comments'] = hr_comments
+        hr_data['review_date'] = timezone.now().isoformat()
+        hr_data['reviewer'] = hr_employee.employee_id
+        hr_section.data = hr_data
+        hr_section.save()
+        
+        # Handle different actions
+        if hr_action == 'complete':
+            # Mark appraisal as completed
+            self.appraisal.status = 'completed'
+            self.appraisal.save()
+            messages.success(self.request, "Appraisal has been successfully completed.")
+            
+        elif hr_action == 'reassign':
+            # Reassign to a new appraiser
+            new_appraiser_id = self.request.POST.get('new_appraiser_id')
+            
+            if not new_appraiser_id:
+                messages.error(self.request, "No new appraiser selected for reassignment.")
+                return redirect('appraisals:hr_review', appraisal_id=self.appraisal.appraisal_id)
+            
+            try:
+                # Get the new appraiser
+                new_appraiser = Employee.objects.get(employee_id=new_appraiser_id)
+                
+                # Store reassignment history
+                history = {
+                    'date': timezone.now().isoformat(),
+                    'from_appraiser': self.appraisal.appraiser.employee_id,
+                    'to_appraiser': new_appraiser.employee_id,
+                    'reason': hr_comments,
+                    'by_hr': hr_employee.employee_id
+                }
+                
+                history_section, created = AppraisalSection.objects.get_or_create(
+                    appraisal=self.appraisal,
+                    section_name='reassignment_history',
+                    defaults={'data': {'reassignments': [history]}}
+                )
+                
+                if not created:
+                    if isinstance(history_section.data, str):
+                        data = json.loads(history_section.data)
+                    else:
+                        data = history_section.data
+                        
+                    if 'reassignments' not in data:
+                        data['reassignments'] = []
+                        
+                    data['reassignments'].append(history)
+                    history_section.data = data
+                    history_section.save()
+                
+                # Update the appraisal with the new appraiser
+                self.appraisal.appraiser = new_appraiser
+                self.appraisal.status = 'reassigned_review'
+                self.appraisal.save()
+                
+                messages.success(self.request, f"Appraisal has been reassigned to {new_appraiser.get_full_name()}")
+                
+            except Employee.DoesNotExist:
+                messages.error(self.request, "Selected appraiser not found.")
+                return redirect('appraisals:hr_review', appraisal_id=self.appraisal.appraisal_id)
+                
+        else:
+            messages.warning(self.request, "No action was selected.")
+            
+        return redirect('appraisals:form_list')
