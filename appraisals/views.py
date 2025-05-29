@@ -1292,11 +1292,14 @@ def save_section_data(request):
         # Get current user's employee record
         current_employee = request.user.employee
         
+
+        #
         # Get or create section object
         section_obj, created = AppraisalSection.objects.get_or_create(
             appraisal=appraisal,
             section_name=section,
-            appraiser=current_employee,
+            # Here saved as primary appraiser even its the secondary appraiser saving
+            appraiser=appraisal.appraiser,  # Use primary appraiser
             defaults={'data': {}}
         )
         
