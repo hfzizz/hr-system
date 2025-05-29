@@ -26,12 +26,16 @@
 <body class="bg-gray-50">
     <div x-data="{ sidebarOpen: true }">
         <!-- Sidebar -->
-        {% include 'sidebar.html' %}
+        {% block sidebar %}
+            {% include 'sidebar.html' %}
+        {% endblock %}
     
         <!-- Main Content Area -->
+        {% block main_wrapper %}
         <div class="ml-64">
             <div class="flex-1 flex flex-col min-h-screen">
                 <!-- Top Navigation Bar -->
+                {% block header %}
                 <header class="bg-white shadow">
                     <div class="flex justify-between items-center px-8 py-4">
                         <!-- Breadcrumb Navigation -->
@@ -118,6 +122,7 @@
                         {% endif %}
                     </div>
                 </header>
+                {% endblock header %}
 
                 <!-- Main Content -->
                 <main class="flex-1 p-8">
@@ -142,6 +147,7 @@
                 </main>
             </div>
         </div>
+        {% endblock %}
     </div>
 
     <!-- JavaScript -->

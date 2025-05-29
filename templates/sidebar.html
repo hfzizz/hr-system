@@ -28,6 +28,7 @@
         </li>
 
         <!-- My Profile -->
+        {% if request.user.is_authenticated and request.user.employee %}
         <li>
           <a href="{% url 'employees:profile' request.user.employee.pk %}"
              class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 {% if 'profile' in request.path %}bg-gray-100 text-gray-900{% endif %}">
@@ -39,6 +40,7 @@
             </div>
           </a>
         </li>
+        {% endif %}
 
         <!-- Employees -->
         {% if perms.employees.view_employee %}
