@@ -82,10 +82,15 @@ class ContractRenewalForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        is_draft = False
+        # Check if POST data is present and is_draft is set
+        data = kwargs.get('data')
+        if data and (data.get('is_draft') == 'true' or data.get('is_draft') == True):
+            is_draft = True
         super().__init__(*args, **kwargs)
-        
         self.fields['contract_type'].choices = Contract.CONTRACT_TYPE_CHOICES
-        self.fields['contract_type'].required = True
+        self.fields['contract_type'].required = not is_draft
+        self.fields['employee'].required = not is_draft
         for field in self.fields:
             self.fields[field].widget.attrs.update({
                 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm'

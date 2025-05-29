@@ -16,7 +16,7 @@
             <h1 class="text-2xl font-bold">Contract Form - {{ contract.contract_id }}</h1>
         </div>
         <div class="flex space-x-3">
-            <a href="{% url 'contract:download_merged_contract' contract.id %}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+            <a href="{% url 'contract:download_contract_zip' contract.id %}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
@@ -26,7 +26,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
             </svg>
-            Print Form
+            Preview
         </button>
     </div>
     </div>
@@ -36,6 +36,95 @@
     <script>
         // Set PDF.js worker source
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        
+        // Function to render PDF into a canvas
+        function renderPDF(url, canvasContainer, documentType) {
+            // Clear previous content
+            canvasContainer.innerHTML = '<div class="flex justify-center items-center h-full"><div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div><p class="ml-2">Loading document...</p></div>';
+            
+            // Load the PDF document
+            const loadingTask = pdfjsLib.getDocument(url);
+            loadingTask.promise.then(function(pdf) {
+                const numPages = pdf.numPages;
+                
+                // Clear loading indicator
+                canvasContainer.innerHTML = '';
+                
+                // Create page display elements
+                const pagesContainer = document.createElement('div');
+                pagesContainer.className = 'pdf-pages-container';
+                canvasContainer.appendChild(pagesContainer);
+                
+                // Create a document info section
+                const infoSection = document.createElement('div');
+                infoSection.className = 'pdf-info print:hidden';
+                infoSection.innerHTML = `<p class="text-sm text-gray-500 mb-2">Document has ${numPages} pages - scroll to view all</p>`;
+                canvasContainer.insertBefore(infoSection, pagesContainer);
+                
+                // Render all pages in sequence
+                let renderedPages = 0;
+                
+                // Function to check if all pages are rendered
+                function checkAllPagesRendered() {
+                    renderedPages++;
+                    if (renderedPages === numPages) {
+                        console.log(`All ${numPages} pages rendered for ${documentType}`);
+                    }
+                }
+                
+                // Load all pages in sequence
+                for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+                    renderPage(pageNum);
+                }
+                
+                function renderPage(pageNumber) {
+                    // Get the page
+                    pdf.getPage(pageNumber).then(function(page) {
+                        // Create canvas for this page
+                        const canvas = document.createElement('canvas');
+                        pagesContainer.appendChild(canvas);
+                        
+                        const context = canvas.getContext('2d');
+                        
+                        // Set scale for good quality display
+                        const viewport = page.getViewport({ scale: 1.5 });
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+                        
+                        // Add a page divider if not the first page
+                        if (pageNumber > 1) {
+                            canvas.style.marginTop = '20px';
+                            const divider = document.createElement('div');
+                            divider.className = 'page-divider';
+                            divider.innerHTML = `<p class="text-center text-sm text-gray-400">Page ${pageNumber}</p>`;
+                            pagesContainer.insertBefore(divider, canvas);
+                        } else {
+                            // First page indicator
+                            const pageIndicator = document.createElement('div');
+                            pageIndicator.className = 'text-center text-sm text-gray-400 mb-2';
+                            pageIndicator.innerHTML = `Page 1`;
+                            pagesContainer.insertBefore(pageIndicator, canvas);
+                        }
+                        
+                        // Render PDF page
+                        const renderContext = {
+                            canvasContext: context,
+                            viewport: viewport
+                        };
+                        
+                        page.render(renderContext).promise.then(function() {
+                            checkAllPagesRendered();
+                        });
+                    }).catch(function(error) {
+                        console.error(`Error rendering page ${pageNumber}:`, error);
+                        checkAllPagesRendered();
+                    });
+                }
+            }).catch(function(error) {
+                console.error('Error loading PDF:', error);
+                canvasContainer.innerHTML = '<p class="text-red-500 p-4">Error loading PDF document. The document may not be a valid PDF or there was an error accessing it.</p>';
+            });
+        }
     </script>
 
     <!-- Combined University Header and CV Format to keep them together -->
@@ -506,119 +595,6 @@
         </div>
     </div>
 
-    <!-- Dean's Comments Section -->
-    {% if contract.dean_reviews.exists %}
-    <div class="cv-section">
-        <h2 class="cv-section-title">Dean's Comments</h2>
-        <div class="cv-section-content">
-        {% for review in dean_reviews %}
-            <div class="review-item {% if not forloop.last %}mb-4 pb-4 border-b{% endif %}">
-                <div class="review-header">
-                    <span class="reviewer-name">{{ review.dean.get_full_name }}</span>
-                    <span class="review-date">{{ review.created_at|date:"F d, Y" }}</span>
-                </div>
-                <div class="cv-text-block mt-2">{{ review.comments }}</div>
-            {% if review.document_name %}
-                <div class="document-section">
-                    <h4 class="document-title">Supporting Document: {{ review.document_name }}</h4>
-                    <div class="document-preview" id="pdf-preview-{{ forloop.counter }}">
-                        {% if ".pdf" in review.document_name|lower %}
-                        <div class="pdf-container">
-                            <!-- PDF will be rendered here -->
-                            <div class="pdf-pages-container" data-document-url="{{ review.document.url }}"></div>
-                            <div class="pdf-placeholder print-only">
-                                <div class="pdf-icon">PDF</div>
-                                <p>{{ review.document_name }}</p>
-                                <p class="pdf-note">PDF document attached to original application</p>
-                            </div>
-                        </div>
-                        {% elif ".doc" in review.document_name|lower or ".docx" in review.document_name|lower %}
-                        <div class="doc-placeholder">
-                            <div class="doc-icon">DOC</div>
-                            <p>{{ review.document_name }}</p>
-                            <p class="doc-note">Document available in original application</p>
-                        </div>
-                        {% else %}
-                        <div class="file-placeholder">
-                            <p>{{ review.document_name }}</p>
-                            <p class="file-note">Document available in original application</p>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-            {% endif %}
-        </div>
-        {% endfor %}
-
-        <!-- Peer Reviews Section -->
-        {% if peer_reviews %}
-            <div class="mt-4 pt-3 border-t">
-                <h3 class="cv-subsection-title">Peer Reviews</h3>
-                <div class="peer-reviews-container">
-            {% for review in peer_reviews %}
-                    <div class="peer-review-item">
-                        <div class="review-header">
-                            <span class="reviewer-name">{{ review.name }}</span>
-                            <span class="review-date">{{ review.created_at|date:"F d, Y" }}</span>
-                        </div>
-                        <div class="document-section">
-                            <h4 class="document-title">{{ review.document_name }}</h4>
-                            <div class="document-preview" id="peer-pdf-preview-{{ forloop.counter }}">
-                                {% if ".pdf" in review.document_name|lower %}
-                                <div class="pdf-container">
-                                    <!-- PDF will be rendered here -->
-                                    <div class="pdf-pages-container" data-document-url="{{ review.document.url }}"></div>
-                                    <div class="pdf-placeholder print-only">
-                                        <div class="pdf-icon">PDF</div>
-                                        <p>{{ review.document_name }}</p>
-                                        <p class="pdf-note">PDF document attached to original application</p>
-                                    </div>
-                                </div>
-                                {% elif ".doc" in review.document_name|lower or ".docx" in review.document_name|lower %}
-                                <div class="doc-placeholder">
-                                    <div class="doc-icon">DOC</div>
-                                    <p>{{ review.document_name }}</p>
-                                    <p class="doc-note">Document available in original application</p>
-                                </div>
-                                {% else %}
-                                <div class="file-placeholder">
-                                    <p>{{ review.document_name }}</p>
-                                    <p class="file-note">Document available in original application</p>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-            </div>
-            {% endfor %}
-                </div>
-        </div>
-        {% endif %}
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- SMT Decision & Comments Section -->
-    {% if contract.smt_reviews.exists %}
-    <div class="cv-section">
-        <h2 class="cv-section-title">SMT Decision & Comments</h2>
-        <div class="cv-section-content">
-        {% for review in smt_reviews %}
-            <div class="review-item {% if not forloop.last %}mb-4 pb-4 border-b{% endif %}">
-                <div class="review-header">
-                    <span class="reviewer-name">{{ review.smt_member.get_full_name }}</span>
-                    <span class="review-date">{{ review.created_at|date:"F d, Y" }}</span>
-                </div>
-                <div class="decision-badge">{{ review.get_decision_display }}</div>
-                <div class="cv-text-block mt-2">{{ review.comments }}</div>
-            {% if review.document_name %}
-                <p class="document-note">Supporting Document: {{ review.document_name }} (Not printable here)</p>
-            {% endif %}
-        </div>
-        {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-
     <!-- MOE Decision & Comments Section -->
     {% if contract.moe_reviews.exists %}
     <div class="cv-section">
@@ -637,6 +613,132 @@
             {% endif %}
         </div>
         {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Add Dean Review Documents Section -->
+    {% if dean_reviews %}
+    <div class="cv-section">
+        <h2 class="cv-section-title">Dean Review Documents</h2>
+        <div class="cv-section-content">
+            {% for review in dean_reviews %}
+                {% if review.document and review.document_name %}
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold mb-2">{{ review.dean.get_full_name }} - {{ review.created_at|date:"F d, Y" }}</h3>
+                        <div class="flex items-center mb-2 print:hidden">
+                            <a href="{% url 'contract:preview_dean_document' contract.id review.id %}" target="_blank" class="text-blue-600 hover:underline mr-4">
+                                View in New Tab
+                            </a>
+                            <a href="{% url 'contract:download_dean_document' contract.id review.id %}" class="text-blue-600 hover:underline">
+                                Download Document
+                            </a>
+                        </div>
+                        
+                        <!-- PDF Preview Container -->
+                        <div id="dean-pdf-container-{{ review.id }}" class="pdf-viewer-container border border-gray-300 rounded-lg p-2 mb-4" style="height: 600px; overflow: auto;">
+                            <!-- Loading indicator is now handled by the renderPDF function -->
+                        </div>
+                        
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                // Debugging
+                                console.log("Loading Dean document for {{ review.id }}");
+                                try {
+                                    const pdfUrl = "{% url 'contract:preview_dean_document' contract.id review.id %}";
+                                    const container = document.getElementById('dean-pdf-container-{{ review.id }}');
+                                    if (!container) {
+                                        console.error("Container for Dean PDF {{ review.id }} not found");
+                                    } else {
+                                        renderPDF(pdfUrl, container, 'dean-{{ review.id }}');
+                                    }
+                                } catch (error) {
+                                    console.error("Error setting up Dean PDF viewer:", error);
+                                }
+                            });
+                        </script>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Add SMT Review Documents Section -->
+    {% if smt_reviews %}
+    <div class="cv-section">
+        <h2 class="cv-section-title">SMT Review Documents</h2>
+        <div class="cv-section-content">
+            {% for review in smt_reviews %}
+                {% if review.document and review.document_name %}
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold mb-2">{{ review.smt_member.get_full_name }} - {{ review.created_at|date:"F d, Y" }}</h3>
+                        <div class="flex items-center mb-2 print:hidden">
+                            <a href="{% url 'contract:preview_smt_document' contract.id review.id %}" target="_blank" class="text-blue-600 hover:underline mr-4">
+                                View in New Tab
+                            </a>
+                            <a href="{% url 'contract:download_smt_document_with_id' contract.id review.id %}" class="text-blue-600 hover:underline">
+                                Download Document
+                            </a>
+                        </div>
+                        
+                        <!-- PDF Preview Container -->
+                        <div id="smt-pdf-container-{{ review.id }}" class="pdf-viewer-container border border-gray-300 rounded-lg p-2 mb-4" style="height: 600px; overflow: auto;"></div>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                try {
+                                    const pdfUrl = "{% url 'contract:preview_smt_document' contract.id review.id %}";
+                                    const container = document.getElementById('smt-pdf-container-{{ review.id }}');
+                                    if (container) {
+                                        renderPDF(pdfUrl, container, 'smt-{{ review.id }}');
+                                    }
+                                } catch (error) {
+                                    console.error("Error setting up SMT PDF viewer:", error);
+                                }
+                            });
+                        </script>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# --- Add Peer Review Documents Section --- #}
+    {% if peer_reviews %}
+    <div class="cv-section">
+        <h2 class="cv-section-title">Peer Review Documents</h2>
+        <div class="cv-section-content">
+            {% for review in peer_reviews %}
+                {% if review.document and review.document_name %}
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold mb-2">{{ review.name }} - {{ review.created_at|date:"F d, Y" }}</h3>
+                        <div class="flex items-center mb-2 print:hidden">
+                            <a href="{% url 'contract:preview_peer_review' contract.id review.id %}" target="_blank" class="text-blue-600 hover:underline mr-4">
+                                View in New Tab
+                            </a>
+                            <a href="{% url 'contract:download_peer_review' contract.id review.id %}" class="text-blue-600 hover:underline">
+                                Download Document
+                            </a>
+                        </div>
+                        <!-- PDF Preview Container -->
+                        <div id="peer-pdf-container-{{ review.id }}" class="pdf-viewer-container border border-gray-300 rounded-lg p-2 mb-4" style="height: 600px; overflow: auto;"></div>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                try {
+                                    const pdfUrl = "{% url 'contract:preview_peer_review' contract.id review.id %}";
+                                    const container = document.getElementById('peer-pdf-container-{{ review.id }}');
+                                    if (container) {
+                                        renderPDF(pdfUrl, container, 'peer-{{ review.id }}');
+                                    }
+                                } catch (error) {
+                                    console.error("Error setting up Peer Review PDF viewer:", error);
+                                }
+                            });
+                        </script>
+                    </div>
+                {% endif %}
+            {% endfor %}
         </div>
     </div>
     {% endif %}
@@ -746,11 +848,6 @@
         pageElements.forEach(element => {
             element.textContent = pageCounter++;
         });
-        
-        // Automatically trigger print
-        setTimeout(function() {
-        window.print();
-        }, 1000); // Delay to allow PDFs to render
     }
 </script>
 
@@ -1209,6 +1306,49 @@
         /* Hide the rendered PDFs when printing */
         .pdf-preview-canvas, .more-pages-note {
             display: none;
+        }
+    }
+
+    /* Add styling for PDF viewers */
+    .pdf-viewer-container {
+        background-color: #f3f4f6;
+    }
+    
+    .pdf-pages-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .pdf-pages-container canvas {
+        max-width: 100%;
+        height: auto;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+    
+    .pdf-info {
+        text-align: center;
+        padding: 8px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 12px;
+    }
+    
+    .page-divider {
+        width: 100%;
+        border-top: 1px dashed #d1d5db;
+        margin: 10px 0;
+        padding-top: 5px;
+    }
+    
+    @media print {
+        .pdf-viewer-container {
+            height: auto !important;
+            overflow: visible !important;
+        }
+        
+        .page-divider {
+            page-break-before: always;
         }
     }
 </style>

@@ -11,7 +11,7 @@
         </div>
 
         <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-            <form method="post" enctype="multipart/form-data" class="space-y-8">
+            <form id="contract-form" method="post" enctype="multipart/form-data" class="space-y-8" action="{{ request.path }}">
                 {% csrf_token %}
                 
                 <!-- Employee Information -->
@@ -388,7 +388,7 @@
                                             <thead class="bg-gray-50">
                                                 <tr>
                                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
-                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From <span class="text-red-500">*</span></th>
                                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">To</th>
                                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
                                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -686,6 +686,7 @@
                             <label class="block text-sm font-medium text-gray-700">Future Plan</label>
                             <p class="mt-1 text-sm text-gray-500">Describe your teaching plans for the future</p>
                             <textarea name="teaching_future_plan" 
+                                      id="teaching_future_plan"
                                       rows="4"
                                       class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-800 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                       >{{ form.teaching_future_plan.value|default:'' }}</textarea>
@@ -740,7 +741,12 @@
                     <p>Teaching Modules Data: <span id="debug_teaching"></span></p>
                 </div>
 
-                <div class="flex justify-end mt-8">
+                <div class="flex justify-end mt-8 gap-4">
+                    <button type="button"
+                            id="save-draft-btn"
+                            class="inline-flex justify-center py-2 px-4 border border-gray-400 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Save as Draft
+                    </button>
                     <button type="submit"
                             class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Submit Application
@@ -748,6 +754,8 @@
                 </div>
             </form>
         </div>
+        <!-- Toast Notification -->
+        <div id="toast-notification" class="fixed top-4 right-4 z-50 hidden bg-green-500 text-white px-6 py-3 rounded shadow-lg transition-opacity duration-500"></div>
     </div>
 </div>
 
@@ -1245,24 +1253,6 @@ document.addEventListener('DOMContentLoaded', function() {
     {% if is_edit_mode and contract_data_json %}
     const contractData = {{ contract_data_json|safe }};
     console.log("Edit mode enabled - populating tables with saved data");
-    
-    // Clear tables before populating with saved data to prevent duplicates
-    function clearTable(tableId) {
-        const table = document.getElementById(tableId);
-        if (table && table.querySelector('tbody')) {
-            const tbody = table.querySelector('tbody');
-            while (tbody.firstChild) {
-                tbody.removeChild(tbody.firstChild);
-            }
-            console.log(`Cleared table: ${tableId}`);
-        }
-    }
-    
-    // Clear all dynamic tables
-    ['academicQualificationsTable', 'consultancyWorkTable', 'researchHistoryTable', 
-     'ongoingResearchTable', 'conferencePapersTable', 'conferenceAttendanceTable',
-     'teachingModulesTable', 'administrativePositionsTable', 'universityCommitteesTable',
-     'externalCommitteesTable', 'participationWithinTable', 'participationOutsideTable'].forEach(clearTable);
     
     // Helper function to safely parse JSON that might be double-encoded
     function safelyParseJson(jsonData) {
@@ -1990,7 +1980,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="date" 
                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                        pattern="\d{4}-\d{2}-\d{2}"
-                       placeholder="YYYY-MM-DD">
+                       placeholder="YYYY-MM-DD"
+                       required>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
                 <input type="date" 
@@ -2002,11 +1993,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="text" placeholder="Details" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right">
-                <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove();">Delete</button>
+                <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateAdministrativePositionsData();">Delete</button>
             </td>
         `;
 
         administrativePositionsTable.querySelector('tbody').appendChild(row);
+        updateAdministrativePositionsData();
     });
 
     // Function to collect administrative positions data
@@ -2030,13 +2022,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const toDate = inputs[2].value;
             const details = inputs[3].value;
 
-            if (position || fromDate || toDate || details) {
+            // Only add positions with a valid from_date
+            if (fromDate && fromDate.trim() !== '') {
                 positions.push({
-                    position: position,
+                    position: position || '',
                     from_date: fromDate,
-                    to_date: toDate,
-                    details: details
+                    to_date: toDate || fromDate, // Use from_date as fallback if to_date is empty
+                    details: details || ''
                 });
+            } else {
+                console.warn(`Skipping row ${index + 1} due to missing from_date`);
+                // Highlight the empty date field in red
+                inputs[1].classList.add('border-red-500');
             }
         });
 
@@ -2044,12 +2041,46 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Debug: JSON string to be sent:", JSON.stringify(positions));
         
         administrativePositionsInput.value = JSON.stringify(positions);
+        return positions.length;
     }
 
     // Also update when table changes
-    administrativePositionsTable.addEventListener('change', function() {
+    administrativePositionsTable.addEventListener('change', function(e) {
         console.log("Debug: Table changed");
+        // Remove error highlighting when field is filled
+        if (e.target.tagName === 'INPUT' && e.target.type === 'date') {
+            if (e.target.value && e.target.value.trim() !== '') {
+                e.target.classList.remove('border-red-500');
+            }
+        }
         updateAdministrativePositionsData();
+    });
+    
+    // Add form validation before submission
+    document.querySelector('form').addEventListener('submit', function(e) {
+        // Update all dynamic data tables
+        updateAdministrativePositionsData();
+        updateUniversityCommitteesData();
+        updateExternalCommitteesData();
+        // Add any other data table update functions here
+        
+        // Check if all required date fields are filled
+        const dateInputs = administrativePositionsTable.querySelectorAll('tbody tr input[type="date"]:first-of-type');
+        let hasEmptyDates = false;
+        
+        dateInputs.forEach(input => {
+            if (!input.value || input.value.trim() === '') {
+                input.classList.add('border-red-500');
+                hasEmptyDates = true;
+            }
+        });
+        
+        if (hasEmptyDates) {
+            e.preventDefault();
+            alert('Please fill in all required date fields for Administrative Positions. The "From" date is required.');
+            // Scroll to the administrative positions section
+            administrativePositionsTable.scrollIntoView({ behavior: 'smooth' });
+        }
     });
 
     // Function to create a new row for University Committees
@@ -2769,6 +2800,113 @@ document.addEventListener('DOMContentLoaded', function() {
 
     addGradSupervisionBtn.addEventListener('click', () => addGradSupervisionRow({}));
     gradSupervisionTable.addEventListener('change', updateGradSupervisionData);
+
+    function showToast(message, isSuccess = true) {
+        const toast = document.getElementById('toast-notification');
+        toast.textContent = message;
+        toast.className = 'fixed top-4 right-4 z-50 px-6 py-3 rounded shadow-lg transition-opacity duration-500 ' +
+            (isSuccess ? 'bg-green-500' : 'bg-red-500') + ' text-white';
+        toast.style.opacity = '1';
+        toast.classList.remove('hidden');
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 500);
+        }, 2500);
+    }
+
+    document.getElementById('save-draft-btn').addEventListener('click', function() {
+        // --- Update all dynamic tables and hidden fields before collecting FormData ---
+        if (typeof updateAcademicQualifications === 'function') updateAcademicQualifications();
+        if (typeof updateConsultancyWorkData === 'function') updateConsultancyWorkData();
+        if (typeof updateResearchHistoryData === 'function') updateResearchHistoryData();
+        if (typeof updateOngoingResearchData === 'function') updateOngoingResearchData();
+        if (typeof updateConferencePapersData === 'function') updateConferencePapersData();
+        if (typeof updateAttendanceData === 'function') updateAttendanceData();
+        if (typeof updateAdministrativePositionsData === 'function') updateAdministrativePositionsData();
+        if (typeof updateUniversityCommitteesData === 'function') updateUniversityCommitteesData();
+        if (typeof updateExternalCommitteesData === 'function') updateExternalCommitteesData();
+        if (typeof updateTeachingModulesText === 'function') updateTeachingModulesText();
+        if (typeof updateFellowshipsAwardsData === 'function') updateFellowshipsAwardsData();
+        if (typeof updateMentorshipData === 'function') updateMentorshipData();
+        if (typeof updateGradSupervisionData === 'function') updateGradSupervisionData();
+        // --- Add debug logs for each major field/table ---
+        function logFieldValue(fieldIdOrName, label) {
+            var el = document.getElementById(fieldIdOrName) || document.querySelector('[name="' + fieldIdOrName + '"]');
+            if (el) {
+                console.log('DEBUG: ' + label + ' value before draft submit:', el.value);
+            }
+        }
+        logFieldValue('fellowships_awards_text', 'fellowships_awards_text');
+        logFieldValue('mentorship_text', 'mentorship_text');
+        logFieldValue('grad_supervision_text', 'grad_supervision_text');
+        // Debug for teaching_documents file input
+        var teachingDocInput = document.getElementById('teaching_documents');
+        if (teachingDocInput && teachingDocInput.files.length > 0) {
+            console.log('DEBUG: teaching_documents file selected:', teachingDocInput.files[0].name);
+        } else {
+            console.log('DEBUG: teaching_documents file selected: none');
+        }
+        // --- End debug logs ---
+        // Use the form by id to ensure correct form is used
+        const form = document.getElementById('contract-form');
+        const formData = new FormData(form);
+        formData.set('is_draft', 'true');
+        fetch(window.location.pathname, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Draft saved.', true);
+                setTimeout(() => {
+                    window.location.href = data.redirect_url || '/contract/employee_contracts/';
+                }, 1200);
+            } else {
+                showToast('Failed to save draft.', false);
+            }
+        })
+        .catch(() => showToast('Error saving draft.', false));
+    });
+
+    // Populate Mentorship table from contractData
+    if (typeof contractData !== 'undefined' && contractData.mentorship_text) {
+        try {
+            const mentorships = JSON.parse(contractData.mentorship_text);
+            mentorships.forEach(m => {
+                if (typeof createMentorshipRow === 'function') createMentorshipRow(m);
+            });
+        } catch(e) {
+            console.error('Error parsing mentorship_text:', e);
+        }
+    }
+    // Populate Graduate Supervision table from contractData
+    if (typeof contractData !== 'undefined' && contractData.grad_supervision_text) {
+        try {
+            const gradSupervisions = JSON.parse(contractData.grad_supervision_text);
+            gradSupervisions.forEach(g => {
+                if (typeof createGradSupervisionRow === 'function') createGradSupervisionRow(g);
+            });
+        } catch(e) {
+            console.error('Error parsing grad_supervision_text:', e);
+        }
+    }
+    // Populate Fellowships and Awards table from contractData
+    if (typeof contractData !== 'undefined' && contractData.fellowships_awards_text) {
+        try {
+            const fellowships = JSON.parse(contractData.fellowships_awards_text);
+            fellowships.forEach(f => {
+                if (typeof createFellowshipAwardRow === 'function') createFellowshipAwardRow(f);
+            });
+        } catch(e) {
+            console.error('Error parsing fellowships_awards_text:', e);
+        }
+    }
 });
 </script>
 
@@ -2818,24 +2956,4 @@ document.addEventListener('DOMContentLoaded', function() {
         background: linear-gradient(to right, transparent, #e5e7eb, transparent);
     }
 </style>
-
-{% if is_edit_mode %}
-<div class="bg-gray-100 p-4 my-4 rounded" style="display: none;">
-    <h3 class="text-lg font-bold">Debug Data</h3>
-    <pre class="text-xs overflow-auto max-h-40">{{ debug_data|json_script:"debug-data" }}</pre>
-    
-    <h4 class="font-bold mt-2">Contract Data JSON:</h4>
-    <pre class="text-xs overflow-auto max-h-40">{{ contract_data_json|json_script:"contract-data-json" }}</pre>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const debugData = JSON.parse(document.getElementById('debug-data').textContent);
-            const contractDataJson = JSON.parse(document.getElementById('contract-data-json').textContent);
-            
-            console.log('Debug Data:', debugData);
-            console.log('Contract Data JSON:', contractDataJson);
-        });
-    </script>
-</div>
-{% endif %}
 {% endblock %}

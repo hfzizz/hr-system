@@ -107,6 +107,11 @@ class Contract(models.Model):
     mentorship_text = models.TextField(blank=True, null=True)
     grad_supervision_text = models.TextField(blank=True, null=True)
 
+    # Draft support fields
+    is_draft = models.BooleanField(default=False)
+    draft_saved_at = models.DateTimeField(null=True, blank=True)
+    draft_saved_by = models.ForeignKey(Employee, null=True, blank=True, on_delete=models.SET_NULL, related_name='drafted_contracts')
+
     class Meta:
         ordering = ['-submission_date']
 
