@@ -1375,6 +1375,8 @@ def get_section_data(request):
         logger.error(f"Error in get_section_data: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
     
+
+    
 @require_POST
 @login_required
 @csrf_protect
@@ -1534,6 +1536,65 @@ def update_appraisal_status(request):
         import traceback
         error_details = traceback.format_exc()
         logger.error(f"Error in update_appraisal_status: {str(e)}\n{error_details}")
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+# temp complete function
+@require_POST
+@login_required
+@csrf_protect
+def complete_appraisal(request):
+    """Directly change an appraisal's status to completed (for authorized users only)"""
+    try:
+        # Parse the request data
+        if request.content_type and 'application/json' in request.content_type:
+            data = json.loads(request.body)
+            appraisal_id = data.get('appraisal_id')
+        else:
+            appraisal_id = request.POST.get('appraisal_id')
+        
+        if not appraisal_id:
+            return JsonResponse({'status': 'error', 'message': 'Missing appraisal_id'}, status=400)
+        
+        # Get the appraisal
+        appraisal = get_object_or_404(Appraisal, appraisal_id=appraisal_id)
+        
+        # Check if user has permission to complete appraisals (must be HR)
+        if not request.user.groups.filter(name=HR_GROUP_NAME).exists():
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Only HR users can complete appraisals directly'
+            }, status=403)
+        
+        # Log the manual completion
+        section, created = AppraisalSection.objects.get_or_create(
+            appraisal=appraisal,
+            section_name='completion_history',
+            appraiser=request.user.employee
+        )
+        
+        data = section.data or {}
+        data['completed_at'] = timezone.now().isoformat()
+        data['completed_by'] = request.user.employee.get_full_name()
+        data['previous_status'] = appraisal.status
+        data['manually_completed'] = True
+        section.data = data
+        section.save()
+        
+        # Update the appraisal status to completed
+        appraisal.status = 'completed'
+        appraisal.save()
+        
+        # Return success response with redirect URL
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Appraisal marked as completed',
+            'redirect_url': reverse('appraisals:form_detail', kwargs={'pk': appraisal_id})
+        })
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        logger.error(f"Error in complete_appraisal: {str(e)}\n{error_details}")
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 class AppraiseeWizard(SessionWizardView):

@@ -46,5 +46,6 @@ urlpatterns = [
     path('forms/<int:appraisal_id>/review/section-a/', views.appraisal_wizard_section_a, name='appraisal_wizard_section_a'),
     path('forms/<int:appraisal_id>/review/section-c/', views.appraisal_wizard_section_c, name='appraisal_wizard_section_c'),
     path('update-appraisal-status/', views.update_appraisal_status, name='update_appraisal_status'),
+    path('update-complete-appraisals/', views.complete_appraisal, name='update_complete_appraisals'),
 
 ]

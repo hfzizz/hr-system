@@ -52,6 +52,7 @@
 {% endblock %}
 
 {% block content %}
+{% csrf_token %}
 <div class="space-y-6">
     <!-- Enhanced Header -->
     <div class="flex items-center justify-between bg-white shadow-sm rounded-lg p-4">
@@ -99,7 +100,16 @@
                 class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors duration-200">
                     Edit Appraisal
                 </a>
-            {% endif %}    
+            {% endif %}   
+            
+            {% if 'HR' in user.groups.all|stringformat:'s' and appraisal.status != 'completed' %}
+                <button 
+                    id="complete-button"
+                    class="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 transition-colors duration-200"
+                    onclick="updateAppraisalStatus()">
+                    Mark as Complete
+                </button>
+            {% endif %}
         </div>
     </div>
 
@@ -468,5 +478,48 @@
             section.style.animationDelay = `${0.1 + (index * 0.1)}s`;
         });
     });
+     
+    // Function to update appraisal status to complete
+    function updateAppraisalStatus() {
+        // Show confirmation dialog
+        if (!confirm('Are you sure you want to mark this appraisal as complete? This action cannot be undone.')) {
+            return;
+        }
+        
+        // Get the CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        // Make the API call to update the status
+        fetch('{% url "appraisals:update_complete_appraisals" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                appraisal_id: '{{ appraisal.appraisal_id }}',
+                is_final_submit: true,
+                hr_override: true
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                // Reload the current page to reflect the status change
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error updating status:', error);
+            alert('Failed to update the appraisal status. Please try again.');
+        });
+    }
 </script>
 {% endblock %}
