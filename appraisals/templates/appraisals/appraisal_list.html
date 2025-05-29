@@ -326,7 +326,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-900">{{ appraisal.get_appraisal_period_display }}</div>
-                            </td>
+                            </td>               
                             <td data-column="status" class="px-6 py-4 whitespace-nowrap">
                                 {% with status=appraisal.status %}
                                 <span class="px-2.5 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full 
@@ -344,40 +344,62 @@
                                         bg-red-100 text-red-800
                                     {% elif status == 'reassigned' %}
                                         bg-purple-100 text-purple-800
-                                    {% elif status == 'ressigned_review' %}
+                                    {% elif status == 'reassigned_review' %}
                                         bg-purple-100 text-purple-800
+                                    {% elif status == 'hr_review' %}
+                                        bg-orange-100 text-orange-800
                                     {% else %}
                                         bg-gray-100 text-gray-800
                                     {% endif %}">
                                     
-                                    <!-- Include the SVG icons as in the all-tab -->
                                     {% if status == 'pending' %}
                                         <svg class="w-3.5 h-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
                                         </svg>
                                         Pending
                                     {% elif status == 'primary_review' %}
-                                        <!-- Include SVG for primary review -->
                                         <svg class="w-3.5 h-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
                                             <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                         </svg>
                                         Primary Review
+                                    {% elif status == 'secondary_review' %}
+                                        <svg class="w-3.5 h-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                        Secondary Review
+                                    {% elif status == 'hr_review' %}
+                                        <svg class="w-3.5 h-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+                                        </svg>
+                                        HR Review
                                     {% else %}
                                         {{ status|title }}
                                     {% endif %}
                                 </span>
                                 {% endwith %}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                           <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex justify-center w-full">
-                                    <a href="{% url 'appraisals:appraisal_review' appraisal.appraisal_id %}" 
-                                       class="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                        Review
-                                    </a>
+                                    {% if appraisal.status == 'hr_review' %}
+                                        <a href="{% url 'appraisals:appraisal_review' appraisal.appraisal_id %}" 
+                                        class="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-white bg-orange-600 rounded-md shadow-sm hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors duration-200">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                            </svg>
+                                            HR Review
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'appraisals:appraisal_review' appraisal.appraisal_id %}" 
+                                        class="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                            Review
+                                        </a>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>

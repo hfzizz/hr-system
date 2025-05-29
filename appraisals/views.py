@@ -119,11 +119,26 @@ class AppraisalListView(LoginRequiredMixin, ListView):
         ).values_list('appraisal_id', flat=True))
         
         # Review tab - show appraisals where user is the primary or secondary appraiser
-        context['review_appraisals'] = Appraisal.objects.filter(
-            Q(appraiser__user=user) | Q(appraiser_secondary__user=user),
-            status__in=['primary_review', 'secondary_review']
-        )
-        
+        # And include hr_review status appraisals for HR users
+        if self.request.user.groups.filter(name=HR_GROUP_NAME).exists():
+            # For HR users, include hr_review status appraisals in the review tab
+            context['review_appraisals'] = Appraisal.objects.filter(
+                Q(appraiser__user=user) | Q(appraiser_secondary__user=user) | 
+                Q(status='hr_review'),
+                status__in=['primary_review', 'secondary_review', 'hr_review']
+            ).select_related('employee__user', 'appraiser__user', 'appraiser_secondary')
+        else:
+            # For regular appraisers, show only their assigned appraisals
+            context['review_appraisals'] = Appraisal.objects.filter(
+                Q(appraiser__user=user) | Q(appraiser_secondary__user=user),
+                status__in=['primary_review', 'secondary_review']
+            ).select_related('employee__user', 'appraiser__user', 'appraiser_secondary')
+
+        # Add a list of HR review appraisal IDs to help UI distinguish them
+        context['hr_review_ids'] = list(Appraisal.objects.filter(
+            status='hr_review'
+        ).values_list('appraisal_id', flat=True))
+                
         # Completed tab - show completed appraisals for the user
         context['completed_appraisals'] = Appraisal.objects.filter(
             Q(employee__user=user) | Q(appraiser__user=user) | Q(appraiser_secondary__user=user),
