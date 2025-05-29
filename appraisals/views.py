@@ -1823,3 +1823,70 @@ class AppraiseeWizard(SessionWizardView):
             messages.error(self.request, "Error processing your response.")
             
         return redirect('appraisals:list')
+    
+
+@login_required
+@require_POST
+def save_appraisee_response(request):
+    """
+    Save the appraisee's response to their appraisal.
+    This includes their agreement status, comments, and confirmation details.
+    """
+    appraisal_id = request.POST.get('appraisal_id')
+    is_draft = request.POST.get('is_draft') == 'true'
+    is_final_submit = request.POST.get('is_final_submit') == 'true'
+    
+    # Get the appraisal
+    appraisal = get_object_or_404(Appraisal, appraisal_id=appraisal_id)
+    
+    # Check if user is authorized to respond to this appraisal
+    if appraisal.employee.user != request.user:
+        return JsonResponse({"success": False, "message": "You are not authorized to respond to this appraisal"}, status=403)
+    
+    # Check if appraisal is in the right status for a response
+    if appraisal.status not in ['reviewed', 'response_pending', 'appraisee_review']:
+        return JsonResponse({"success": False, "message": "This appraisal is not currently available for response"}, status=400)
+    
+    # Collect all data from the form
+    data = {
+        'r_agreement_status': request.POST.get('r_agreement_status'),
+        'r_appraisee_comments': request.POST.get('r_appraisee_comments'),
+        'r_response_date': request.POST.get('r_response_date'),
+        'r_appraisee_name': request.POST.get('r_appraisee_name'),
+        'r_confirmation': 'true' if 'r_confirmation' in request.POST else 'false'
+    }
+    
+    # Save to appraisal data model
+    appraisal_data, created = AppraisalSection.objects.update_or_create(
+        appraisal=appraisal,
+        section_name='response',
+        defaults={'data': json.dumps(data)}
+    )
+    
+    # If this is the final submission, update the appraisal status
+    if is_final_submit:
+        # Check the agreement status to determine the next status
+        agreement_status = request.POST.get('r_agreement_status').lower().strip()
+        if agreement_status == 'agree' or agreement_status == 'true':
+            # If appraisee agrees, mark as completed
+            appraisal.status = 'completed'
+        else:
+            # If appraisee disagrees, send to HR for review
+            appraisal.status = 'hr_review'
+            
+        appraisal.response_date = datetime.now()
+        appraisal.save()
+        
+        # You might want to send notifications here
+        
+        redirect_url = reverse('appraisals:form_list')  # Use named URL pattern
+    else:
+        # For drafts, keep the same status
+        redirect_url = request.META.get('HTTP_REFERER', reverse('appraisals:form_list'))
+    
+    return JsonResponse({
+        "success": True,
+        "message": "Response submitted successfully" if is_final_submit else "Draft saved successfully",
+        "redirect_url": redirect_url,
+        "is_final": is_final_submit
+    })
