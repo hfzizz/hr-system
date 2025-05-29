@@ -27,4 +27,7 @@ urlpatterns = [
     path('bulk_confirm_create/', views.bulk_confirm_create, name='bulk_confirm_create'),
     path('bulk_cancel/', views.bulk_cancel, name='bulk_cancel'),
     path('download_credentials_csv/', views.download_credentials_csv, name='download_credentials_csv'),
+    path('bulk_employee_edit/<int:index>/', views.bulk_employee_edit, name='bulk_employee_edit'),
+    path('bulk_employee_edit/<int:index>/autosave/', views.bulk_employee_autosave, name='bulk_employee_autosave'),
+    path('bulk_employee_delete/<int:index>/', views.bulk_employee_delete, name='bulk_employee_delete'),
 ]

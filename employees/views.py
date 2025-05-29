@@ -67,6 +67,7 @@ import re
 from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime
 import csv
+from django.db import IntegrityError
 
 logger = logging.getLogger(__name__)
 
@@ -908,7 +909,14 @@ class ResumeParserView(LoginRequiredMixin, View):
                 print(json.dumps(parsed_data, indent=2))
                 # Transform the parsed data into form-compatible format
                 print("\n=== Data Transformation ===")
-                form_data = {
+                ic_colour_map = {
+                    'yellow': 'Y',
+                    'purple': 'P',
+                    'green': 'G',
+                    'red': 'R'
+                }
+                parsed_colour = (parsed_data.get('personal_info', {}).get('ic_colour', '').strip().lower())
+                employee_data = {
                     'first_name': parsed_data.get('personal_info', {}).get('first_name', ''),
                     'last_name': parsed_data.get('personal_info', {}).get('last_name', ''),
                     'email': parsed_data.get('personal_info', {}).get('email', ''),
@@ -922,25 +930,26 @@ class ResumeParserView(LoginRequiredMixin, View):
                     'appointment_type': parsed_data.get('employment', {}).get('appointment_type', ''),
                     'employee_status': parsed_data.get('employment', {}).get('employee_status', ''),
                     'hire_date': parsed_data.get('employment', {}).get('hire_date', ''),
-                    'salary': parsed_data.get('employment', {}).get('salary', '')
+                    'salary': parsed_data.get('employment', {}).get('salary', ''),
+                    'ic_colour': ic_colour_map.get(parsed_colour, None)
                 }
                 # Generate a username from email or name
-                if form_data['email']:
-                    form_data['username'] = form_data['email'].split('@')[0]
-                elif form_data['first_name'] and form_data['last_name']:
-                    form_data['username'] = f"{form_data['first_name']}{form_data['last_name']}".lower()
+                if employee_data['email']:
+                    employee_data['username'] = employee_data['email'].split('@')[0]
+                elif employee_data['first_name'] and employee_data['last_name']:
+                    employee_data['username'] = f"{employee_data['first_name']}{employee_data['last_name']}".lower()
                 print("\nTransformed form data:")
-                print(json.dumps(form_data, indent=2))
-                print(f"Form data type: {type(form_data)}")
+                print(json.dumps(employee_data, indent=2))
+                print(f"Form data type: {type(employee_data)}")
                 # Check which fields have values
-                populated_fields = {k: v for k, v in form_data.items() if v}
+                populated_fields = {k: v for k, v in employee_data.items() if v}
                 print(f"\nFields with values ({len(populated_fields)}):")
                 for key, value in populated_fields.items():
                     print(f"- {key}: {value}")
                 # Prepare the response
                 response_data = {
                     'status': 'success',
-                    'data': form_data,
+                    'data': employee_data,
                     'jsonb_data': parsed_data
                 }
                 print("\n=== Response Data ===")
@@ -1046,7 +1055,9 @@ def parse_pdf(request):
         os.remove(tmp_path)
 
 def bulk_add(request):
-    return render(request, 'employees/bulk_add.html')
+    employees = request.session.get('bulk_employees', [])
+    already_exists = request.session.get('bulk_already_exists', [])
+    return render(request, 'employees/bulk_add.html', {'employees': employees, 'already_exists': already_exists})
 
 @csrf_exempt
 def bulk_upload_parse(request):
@@ -1073,31 +1084,93 @@ def bulk_upload_parse(request):
 
 @require_POST
 def bulk_confirm_create(request):
-    employees_data = request.session.get('bulk_employees')
-    if not employees_data:
-        messages.error(request, "No employees to add. Please upload and parse files first.")
-        return redirect('employees:bulk_add')
+    # Get original parsed data from session
+    session_employees = request.session.get('bulk_employees', [])
+    total = int(request.POST.get('total_employees', 0))
+    merged_employees = []
     created_credentials = []
-    for data in employees_data:
-        # Generate a username (e.g., from email or name)
+    already_exists = []
+
+    for i in range(total):
+        # Get editable fields from POST
+        post_data = {
+            'first_name': request.POST.get(f'employees-{i}-first_name'),
+            'last_name': request.POST.get(f'employees-{i}-last_name'),
+            'email': request.POST.get(f'employees-{i}-email'),
+            'ic_no': request.POST.get(f'employees-{i}-ic_no'),
+            'post': request.POST.get(f'employees-{i}-post'),
+        }
+        # Get original data for this employee (by index)
+        original = session_employees[i] if i < len(session_employees) else {}
+        # Merge: use POST value if present, else original
+        merged = {**original, **{k: v for k, v in post_data.items() if v is not None}}
+        merged_employees.append(merged)
+
+    # Create users and employees
+    for idx, data in enumerate(merged_employees):
+        # Generate a username (from email or name)
         username = (data.get('first_name', '') or '') + (data.get('last_name', '') or '')
         username = username.lower() or data.get('ic_no') or None
         password = User.objects.make_random_password()
-        user = User.objects.create_user(
-            username=username,
-            email=data['email'],
-            password=password,
-            first_name=data['first_name'],
-            last_name=data['last_name']
+        try:
+            user = User.objects.create_user(
+                username=username,
+                email=data.get('email', ''),
+                password=password,
+                first_name=data.get('first_name', ''),
+                last_name=data.get('last_name', '')
+            )
+        except IntegrityError:
+            already_exists.append({
+                'first_name': data.get('first_name', ''),
+                'last_name': data.get('last_name', ''),
+                'email': data.get('email', ''),
+                'ic_no': data.get('ic_no', ''),
+                'index': idx,
+            })
+            continue
+        # Get or create department if present
+        department = data.get('department')
+        if isinstance(department, str) and department:
+            department_obj, _ = Department.objects.get_or_create(name=department)
+        else:
+            department_obj = department if department else None
+
+        # Create Employee
+        Employee.objects.create(
+            user=user,
+            first_name=data.get('first_name', ''),
+            last_name=data.get('last_name', ''),
+            email=data.get('email', ''),
+            ic_no=data.get('ic_no', ''),
+            ic_colour=data.get('ic_colour'),
+            date_of_birth=data.get('date_of_birth'),
+            department=department_obj,
+            post=data.get('post'),
+            appointment_type=data.get('appointment_type'),
+            salary=data.get('salary') or 0,
+            hire_date=data.get('hire_date'),
+            employee_status=data.get('employee_status', 'active'),
+            address=data.get('address'),
+            phone_number=data.get('phone_number'),
         )
-        data['user'] = user
-        employee = Employee(**data)
-        employee.save()
-        created_credentials.append({'email': data['email'], 'password': password})
+        created_credentials.append({'email': data.get('email', ''), 'password': password})
+
+    # Clean up session
+    if 'bulk_employees' in request.session:
+        del request.session['bulk_employees']
     request.session['created_credentials'] = created_credentials
-    del request.session['bulk_employees']
-    messages.success(request, "Employees created successfully!")
-    return render(request, 'employees/bulk_add.html', {'created_credentials': created_credentials})
+    # Store already_exists persistently in session
+    if already_exists:
+        request.session['bulk_already_exists'] = already_exists
+    elif 'bulk_already_exists' in request.session:
+        del request.session['bulk_already_exists']
+    # Show credentials and already_exists on the same page
+    return render(request, 'employees/bulk_add.html', {
+        'created_credentials': created_credentials,
+        'already_exists': already_exists,
+        'employees': []
+    })
 
 def bulk_cancel(request):
     if 'bulk_employees' in request.session:
@@ -1273,3 +1346,125 @@ def download_credentials_csv(request):
     for cred in credentials:
         writer.writerow([cred['email'], cred['password']])
     return response
+
+def bulk_employee_edit(request, index):
+    from employees.models import Employee, Department
+    employees = request.session.get('bulk_employees', [])
+    if index < 0 or index >= len(employees):
+        return redirect('employees:bulk_add')
+    employee = employees[index]
+
+    # Choices for dropdowns
+    ic_colour_choices = Employee.ICColour.choices
+    gender_choices = Employee.Gender.choices
+    appointment_type_choices = Employee.AppointmentType.choices
+    status_choices = Employee.Status.choices
+    department_list = Department.objects.all()
+
+    if request.method == 'POST':
+        # Update all relevant fields from form
+        for field in [
+            'first_name', 'last_name', 'email', 'phone_number', 'ic_no', 'ic_colour',
+            'date_of_birth', 'gender', 'address', 'hire_date', 'salary',
+            'appointment_type', 'employee_status', 'post', 'department'
+        ]:
+            value = request.POST.get(field, employee.get(field))
+            if field in ['salary']:
+                try:
+                    value = float(value) if value else None
+                except Exception:
+                    value = None
+            elif field in ['hire_date', 'date_of_birth']:
+                value = value if value else None
+            elif field == 'department':
+                value = int(value) if value else None
+            employee[field] = value
+        employees[index] = employee
+        request.session['bulk_employees'] = employees
+        # Remove from bulk_already_exists if no longer duplicate
+        already_exists = request.session.get('bulk_already_exists', [])
+        # Check if this employee is in already_exists
+        for emp in already_exists:
+            if emp.get('index') == index:
+                # Check if the new data would still cause a duplicate
+                from django.contrib.auth.models import User
+                username = (employee.get('first_name', '') or '') + (employee.get('last_name', '') or '')
+                username = username.lower() or employee.get('ic_no') or None
+                email = employee.get('email', '')
+                duplicate = User.objects.filter(username=username).exists() or User.objects.filter(email=email).exists()
+                if not duplicate:
+                    already_exists = [e for e in already_exists if e.get('index') != index]
+                    break
+        if already_exists:
+            request.session['bulk_already_exists'] = already_exists
+        elif 'bulk_already_exists' in request.session:
+            del request.session['bulk_already_exists']
+        # Redirect logic
+        if 'next' in request.POST:
+            return redirect('employees:bulk_employee_edit', index=index+1)
+        elif 'prev' in request.POST:
+            return redirect('employees:bulk_employee_edit', index=index-1)
+        else:
+            return redirect('employees:bulk_add')
+
+    return render(request, 'employees/bulk_employee_edit.html', {
+        'employee': employee,
+        'index': index,
+        'has_prev': index > 0,
+        'has_next': index < len(employees) - 1,
+        'ic_colour_choices': ic_colour_choices,
+        'gender_choices': gender_choices,
+        'appointment_type_choices': appointment_type_choices,
+        'status_choices': status_choices,
+        'department_list': department_list,
+    })
+
+@csrf_exempt
+def bulk_employee_autosave(request, index):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
+    employees = request.session.get('bulk_employees', [])
+    if index < 0 or index >= len(employees):
+        return JsonResponse({'success': False, 'error': 'Invalid index'}, status=400)
+    employee = employees[index]
+    field = request.POST.get('field')
+    value = request.POST.get('value')
+    if not field:
+        return JsonResponse({'success': False, 'error': 'No field provided'}, status=400)
+    # Type conversion for certain fields
+    if field in ['salary']:
+        try:
+            value = float(value) if value else None
+        except Exception:
+            value = None
+    elif field in ['hire_date', 'date_of_birth']:
+        value = value if value else None
+    elif field == 'department':
+        value = int(value) if value else None
+    employee[field] = value
+    employees[index] = employee
+    request.session['bulk_employees'] = employees
+    return JsonResponse({'success': True})
+
+@require_POST
+def bulk_employee_delete(request, index):
+    employees = request.session.get('bulk_employees', [])
+    from_edit = request.POST.get('from_edit')
+    if 0 <= index < len(employees):
+        del employees[index]
+        request.session['bulk_employees'] = employees
+    # Also remove from bulk_already_exists if present
+    already_exists = request.session.get('bulk_already_exists', [])
+    already_exists = [emp for emp in already_exists if emp.get('index') != index]
+    if already_exists:
+        request.session['bulk_already_exists'] = already_exists
+    elif 'bulk_already_exists' in request.session:
+        del request.session['bulk_already_exists']
+    if from_edit:
+        if index < len(employees):
+            return redirect('employees:bulk_employee_edit', index=index)
+        elif index-1 >= 0 and len(employees) > 0:
+            return redirect('employees:bulk_employee_edit', index=index-1)
+        else:
+            return redirect('employees:bulk_add')
+    return redirect('employees:bulk_add')
