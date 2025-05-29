@@ -94,10 +94,12 @@
                class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors duration-200">
                 Back to List
             </a>
-            <a href="{% url 'appraisals:appraisal_fill' appraisal.appraisal_id %}" 
-               class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors duration-200">
-                Edit Appraisal
-            </a>
+            {% if appraisal.status == 'pending' or appraisal.status == 'returned_to_appraisee' %}
+                <a href="{% url 'appraisals:appraisal_fill' appraisal.appraisal_id %}" 
+                class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors duration-200">
+                    Edit Appraisal
+                </a>
+            {% endif %}    
         </div>
     </div>
 

@@ -104,7 +104,7 @@ class AppraisalListView(LoginRequiredMixin, ListView):
         # Add appraisee_review status to show appraisals waiting for employee review
         context['my_appraisals'] = Appraisal.objects.filter(
             employee__user=user,
-            status__in=['pending', 'appraisee_review'],
+            status__in=['pending', 'primary_review', 'secondary_review', 'returned_to_appraisee','appraisee_review', 'hr_review', 'reassigned_review'],
         ).select_related('employee__user', 'appraiser__user', 'appraiser_secondary')
         
         # To help UI distinguish between pending forms and those needing review
