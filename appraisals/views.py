@@ -177,7 +177,6 @@ class AppraiserWizard(BaseAppraisalWizard):
         ('section_b', SectionBForm),  # General Traits
         ('section_c', SectionCForm),  # Local Staff Appraisal
         ('section_d', SectionDForm),  # Adverse Appraisal
-        ('section_e', SectionEForm)
     ]
     
     templates = {
@@ -185,7 +184,6 @@ class AppraiserWizard(BaseAppraisalWizard):
         'section_b': 'appraisals/wizard/section_b.html',
         'section_c': 'appraisals/wizard/section_c.html',
         'section_d': 'appraisals/wizard/section_d.html',
-        'section_e': 'appraisals/wizard/section_e.html',
     }
 
     def get_context_data(self, form, **kwargs):
