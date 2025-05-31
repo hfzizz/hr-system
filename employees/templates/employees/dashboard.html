@@ -69,7 +69,7 @@
             <div class="overflow-hidden rounded-lg bg-white shadow">
                 <div class="p-6">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-medium leading-6 text-gray-900">Recent Employees</h3>
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">New Employees</h3>
                         <a href="{% url 'employees:employee_list' %}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">View all</a>
                     </div>
                     <div class="mt-6 flow-root">
@@ -94,7 +94,7 @@
                             </li>
                             {% empty %}
                             <li class="py-4 text-center text-sm text-gray-500">
-                                No recent employees
+                                No new employees
                             </li>
                             {% endfor %}
                         </ul>

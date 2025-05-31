@@ -20,7 +20,20 @@
                     <input id="folderInput" type="file" name="resume_folder" webkitdirectory directory multiple class="hidden" />
                     <span id="folderName" class="text-gray-500 text-sm ml-2">No folder chosen</span>
                 </div>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded ml-4">Upload</button>
+                <button id="extractBtn" type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded ml-4 flex items-center gap-2">
+                    <span id="extractBtnText">Extract</span>
+                    <svg id="extractSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                    </svg>
+                </button>
+            </div>
+            <!-- Progress Bar (initially hidden) -->
+            <div id="extractProgressWrapper" class="w-full mt-4 hidden">
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="extractProgressBar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <div id="extractProgressText" class="text-xs text-gray-600 mt-1 text-center">0%</div>
             </div>
         </form>
     </div>
@@ -35,7 +48,7 @@
                         <th class="px-6 py-3 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider">Email</th>
                         <th class="px-6 py-3 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider">IC No</th>
                         <th class="px-6 py-3 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider">Post</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider rounded-tr-xl">Action</th>
+                        <th class="px-6 py-3 text-center text-xs font-bold text-indigo-700 uppercase tracking-wider rounded-tr-xl">Action</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
@@ -55,7 +68,7 @@
                                     {{ emp.post }}
                                 </td>
                                 <td class="px-6 py-3 text-center flex gap-2 justify-center">
-                                    <a href="{% url 'employees:bulk_employee_edit' forloop.counter0 %}" class="rounded bg-indigo-500 hover:bg-indigo-700 text-white px-4 py-1 text-sm font-semibold shadow">Edit Employees</a>
+                                    <a href="{% url 'employees:bulk_employee_edit' forloop.counter0 %}" class="rounded bg-indigo-500 hover:bg-indigo-700 text-white px-4 py-1 text-sm font-semibold shadow">Edit Employees Details</a>
                                     <form method="post" action="{% url 'employees:bulk_employee_delete' forloop.counter0 %}" style="display:inline;">
                                         {% csrf_token %}
                                         <button type="submit" class="rounded bg-red-600 hover:bg-red-800 text-white px-4 py-1 text-sm font-semibold shadow">Delete</button>
@@ -78,7 +91,20 @@
             <input type="hidden" name="total_employees" value="{{ employees|length }}">
             <div class="flex justify-end mt-6 space-x-4 mb-4 pr-4">
                 <a href="{% url 'employees:bulk_cancel' %}" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Cancel</a>
-                <button type="submit" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 mr-2">Confirm Employee Creation</button>
+                <button id="confirmBtn" type="submit" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 mr-2 flex items-center gap-2">
+                    <span id="confirmBtnText">Confirm Employee Creation</span>
+                    <svg id="confirmSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                    </svg>
+                </button>
+            </div>
+            <!-- Progress Bar for Confirm (initially hidden) -->
+            <div id="confirmProgressWrapper" class="w-full mt-4 hidden">
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="confirmProgressBar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <div id="confirmProgressText" class="text-xs text-gray-600 mt-1 text-center">0%</div>
             </div>
         </form>
     </div>
@@ -103,7 +129,10 @@
                     {% endfor %}
                 </tbody>
             </table>
-            <p class="mt-2 text-sm text-gray-600">Please securely share these credentials with the new employees.</p>
+            <div class="mt-4">
+                <span class="text-lg font-semibold text-green-800 block">Credentials have been sent to each employee's email address.</span>
+                <span class="block text-gray-700 mt-1 text-base">Each employee will receive their login credentials via email. Please remind them to check their inbox (and spam folder) and to change their password after first login.</span>
+            </div>
         </div>
     {% endif %}
 
@@ -156,6 +185,63 @@ document.getElementById('folderInput').addEventListener('change', function(e) {
     } else {
         document.getElementById('folderName').textContent = 'No folder chosen';
     }
+});
+
+document.getElementById('resumeUploadForm').addEventListener('submit', function(e) {
+    var btn = document.getElementById('extractBtn');
+    var spinner = document.getElementById('extractSpinner');
+    var btnText = document.getElementById('extractBtnText');
+    var progressWrapper = document.getElementById('extractProgressWrapper');
+    var progressBar = document.getElementById('extractProgressBar');
+    var progressText = document.getElementById('extractProgressText');
+
+    // Show spinner, disable button, show progress bar
+    btn.disabled = true;
+    spinner.classList.remove('hidden');
+    btnText.textContent = 'Extracting...';
+    progressWrapper.classList.remove('hidden');
+    progressBar.style.width = '0%';
+    progressText.textContent = '0%';
+
+    // Simulate progress (for demo only)
+    let progress = 0;
+    let interval = setInterval(function() {
+        if (progress < 90) { // Simulate up to 90% until page reload
+            progress += 10;
+            progressBar.style.width = progress + '%';
+            progressText.textContent = progress + '%';
+        } else {
+            clearInterval(interval);
+        }
+    }, 300);
+});
+
+// Confirm Employee Creation loading visual
+document.querySelector('form[action$="bulk_confirm_create/"]').addEventListener('submit', function(e) {
+    var btn = document.getElementById('confirmBtn');
+    var spinner = document.getElementById('confirmSpinner');
+    var btnText = document.getElementById('confirmBtnText');
+    var progressWrapper = document.getElementById('confirmProgressWrapper');
+    var progressBar = document.getElementById('confirmProgressBar');
+    var progressText = document.getElementById('confirmProgressText');
+
+    btn.disabled = true;
+    spinner.classList.remove('hidden');
+    btnText.textContent = 'Processing...';
+    progressWrapper.classList.remove('hidden');
+    progressBar.style.width = '0%';
+    progressText.textContent = '0%';
+
+    let progress = 0;
+    let interval = setInterval(function() {
+        if (progress < 90) {
+            progress += 10;
+            progressBar.style.width = progress + '%';
+            progressText.textContent = progress + '%';
+        } else {
+            clearInterval(interval);
+        }
+    }, 300);
 });
 </script>
 {% endblock %}
