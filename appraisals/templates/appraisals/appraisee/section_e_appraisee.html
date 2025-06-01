@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Appraisal Response - Appraisee Comments{% endblock %}
+
+{% block content %}
+<div id="wizard-container">
+    <form id="section-e-form" method="post" action="">
+        {% csrf_token %}
+        <input type="hidden" name="appraisal_id" value="{{ appraisal.appraisal_id }}">
+        <input type="hidden" name="section" value="response">
+
+        <!-- Appraisal Section E (Appraisee Response) -->
+        <div class="max-w-5xl mx-auto bg-white shadow-md rounded-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Appraisee's Response</h2>
+            <p class="text-sm text-gray-600 mb-6 pb-2 border-b border-gray-200">
+                This section allows you to respond to your appraisal evaluation and provide additional comments
+            </p>
+            
+            <div class="mb-4 bg-blue-50 border border-blue-100 rounded-md p-4">
+                <div class="flex items-center space-x-2 text-blue-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                    <p>Please review your appraisal carefully before submitting your response</p>
+                </div>
+            </div>
+
+            <!-- E1. Agreement with Evaluation -->
+            <div class="mb-8 bg-gray-50 rounded-lg shadow-sm p-5 border border-gray-100">
+                <h3 class="text-xl font-semibold text-gray-700 mb-4 pb-2 border-b border-gray-200">E1. Agreement with Evaluation</h3>
+                
+                <div class="mb-6">
+                    <p class="text-gray-700 mb-4">Please indicate whether you agree or disagree with the evaluation:</p>
+                    
+                    <div class="flex items-center space-x-6">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="r_agreement_status" value="agree" class="h-5 w-5 text-blue-600" required>
+                            <span class="ml-2 text-gray-700">I agree with the appraisal</span>
+                        </label>
+                        
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="r_agreement_status" value="disagree" class="h-5 w-5 text-blue-600">
+                            <span class="ml-2 text-gray-700">I disagree with the appraisal</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- E2. Appraisee Comments -->
+            <div class="mb-8 bg-gray-50 rounded-lg shadow-sm p-5 border border-gray-100">
+                <h3 class="text-xl font-semibold text-gray-700 mb-4 pb-2 border-b border-gray-200">E2. Appraisee Comments</h3>
+                
+                <div class="mb-6">
+                    <label for="e_appraisee_comments" class="block text-gray-700 font-medium mb-2">
+                        Please provide any additional comments or reasons for agreement/disagreement:
+                    </label>
+                    <textarea id="r_appraisee_comments" 
+                              name="r_appraisee_comments" 
+                              rows="6" 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    <p class="text-sm text-gray-500 mt-1">Your comments will be included in the final appraisal report</p>
+                </div>
+            </div>
+
+            <!-- E3. Signature and Date -->
+            <div class="mb-8 bg-gray-50 rounded-lg shadow-sm p-5 border border-gray-100">
+                <h3 class="text-xl font-semibold text-gray-700 mb-4 pb-2 border-b border-gray-200">E3. Confirmation</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="form-group">
+                        <label for="e_appraisee_name" class="block text-gray-700 font-medium mb-2">
+                            Full Name
+                        </label>
+                        <input type="text" 
+                               id="r_appraisee_name" 
+                               name="e_appraisee_name" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               value="{{ appraisal.appraisee.get_full_name }}" 
+                               readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="r_response_date" class="block text-gray-700 font-medium mb-2">
+                            Date
+                        </label>
+                        <input type="date" 
+                               id="e_response_date" 
+                               name="e_response_date" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               value="{% now 'Y-m-d' %}"
+                               required>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <div class="form-check">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" 
+                                   name="r_confirmation" 
+                                   class="h-5 w-5 text-blue-600" 
+                                   required>
+                            <span class="ml-2 text-gray-700">
+                                I confirm that I have reviewed the appraisal and my response represents my honest assessment
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save indicator -->
+            <div id="save-indicator" class="htmx-indicator fixed bottom-4 right-4 p-3 bg-white rounded-lg shadow-lg z-50">
+                <div class="flex items-center">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="text-gray-700">Saving...</span>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between items-center mt-8 pt-4 border-t border-gray-200">
+                <!-- Back to Review button -->
+                <a href="{% url 'appraisals:appraisee_review' appraisal.appraisal_id %}" 
+                   class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors">
+                    <span class="flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                        Back to Review
+                    </span>
+                </a>
+                
+                <!-- Save as Draft Button -->
+                <button type="button" 
+                        id="save-draft-button"
+                        onclick="saveDraft()" 
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors">
+                    <span class="flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                        </svg>
+                        Save as Draft
+                    </span>
+                </button>
+                
+                <!-- Submit Response Button -->
+                <button type="button"
+                        id="submit-response-button"
+                        onclick="submitResponse()"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                    <span class="flex items-center">
+                        Submit Response
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+    console.log("Section E Appraisee JavaScript loaded");
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load saved data if any
+        loadSavedData();
+        
+        function loadSavedData() {
+            console.log("Loading saved response data...");
+            const url = '{% url "appraisals:get_section_data" %}?section=E&appraisal_id={{ appraisal.appraisal_id }}';
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`Network response was not ok (${response.status}): ${text}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Response data loaded:", data);
+                    
+                    if (!data || !data.data) {
+                        console.log("No saved response data found");
+                        return;
+                    }
+                    
+                    const formData = data.data;
+                    
+                    // Set form values from the loaded data
+                    if (formData.e_agreement_status) {
+                        document.querySelector(`input[name="e_agreement_status"][value="${formData.e_agreement_status}"]`).checked = true;
+                    }
+                    
+                    if (formData.e_appraisee_comments) {
+                        document.getElementById('e_appraisee_comments').value = formData.e_appraisee_comments;
+                    }
+                    
+                    if (formData.e_response_date) {
+                        document.getElementById('e_response_date').value = formData.e_response_date;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading response data:', error);
+                    // Show error message if needed
+                    showMessage('Error loading your saved response. You can still submit a new one.', 'error');
+                });
+        }
+    });
+    
+    function saveDraft() {
+        const form = document.getElementById('section-e-form');
+        if (!form) {
+            console.error("Form not found");
+            return;
+        }
+        
+        // Check if agreement option is selected
+        const agreementSelected = document.querySelector('input[name="e_agreement_status"]:checked');
+        if (!agreementSelected) {
+            showMessage('Please indicate whether you agree or disagree with the appraisal.', 'warning');
+            return;
+        }
+        
+        // Show saving indicator
+        const saveIndicator = document.getElementById('save-indicator');
+        saveIndicator.style.display = 'flex';
+        
+        // Create FormData and add draft flag
+        const formData = new FormData(form);
+        formData.append('is_draft', 'true');
+        
+        // Send the data
+        fetch('{% url "appraisals:save_appraisee_response" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`Network response was not ok (${response.status}): ${text}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Draft saved successfully:', data);
+            showMessage('Your response has been saved as a draft.', 'success');
+        })
+        .catch(error => {
+            console.error('Error saving draft:', error);
+            showMessage('Error saving your draft response. Please try again.', 'error');
+        })
+        .finally(() => {
+            // Hide the saving indicator
+            saveIndicator.style.display = 'none';
+        });
+    }
+    
+    function submitResponse() {
+        const form = document.getElementById('section-e-form');
+        if (!form) {
+            console.error("Form not found");
+            return;
+        }
+        
+        // Check if form is valid
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+        
+        // Confirm submission
+        if (!confirm('Are you sure you want to submit your final response? This cannot be changed later.')) {
+            return;
+        }
+        
+        // Show saving indicator
+        const saveIndicator = document.getElementById('save-indicator');
+        saveIndicator.style.display = 'flex';
+        
+        // Create FormData and add final submission flag
+        const formData = new FormData(form);
+        formData.append('is_final_submit', 'true');
+        
+        // Send the data
+        fetch('{% url "appraisals:save_appraisee_response" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`Network response was not ok (${response.status}): ${text}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response submitted successfully:', data);
+            showMessage('Your response has been submitted successfully!', 'success');
+            
+            // Redirect to completion page or dashboard after a delay
+            setTimeout(() => {
+                window.location.href = data.redirect_url || '{% url "appraisals:form_list" %}';
+            }, 1500);
+        })
+        .catch(error => {
+            console.error('Error submitting response:', error);
+            showMessage('Error submitting your response. Please try again.', 'error');
+        })
+        .finally(() => {
+            // Hide the saving indicator
+            saveIndicator.style.display = 'none';
+        });
+    }
+    
+    function showMessage(message, type = 'success') {
+        // Create toast notification element
+        const toast = document.createElement('div');
+        const bgColor = type === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 
+                        type === 'warning' ? 'bg-yellow-100 border-yellow-400 text-yellow-700' :
+                        'bg-red-100 border-red-400 text-red-700';
+        
+        toast.className = `fixed bottom-4 left-4 ${bgColor} px-4 py-3 rounded z-50 border`;
+        toast.innerHTML = message;
+        document.body.appendChild(toast);
+        
+        // Remove after delay
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
+</script>
+{% endblock %}

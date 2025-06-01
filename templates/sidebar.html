@@ -29,7 +29,7 @@
 
         <!-- My Profile -->
         <li>
-          <a href="{% url 'employees:profile' request.user.employee.pk  %}" class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 {% if request.path == '/' %}bg-gray-100 text-gray-900{% endif %}">
+          <a href="{% url 'employees:profile' request.user.employee.pk  %}" class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 {% if request.resolver_match.url_name == 'profile' and request.resolver_match.kwargs.pk|stringformat:'i' == request.user.employee.pk|stringformat:'i' %}bg-gray-100 text-gray-900{% endif %}">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
             </svg>            
@@ -42,7 +42,7 @@
         <!-- Employees -->
         {% if perms.employees.view_employee %}
         <li>
-          <a href="{% url 'employees:employee_list' %}" class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 {% if 'employees' in request.path %}bg-gray-100 text-gray-900{% endif %}">
+          <a href="{% url 'employees:employee_list' %}" class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 {% if request.resolver_match.url_name == 'employee_list' or request.resolver_match.url_name == 'employee_detail' %}bg-gray-100 text-gray-900{% endif %}">
             <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M12 14C8.13401 14 5 17.134 5 21H19C19 17.134 15.866 14 12 14Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -57,7 +57,7 @@
         <!-- Departments (for HR only) -->
         {% if is_hr %}
         <li>
-          <a href="{% url 'employees:department_list' %}" class="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 {% if 'department' in request.path %}bg-gray-100 text-gray-900{% endif %}">
+          <a href="{% url 'employees:department_list' %}" class="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900  {% if request.resolver_match.url_name == 'department_list' or request.resolver_match.url_name == 'department_detail' %}bg-gray-100 text-gray-900{% endif %}">
             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M19 21V5C19 3.89543 18.1046 3 17 3H7C5.89543 3 5 3.89543 5 5V21M19 21H5M19 21H21M5 21H3M9 6.99998H15M9 11H15M9 15H12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
@@ -115,7 +115,9 @@
                 </span>
               </summary>
 
+            
               <ul class="mt-2 space-y-1 px-4">
+                {% if is_hr %}
                 <li>
                   <a
                     href="{% url 'appraisals:appraiser_list' %}"
@@ -124,6 +126,7 @@
                     Appraisers
                   </a>
                 </li>
+                {% endif %}
 
                 <li>
                   <a

@@ -39,8 +39,10 @@ class Appraisal(models.Model):
         ('pending', 'Pending'),
         ('primary_review', 'Under Primary Appraiser Review'),
         ('secondary_review', 'Under Secondary Appraiser Review'),
-        ('pending_response', 'Pending Response'),
+        ('returned_to_appraisee', 'Returned to Appraisee for Revision'),
+        ('appraisee_review', 'Appraisee Review'),
         ('disagreed', 'Disagreed'),
+        ('hr_review', 'Under HR Review'),
         ('reassigned', 'Reassigned'),
         ('reassigned_review', 'Under Reassigned Appraiser Review'),
         ('completed', 'Completed')
@@ -68,7 +70,7 @@ class Appraisal(models.Model):
     date_created = models.DateTimeField(default=timezone.now)
     appraisal_year = models.IntegerField(default=now().year)
     status = models.CharField(
-        max_length=20, 
+        max_length=25, 
         choices=STATUS_CHOICES, 
         default='pending'
     )

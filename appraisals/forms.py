@@ -132,6 +132,28 @@ class SectionBForm(forms.ModelForm):
         fields = [
         ]
 
+class SectionCForm(forms.ModelForm):
+    """ General Traits Form """
+    class Meta:
+        model = Appraisal
+        fields = [
+        ]
+
+class SectionDForm(forms.ModelForm):
+    """ General Traits Form """
+    class Meta:
+        model = Appraisal
+        fields = [
+        ]
+
+class SectionEForm(forms.ModelForm):
+    """ General Traits Form """
+    class Meta:
+        model = Appraisal
+        fields = [
+        ]
+
+
 
 class ModuleForm(forms.ModelForm):
     class Meta:

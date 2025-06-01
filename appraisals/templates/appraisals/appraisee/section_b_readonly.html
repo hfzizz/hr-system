@@ -1,0 +1,428 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Appraisal Review - Goals & Objectives{% endblock %}
+
+{% block content %}
+<div id="wizard-container">
+    <form id="section-b-form" method="post" action="">
+        {% csrf_token %}
+        {{ wizard.management_form }}
+        <input type="hidden" name="appraisal_id" value="{{ appraisal.appraisal_id }}">
+        <input type="hidden" name="section" value="B">
+
+        <!-- Appraisal Wizard Section B (Read Only) -->
+        <div class="max-w-5xl mx-auto bg-white shadow-md rounded-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Section B: Appraisal of General Traits</h2>
+            <p class="text-sm text-gray-600 mb-4">
+                <span class="font-medium">Rating Scale:</span> 
+                1 - Outstanding, 2 - Good, 3 - Satisfactory, 4 - Unsatisfactory
+            </p>
+            
+            <div class="mb-4 bg-yellow-50 border border-yellow-100 rounded-md p-4">
+                <div class="flex items-center space-x-2 text-yellow-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                    <p>You are reviewing this appraisal. This section is read-only.</p>
+                </div>
+            </div>
+
+            <!-- B1. General Traits -->
+            <div class="mb-8 bg-gray-50 rounded-lg shadow-sm p-5 border border-gray-100">
+                <h3 class="text-xl font-semibold text-gray-700 mb-4 pb-2 border-b border-gray-200">B1. General Traits</h3>
+                
+                <div class="mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700 font-medium">Effective work output</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium" data-field="b1_effective_work">
+                            Not rated
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700 font-medium">Reliability in carrying out duties</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium" data-field="b1_reliability">
+                            Not rated
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700 font-medium">Punctuality at lectures, tutorials, practicals/lab sessions, meetings</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium" data-field="b1_punctuality">
+                            Not rated
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700 font-medium">Organisation of practicals, tutorials and field work, etc</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium" data-field="b1_organisation">
+                            Not rated
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- B2. Inter-personal Relations -->
+            <div class="mb-8 bg-gray-50 rounded-lg shadow-sm p-5 border border-gray-100">
+                <h3 class="text-xl font-semibold text-gray-700 mb-2 pb-2 border-b border-gray-200">B2. Inter-personal Relations</h3>
+                
+                <div class="mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700 font-medium">With supervisor</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium" data-field="b2_supervisor">
+                            Not rated
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700 font-medium">With colleagues</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium" data-field="b2_colleagues">
+                            Not rated
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700 font-medium">With subordinates</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium" data-field="b2_subordinates">
+                            Not rated
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700 font-medium">With students</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium" data-field="b2_students">
+                            Not rated
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- B3. Contributions to Community Service -->
+            <div class="mb-8 bg-gray-50 rounded-lg shadow-sm p-5 border border-gray-100">
+                <h3 class="text-xl font-semibold text-gray-700 mb-2 pb-2 border-b border-gray-200">B3. Contributions to Community Service</h3>
+                <div class="mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700 font-medium">Community Service</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium" data-field="b3_community">
+                            Not rated
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- B4. Understanding, appreciation and respect for Brunei -->
+            <div class="mb-8 bg-gray-50 rounded-lg shadow-sm p-5 border border-gray-100">
+                <h3 class="text-xl font-semibold text-gray-700 mb-2 pb-2 border-b border-gray-200">B4. Understanding, appreciation and respect for Brunei</h3>
+                <div class="mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700 font-medium">a. culture particularly with the practise of Islam as a way of life</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium" data-field="b4_culture">
+                            Not rated
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700 font-medium">b. religious values, particularly Islam as the official religion</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium" data-field="b4_religious">
+                            Not rated
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- B5. Appraisal of teaching duties -->
+            <div class="mb-8 bg-gray-50 rounded-lg shadow-sm p-5 border border-gray-100">
+                <h3 class="text-xl font-semibold text-gray-700 mb-2 pb-2 border-b border-gray-200">B5. Appraisal of teaching duties</h3>
+                <div class="mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700 font-medium">Preparation of teaching material</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium" data-field="b5_preparation">
+                            Not rated
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700 font-medium">Attitude to teaching</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium" data-field="b5_attitude">
+                            Not rated
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- B6. Appraisal of output and quality of -->
+            <div class="mb-8 bg-gray-50 rounded-lg shadow-sm p-5 border border-gray-100">
+                <h3 class="text-xl font-semibold text-gray-700 mb-2 pb-2 border-b border-gray-200">B6. Appraisal of output and quality of</h3>
+                <div class="mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700 font-medium">a. Research</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium" data-field="b6_research">
+                            Not rated
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-8 bg-gray-50 rounded-lg shadow-sm p-5 border border-gray-100">
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">Appraisee's Strengths and Areas for Improvement</h3>
+                
+                <div class="mb-6">
+                    <h4 class="text-gray-700 font-medium mb-2">B7. Strongest points</h4>
+                    <div class="p-3 bg-white rounded border border-gray-200">
+                        <p class="text-gray-700 whitespace-pre-line" id="b7_strongest_points-content">
+                            No data provided
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h4 class="text-gray-700 font-medium mb-2">B8. Areas needing attention or improvement</h4>
+                    <div class="p-3 bg-white rounded border border-gray-200">
+                        <p class="text-gray-700 whitespace-pre-line" id="b8_improvement_areas-content">
+                            No data provided
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h4 class="text-gray-700 font-medium mb-2">B9. Other comments</h4>
+                    <div class="p-3 bg-white rounded border border-gray-200">
+                        <p class="text-gray-700 whitespace-pre-line" id="b9_other_comments-content">
+                            No comments provided
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- B10. Leadership section with conditional display -->
+            <div id="leadership-section" class="mb-8 bg-gray-50 rounded-lg shadow-sm p-5 border border-gray-100 hidden">
+                <h3 class="text-xl font-semibold text-gray-700 mb-4">
+                    B10. Leadership Role Assessment
+                </h3>
+                
+                <div class="mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700 font-medium">Leadership qualities</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium" data-field="b10_leadership_qualities">
+                            Not rated
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700 font-medium">Problem-solving qualities</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium" data-field="b10_problem_solving">
+                            Not rated
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700 font-medium">Decision-making qualities</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium" data-field="b10_decision_making">
+                            Not rated
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- B11. Relationship to the appraisee -->
+            <div class="mb-8 bg-gray-50 rounded-lg shadow-sm p-5 border border-gray-100">
+                <h3 class="text-xl font-semibold text-gray-700 mb-4">B11. Relationship to the appraisee</h3>
+                
+                <div class="mb-6">
+                    <h4 class="text-gray-700 font-medium mb-2">a. Known the appraisee for:</h4>
+                    <div class="p-3 bg-white rounded border border-gray-200">
+                        <span class="text-gray-700" id="known-for-period">
+                            0 year(s), 0 month(s)
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h4 class="text-gray-700 font-medium mb-2">b. Relationship to appraisee:</h4>
+                    <div class="p-3 bg-white rounded border border-gray-200">
+                        <span class="text-gray-700" id="relationship-display">
+                            Not specified
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appraiser Review Date -->
+            <div class="mb-8 bg-gray-50 rounded-lg shadow-sm p-5 border border-gray-100">
+                <h3 class="text-xl font-semibold text-gray-700 mb-4">Review Date</h3>
+                <div class="p-3 bg-white rounded border border-gray-200">
+                    <span class="text-gray-700" id="review-date">Not specified</span>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between items-center mt-8 pt-4 border-t border-gray-200">
+                <!-- Previous button -->
+                {% if wizard.steps.prev %}
+                    <button type="submit" 
+                            name="wizard_goto_step" 
+                            value="{{ wizard.steps.prev }}" 
+                            class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors">
+                        <span class="flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                            Previous
+                        </span>
+                    </button>
+                {% else %}
+                    <div></div>
+                {% endif %}
+                
+                <!-- Next button -->
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                    <span class="flex items-center">
+                        Next
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block javascript %}
+<script>
+    console.log("Section B Read-Only JavaScript loaded");
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load data using AJAX
+        loadSavedData();
+        
+        function loadSavedData() {
+            console.log("Loading saved data via API...");
+            const url = '{% url "appraisals:get_section_data" %}?section=B&appraisal_id={{ appraisal.appraisal_id }}';
+            console.log("Fetching from URL:", url);
+            
+            fetch(url)
+                .then(response => {
+                    console.log("Response status:", response.status);
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`Network response was not ok (${response.status}): ${text}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Raw data received:", data);
+                    
+                    // Check if we have data in the expected format
+                    if (!data || !data.data) {
+                        console.error("Data is missing or in wrong format:", data);
+                        return;
+                    }
+                    
+                    const formData = data.data;
+                    console.log("Form data to use:", formData);
+                    
+                    // Update all rating spans with debugging
+                    document.querySelectorAll('[data-field]').forEach(element => {
+                        const fieldName = element.getAttribute('data-field');
+                        console.log(`Updating field ${fieldName} with value: ${formData[fieldName]}`);
+                        
+                        if (formData[fieldName] !== undefined) {
+                            element.textContent = formData[fieldName] || "Not rated";
+                        } else {
+                            console.warn(`Field ${fieldName} not found in data`);
+                        }
+                    });
+                    
+                    // Update text fields
+                    updateTextContent('b7_strongest_points', formData.b7_strongest_points || "No data provided");
+                    updateTextContent('b8_improvement_areas', formData.b8_improvement_areas || "No data provided");
+                    updateTextContent('b9_other_comments', formData.b9_other_comments || "No comments provided");
+                    
+                    // Handle leadership section
+                    const leadershipSection = document.getElementById('leadership-section');
+                    if (leadershipSection) {
+                        if (formData.b_is_leadership_role === true || 
+                            formData.b_is_leadership_role === "true" || 
+                            formData.b_is_leadership_role === 1 || 
+                            formData.b_is_leadership_role === "1") {
+                            leadershipSection.classList.remove('hidden');
+                            console.log("Showing leadership section");
+                        } else {
+                            leadershipSection.classList.add('hidden');
+                            console.log("Hiding leadership section");
+                        }
+                    }
+                    
+                    // Update known for period
+                    const knownForSpan = document.getElementById('known-for-period');
+                    if (knownForSpan) {
+                        const years = formData.b11_known_years || "0";
+                        const months = formData.b11_known_months || "0";
+                        knownForSpan.textContent = `${years} year(s), ${months} month(s)`;
+                    }
+                    
+                    // Update relationship
+                    const relationshipSpan = document.getElementById('relationship-display');
+                    if (relationshipSpan) {
+                        let relationshipText = formData.b11_relationship || "Not specified";
+                        if (formData.b11_relationship === "Other" && formData.b11_relationship_other) {
+                            relationshipText += ` - ${formData.b11_relationship_other}`;
+                        }
+                        relationshipSpan.textContent = relationshipText;
+                    }
+                    
+                    // Update review date
+                    const reviewDateSpan = document.getElementById('review-date');
+                    if (reviewDateSpan) {
+                        reviewDateSpan.textContent = formData.b_appraiser_review_date || "Not specified";
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading saved data:', error);
+                    // Show a user-friendly error message on the page
+                    document.getElementById('wizard-container').insertAdjacentHTML('afterbegin', `
+                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                            <p>Error loading appraisal data. Please try refreshing the page or contact support.</p>
+                            <p class="text-xs">${error.message}</p>
+                        </div>
+                    `);
+                });
+        }
+        
+        function updateTextContent(fieldName, value) {
+            const element = document.getElementById(fieldName + '-content');
+            if (element) {
+                element.textContent = value;
+                console.log(`Updated ${fieldName} with: ${value}`);
+            } else {
+                console.warn(`Element with ID ${fieldName}-content not found`);
+            }
+        }
+    });
+</script>
+{% endblock %}
