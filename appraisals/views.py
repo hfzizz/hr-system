@@ -16,7 +16,13 @@ import logging
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 import json
-from .forms import ModuleFormSet, SectionAForm, SectionBForm, SectionCForm, SectionDForm, SectionEForm
+from .forms import (
+    ModuleFormSet, SectionAForm, SectionBForm, SectionCForm, SectionDForm, SectionEForm, 
+    CompletedResearchFormSet, OngoingResearchFormSet, ConferenceAttendanceFormSet, 
+    ConferencePaperFormSet, ConsultancyWorkFormSet, AdministrativePostFormSet,
+    WithinUniversityActivityFormSet, OutsideUniversityActivityFormSet,
+    UniversityCommitteeMembershipFormSet, OutsideCommitteeMembershipFormSet
+)
 from employees.forms import QualificationFormSet
 from django.forms import inlineformset_factory
 from django.core.exceptions import PermissionDenied
@@ -1119,6 +1125,56 @@ class AppraiseeUpdateView(LoginRequiredMixin, UpdateView):
                 instance=self.object.employee,
                 prefix='module_set'
             )
+            context['completed_research_formset'] = CompletedResearchFormSet(
+                self.request.POST,
+                instance=self.object,
+                prefix='completed_research_set'
+            )
+            context['ongoing_research_formset'] = OngoingResearchFormSet(
+                self.request.POST,
+                instance=self.object,
+                prefix='ongoing_research_set'
+            )
+            context['conference_attendance_formset'] = ConferenceAttendanceFormSet(
+                self.request.POST,
+                instance=self.object,
+                prefix='conference_attendance_set'
+            )
+            context['conference_paper_formset'] = ConferencePaperFormSet(
+                self.request.POST,
+                instance=self.object,
+                prefix='conference_paper_set'
+            )
+            context['consultancy_work_formset'] = ConsultancyWorkFormSet(
+                self.request.POST,
+                instance=self.object,
+                prefix='consultancy_work_set'
+            )
+            context['administrative_post_formset'] = AdministrativePostFormSet(
+                self.request.POST,
+                instance=self.object,
+                prefix='administrative_post_set'
+            )
+            context['within_university_activity_formset'] = WithinUniversityActivityFormSet(
+                self.request.POST,
+                instance=self.object,
+                prefix='within_university_activity_set'
+            )
+            context['outside_university_activity_formset'] = OutsideUniversityActivityFormSet(
+                self.request.POST,
+                instance=self.object,
+                prefix='outside_university_activity_set'
+            )
+            context['university_committee_formset'] = UniversityCommitteeMembershipFormSet(
+                self.request.POST,
+                instance=self.object,
+                prefix='university_committee_set'
+            )
+            context['outside_committee_formset'] = OutsideCommitteeMembershipFormSet(
+                self.request.POST,
+                instance=self.object,
+                prefix='outside_committee_set'
+            )
         else:
             context['qualification_formset'] = QualificationFormSet(
                 instance=self.object.employee,
@@ -1128,6 +1184,46 @@ class AppraiseeUpdateView(LoginRequiredMixin, UpdateView):
                 instance=self.object.employee,
                 prefix='module_set'
             )
+            context['completed_research_formset'] = CompletedResearchFormSet(
+                instance=self.object,
+                prefix='completed_research_set'
+            )
+            context['ongoing_research_formset'] = OngoingResearchFormSet(
+                instance=self.object,
+                prefix='ongoing_research_set'
+            )
+            context['conference_attendance_formset'] = ConferenceAttendanceFormSet(
+                instance=self.object,
+                prefix='conference_attendance_set'
+            )
+            context['conference_paper_formset'] = ConferencePaperFormSet(
+                instance=self.object,
+                prefix='conference_paper_set'
+            )
+            context['consultancy_work_formset'] = ConsultancyWorkFormSet(
+                instance=self.object,
+                prefix='consultancy_work_set'
+            )
+            context['administrative_post_formset'] = AdministrativePostFormSet(
+                instance=self.object,
+                prefix='administrative_post_set'
+            )
+            context['within_university_activity_formset'] = WithinUniversityActivityFormSet(
+                instance=self.object,
+                prefix='within_university_activity_set'
+            )
+            context['outside_university_activity_formset'] = OutsideUniversityActivityFormSet(
+                instance=self.object,
+                prefix='outside_university_activity_set'
+            )
+            context['university_committee_formset'] = UniversityCommitteeMembershipFormSet(
+                instance=self.object,
+                prefix='university_committee_set'
+            )
+            context['outside_committee_formset'] = OutsideCommitteeMembershipFormSet(
+                instance=self.object,
+                prefix='outside_committee_set'
+            )
         
         return context
 
@@ -1135,9 +1231,29 @@ class AppraiseeUpdateView(LoginRequiredMixin, UpdateView):
         context = self.get_context_data()
         qualification_formset = context.get('qualification_formset')
         module_formset = context.get('module_formset')
+        completed_research_formset = context.get('completed_research_formset')
+        ongoing_research_formset = context.get('ongoing_research_formset')
+        conference_attendance_formset = context.get('conference_attendance_formset')
+        conference_paper_formset = context.get('conference_paper_formset')
+        consultancy_work_formset = context.get('consultancy_work_formset')
+        administrative_post_formset = context.get('administrative_post_formset')
+        within_university_activity_formset = context.get('within_university_activity_formset')
+        outside_university_activity_formset = context.get('outside_university_activity_formset')
+        university_committee_formset = context.get('university_committee_formset')
+        outside_committee_formset = context.get('outside_committee_formset')
         
         if (qualification_formset.is_valid() and 
-            module_formset.is_valid()):
+            module_formset.is_valid() and
+            completed_research_formset.is_valid() and
+            ongoing_research_formset.is_valid() and
+            conference_attendance_formset.is_valid() and
+            conference_paper_formset.is_valid() and
+            consultancy_work_formset.is_valid() and
+            administrative_post_formset.is_valid() and
+            within_university_activity_formset.is_valid() and
+            outside_university_activity_formset.is_valid() and
+            university_committee_formset.is_valid() and
+            outside_committee_formset.is_valid()):
             
             # Save the main form
             self.object = form.save(commit=False)
@@ -1157,6 +1273,36 @@ class AppraiseeUpdateView(LoginRequiredMixin, UpdateView):
             
             module_formset.instance = self.object.employee
             module_formset.save()
+
+            completed_research_formset.instance = self.object
+            completed_research_formset.save()
+
+            ongoing_research_formset.instance = self.object
+            ongoing_research_formset.save()
+
+            conference_attendance_formset.instance = self.object
+            conference_attendance_formset.save()
+
+            conference_paper_formset.instance = self.object
+            conference_paper_formset.save()
+
+            consultancy_work_formset.instance = self.object
+            consultancy_work_formset.save()
+
+            administrative_post_formset.instance = self.object
+            administrative_post_formset.save()
+
+            within_university_activity_formset.instance = self.object
+            within_university_activity_formset.save()
+
+            outside_university_activity_formset.instance = self.object
+            outside_university_activity_formset.save()
+
+            university_committee_formset.instance = self.object
+            university_committee_formset.save()
+
+            outside_committee_formset.instance = self.object
+            outside_committee_formset.save()
             
             # Add success message
             msg = 'Form saved as draft successfully.' if self.request.POST.get('save_draft') == 'true' else 'Form submitted successfully and sent for review.'

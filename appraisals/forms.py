@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import inlineformset_factory
-from .models import Appraisal, Module
+from .models import Appraisal, Module, CompletedResearch, OngoingResearch, ConferenceAttendance, ConferencePaper, ConsultancyWork, AdministrativePost, WithinUniversityActivity, OutsideUniversityActivity, UniversityCommitteeMembership, OutsideCommitteeMembership
 from employees.models import Employee
 
 class HRAppraisalForm(forms.ModelForm):
@@ -185,5 +185,126 @@ ModuleFormSet = inlineformset_factory(
     ]
 )
 
+class CompletedResearchForm(forms.ModelForm):
+    class Meta:
+        model = CompletedResearch
+        fields = ['title', 'start_date', 'end_date', 'funding_agency', 'grants']
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+CompletedResearchFormSet = inlineformset_factory(
+    Appraisal, CompletedResearch, form=CompletedResearchForm,
+    extra=1, can_delete=True
+)
+
+class OngoingResearchForm(forms.ModelForm):
+    class Meta:
+        model = OngoingResearch
+        fields = ['title', 'start_date', 'end_date', 'funding_agency', 'grants']
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+OngoingResearchFormSet = inlineformset_factory(
+    Appraisal, OngoingResearch, form=OngoingResearchForm,
+    extra=1, can_delete=True
+)
+
+class ConferenceAttendanceForm(forms.ModelForm):
+    class Meta:
+        model = ConferenceAttendance
+        fields = ['event_name', 'type', 'date', 'location', 'role', 'details']
+
+ConferenceAttendanceFormSet = inlineformset_factory(
+    Appraisal, ConferenceAttendance, form=ConferenceAttendanceForm,
+    extra=1, can_delete=True
+)
+
+class ConferencePaperForm(forms.ModelForm):
+    class Meta:
+        model = ConferencePaper
+        fields = ['author', 'year', 'title', 'volume', 'pages', 'doi']
+
+ConferencePaperFormSet = inlineformset_factory(
+    Appraisal, ConferencePaper, form=ConferencePaperForm,
+    extra=1, can_delete=True
+)
+
+class ConsultancyWorkForm(forms.ModelForm):
+    class Meta:
+        model = ConsultancyWork
+        fields = ['title', 'company_institute', 'start_date', 'end_date']
+
+ConsultancyWorkFormSet = inlineformset_factory(
+    Appraisal, ConsultancyWork, form=ConsultancyWorkForm,
+    extra=1, can_delete=True
+)
+
+class AdministrativePostForm(forms.ModelForm):
+    class Meta:
+        model = AdministrativePost
+        fields = ['position', 'from_date', 'to_date', 'details']
+
+AdministrativePostFormSet = inlineformset_factory(
+    Appraisal, AdministrativePost, form=AdministrativePostForm,
+    extra=1, can_delete=True
+)
+
+class WithinUniversityActivityForm(forms.ModelForm):
+    class Meta:
+        model = WithinUniversityActivity
+        fields = ['activity', 'role', 'date', 'remarks']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+WithinUniversityActivityFormSet = inlineformset_factory(
+    Appraisal, WithinUniversityActivity, form=WithinUniversityActivityForm,
+    extra=1, can_delete=True
+)
+
+class OutsideUniversityActivityForm(forms.ModelForm):
+    class Meta:
+        model = OutsideUniversityActivity
+        fields = ['activity', 'role', 'date', 'remarks']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+OutsideUniversityActivityFormSet = inlineformset_factory(
+    Appraisal, OutsideUniversityActivity, form=OutsideUniversityActivityForm,
+    extra=1, can_delete=True
+)
+
+class UniversityCommitteeMembershipForm(forms.ModelForm):
+    class Meta:
+        model = UniversityCommitteeMembership
+        fields = ['committee_name', 'position', 'from_date', 'to_date', 'details']
+        widgets = {
+            'from_date': forms.DateInput(attrs={'type': 'date'}),
+            'to_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+UniversityCommitteeMembershipFormSet = inlineformset_factory(
+    Appraisal, UniversityCommitteeMembership, form=UniversityCommitteeMembershipForm,
+    extra=1, can_delete=True
+)
+
+class OutsideCommitteeMembershipForm(forms.ModelForm):
+    class Meta:
+        model = OutsideCommitteeMembership
+        fields = ['organization', 'position', 'from_date', 'to_date', 'details']
+        widgets = {
+            'from_date': forms.DateInput(attrs={'type': 'date'}),
+            'to_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+OutsideCommitteeMembershipFormSet = inlineformset_factory(
+    Appraisal, OutsideCommitteeMembership, form=OutsideCommitteeMembershipForm,
+    extra=1, can_delete=True
+)
 
     
