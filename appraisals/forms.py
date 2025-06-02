@@ -214,6 +214,9 @@ OngoingResearchFormSet = inlineformset_factory(
 )
 
 class ConferenceAttendanceForm(forms.ModelForm):
+    event_name = forms.CharField(max_length=255, required=False)
+    type = forms.CharField(max_length=100, required=False)
+    
     class Meta:
         model = ConferenceAttendance
         fields = ['event_name', 'type', 'date', 'location', 'role', 'details']
@@ -224,6 +227,9 @@ ConferenceAttendanceFormSet = inlineformset_factory(
 )
 
 class ConferencePaperForm(forms.ModelForm):
+    author = forms.CharField(max_length=255, required=False)
+    title = forms.CharField(max_length=500, required=False)
+    
     class Meta:
         model = ConferencePaper
         fields = ['author', 'year', 'title', 'volume', 'pages', 'doi']
@@ -234,6 +240,9 @@ ConferencePaperFormSet = inlineformset_factory(
 )
 
 class ConsultancyWorkForm(forms.ModelForm):
+    title = forms.CharField(max_length=255, required=False)
+    company_institute = forms.CharField(max_length=255, required=False)
+    
     class Meta:
         model = ConsultancyWork
         fields = ['title', 'company_institute', 'start_date', 'end_date']
@@ -244,6 +253,9 @@ ConsultancyWorkFormSet = inlineformset_factory(
 )
 
 class AdministrativePostForm(forms.ModelForm):
+    position = forms.CharField(max_length=255, required=False)
+    from_date = forms.DateField(required=False)
+    
     class Meta:
         model = AdministrativePost
         fields = ['position', 'from_date', 'to_date', 'details']
@@ -254,6 +266,9 @@ AdministrativePostFormSet = inlineformset_factory(
 )
 
 class WithinUniversityActivityForm(forms.ModelForm):
+    activity = forms.CharField(max_length=255, required=False)
+    role = forms.CharField(max_length=100, required=False)
+    
     class Meta:
         model = WithinUniversityActivity
         fields = ['activity', 'role', 'date', 'remarks']
@@ -267,6 +282,9 @@ WithinUniversityActivityFormSet = inlineformset_factory(
 )
 
 class OutsideUniversityActivityForm(forms.ModelForm):
+    activity = forms.CharField(max_length=255, required=False)
+    role = forms.CharField(max_length=100, required=False)
+    
     class Meta:
         model = OutsideUniversityActivity
         fields = ['activity', 'role', 'date', 'remarks']
@@ -280,6 +298,9 @@ OutsideUniversityActivityFormSet = inlineformset_factory(
 )
 
 class UniversityCommitteeMembershipForm(forms.ModelForm):
+    committee_name = forms.CharField(max_length=255, required=False)
+    position = forms.CharField(max_length=100, required=False)
+    
     class Meta:
         model = UniversityCommitteeMembership
         fields = ['committee_name', 'position', 'from_date', 'to_date', 'details']
@@ -294,6 +315,9 @@ UniversityCommitteeMembershipFormSet = inlineformset_factory(
 )
 
 class OutsideCommitteeMembershipForm(forms.ModelForm):
+    organization = forms.CharField(max_length=255, required=False)
+    position = forms.CharField(max_length=100, required=False)
+    
     class Meta:
         model = OutsideCommitteeMembership
         fields = ['organization', 'position', 'from_date', 'to_date', 'details']

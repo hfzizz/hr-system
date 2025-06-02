@@ -158,7 +158,10 @@
                                     <div class="mt-4">
                                         <button type="button" 
                                                 id="addQualificationBtn"
-                                                class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
                                             Add Qualification
                                         </button>
                                     </div>
@@ -201,7 +204,10 @@
                                         </table>
                                     </div>
                                     <div class="mt-4">
-                                        <button type="button" id="addConsultancyBtn" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        <button type="button" id="addConsultancyBtn" class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
                                             Add Consultancy
                                         </button>
                                     </div>
@@ -209,9 +215,9 @@
                                 </div>
                             </div>
 
-                            <!-- Research History Table -->
+                            <!-- Completed Research Table -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Research History</label>
+                                <label class="block text-sm font-medium text-gray-700">Completed Research</label>
                                 <div class="mt-4">
                                     <div class="overflow-x-auto">
                                         <table class="min-w-full divide-y divide-gray-200" id="researchHistoryTable">
@@ -231,11 +237,14 @@
                                         </table>
                                     </div>
                                     <div class="mt-4">
-                                        <button type="button" id="addResearchHistoryBtn" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        <button type="button" id="addResearchHistoryBtn" class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
                                             Add Research History
                                         </button>
                                     </div>
-                                    <input type="hidden" name="last_research" id="last_research">
+                                    <input type="hidden" name="last_research" id="last_research" value='{{ completed_research_data|default:"[]"|safe }}'>
                                 </div>
                             </div>
 
@@ -261,11 +270,14 @@
                                         </table>
                                     </div>
                                     <div class="mt-4">
-                                        <button type="button" id="addOngoingResearchBtn" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        <button type="button" id="addOngoingResearchBtn" class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
                                             Add Ongoing Research
                                         </button>
                                     </div>
-                                    <input type="hidden" name="ongoing_research" id="ongoing_research">
+                                    <input type="hidden" name="ongoing_research" id="ongoing_research" value='{{ ongoing_research_data|default:"[]"|safe }}'>
                                 </div>
                             </div>
 
@@ -292,7 +304,10 @@
                                         </table>
                                     </div>
                                     <div class="mt-4">
-                                        <button type="button" id="addConferencePaperBtn" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        <button type="button" id="addConferencePaperBtn" class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
                                             Add Conference Paper
                                         </button>
                                     </div>
@@ -304,25 +319,13 @@
                             <div class="space-y-4">
                                 <div class="flex flex-col space-y-1">
                                     <label class="text-sm font-medium text-gray-700">Publications</label>
-                                    <p class="text-sm text-gray-500">List publications in APA format</p>
-                                    <div class="flex space-x-2 mb-2">
-                                        <input type="text" 
-                                               name="scopus_id" 
-                                               id="scopus_id"
-                                               placeholder="Enter Scopus ID (e.g., 34870460300)"
-                                               value="{{ form.scopus_id.value|default:'' }}"
-                                               class="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-800 shadow-sm">
-                                        <button type="button" 
-                                                id="fetchPublicationsBtn"
-                                                class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                            Fetch from Scopus
-                                        </button>
-                                    </div>
+                                    <p class="text-sm text-gray-500">Publications from your completed appraisals will be auto-populated below</p>
+                                    <!-- Remove debug displays -->
                                     <div id="publications-list" class="mb-2 space-y-2"></div>
                                     <textarea name="publications" 
                                               id="publications"
-                                              rows="4"
-                                              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-800 shadow-sm">{{ form.publications.value|default:'' }}</textarea>
+                                              rows="6"
+                                              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-800 shadow-sm">{{ publications_text|default:form.publications.value|default:'' }}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -372,7 +375,10 @@
                                     <div class="mt-4">
                                         <button type="button" 
                                                 id="addAttendanceBtn"
-                                                class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
                                             Add Event
                                         </button>
                                     </div>
@@ -400,7 +406,10 @@
                                         </table>
                                     </div>
                                     <div class="mt-4">
-                                        <button type="button" id="addAdministrativePositionBtn" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        <button type="button" id="addAdministrativePositionBtn" class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
                                             Add Position
                                         </button>
                                     </div>
@@ -430,7 +439,10 @@
                                         </table>
                                     </div>
                                     <div class="mt-4">
-                                        <button type="button" id="addUniversityCommitteeBtn" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        <button type="button" id="addUniversityCommitteeBtn" class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
                                             Add Committee
                                         </button>
                                     </div>
@@ -460,7 +472,10 @@
                                         </table>
                                     </div>
                                     <div class="mt-4">
-                                        <button type="button" id="addExternalCommitteeBtn" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        <button type="button" id="addExternalCommitteeBtn" class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
                                             Add Committee
                                         </button>
                                     </div>
@@ -498,7 +513,10 @@
                                 <div class="mt-4">
                                     <button type="button" 
                                             id="addParticipationWithinBtn"
-                                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                            class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                        </svg>
                                         Add Activity
                                     </button>
                                 </div>
@@ -530,7 +548,10 @@
                                 <div class="mt-4">
                                     <button type="button" 
                                             id="addParticipationOutsideBtn"
-                                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                            class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                        </svg>
                                         Add Activity
                                     </button>
                                 </div>
@@ -561,7 +582,10 @@
                         <div class="mt-4">
                             <button type="button" 
                                     id="addFellowshipAwardBtn"
-                                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
                                 Add Fellowship/Award
                             </button>
                         </div>
@@ -592,7 +616,10 @@
                         <div class="mt-4">
                             <button type="button" 
                                     id="addTeachingModuleBtn"
-                                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
                                 Add Teaching Module
                             </button>
                         </div>
@@ -644,7 +671,10 @@
                             <div class="mt-4">
                                 <button type="button" 
                                         id="addMentorshipBtn"
-                                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
                                     Add Mentorship
                                 </button>
                             </div>
@@ -675,7 +705,10 @@
                             <div class="mt-4">
                                 <button type="button" 
                                         id="addGradSupervisionBtn"
-                                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
                                     Add Graduate Supervision
                                 </button>
                             </div>
@@ -690,17 +723,6 @@
                                       rows="4"
                                       class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-800 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                       >{{ form.teaching_future_plan.value|default:'' }}</textarea>
-                        </div>
-                    </div>
-
-                    <!-- Previous Appraisal Comments -->
-                    <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-                        <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Previous Appraisal Comments</h2>
-                        <div class="flex flex-col space-y-1">
-                            <label class="text-sm font-medium text-gray-700">Appraiser Comments History</label>
-                            <div class="mt-1 space-y-4" id="appraiserCommentsHistory">
-                                <!-- Comments will be inserted here dynamically -->
-                            </div>
                         </div>
                     </div>
 
@@ -744,11 +766,17 @@
                 <div class="flex justify-end mt-8 gap-4">
                     <button type="button"
                             id="save-draft-btn"
-                            class="inline-flex justify-center py-2 px-4 border border-gray-400 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            class="inline-flex items-center rounded-md bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-offset-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                        </svg>
                         Save as Draft
                     </button>
                     <button type="submit"
-                            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            class="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
                         Submit Application
                     </button>
                 </div>
@@ -761,8 +789,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Debug: Verify that all table elements exist
-    console.log("DOM Content Loaded - Starting table element verification");
     
     const tableIds = [
         'consultancyWorkTable', 
@@ -780,10 +806,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     tableIds.forEach(id => {
         const table = document.getElementById(id);
-        console.log(`Table '${id}': ${table ? 'FOUND ✓' : 'MISSING ✗'}`);
         if (table) {
             const tbody = table.querySelector('tbody');
-            console.log(`  - tbody for '${id}': ${tbody ? 'FOUND ✓' : 'MISSING ✗'}`);
         }
     });
     
@@ -862,8 +886,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
-        deleteBtn.className = 'text-red-600 hover:text-red-900';
-        deleteBtn.textContent = 'Delete';
+        deleteBtn.className = 'inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2';
+        deleteBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete
+        `;
         deleteBtn.onclick = () => {
             row.remove();
             updateQualificationsData(); // Update after deletion
@@ -1009,8 +1038,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const deleteButton = document.createElement('button');
         deleteButton.type = 'button';
-        deleteButton.className = 'text-red-600 hover:text-red-900';
-        deleteButton.textContent = 'Delete';
+        deleteButton.className = 'inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2';
+        deleteButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete
+        `;
         deleteButton.onclick = () => {
             row.remove();
             updateTeachingModulesText();
@@ -1061,7 +1095,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         document.querySelector('input[name="attendance_data"]').value = JSON.stringify(attendance);
-        console.log("Updated attendance data:", attendance); // Debug
     }
 
     function updateTeachingModulesText() {
@@ -1092,10 +1125,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update form submission
     document.querySelector('form').addEventListener('submit', function(e) {
-        console.log("Debug: Form submission triggered");
         e.preventDefault();
         updateAdministrativePositionsData();
-        console.log("Debug: Final form data:", administrativePositionsInput.value);
         this.submit();
     });
 
@@ -1252,7 +1283,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // If in edit mode, load contract data from the context to populate all tables
     {% if is_edit_mode and contract_data_json %}
     const contractData = {{ contract_data_json|safe }};
-    console.log("Edit mode enabled - populating tables with saved data");
     
     // Helper function to safely parse JSON that might be double-encoded
     function safelyParseJson(jsonData) {
@@ -1327,7 +1357,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         <input type="text" value="${position.details || ''}" placeholder="Details" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateAdministrativePositionsData();">Delete</button>
+                        <button type="button" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2" onclick="this.closest('tr').remove(); updateAdministrativePositionsData();">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete
+                        </button>
                     </td>
                 `;
                 administrativePositionsTable.querySelector('tbody').appendChild(newRow);
@@ -1366,8 +1401,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const deleteBtn = document.createElement('button');
                 deleteBtn.type = 'button';
-                deleteBtn.className = 'text-red-600 hover:text-red-900 ml-2';
-                deleteBtn.textContent = 'Delete';
+                deleteBtn.className = 'inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2';
+                deleteBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                `;
                 deleteBtn.onclick = () => {
                     row.remove();
                     updateUniversityCommitteesData();
@@ -1412,8 +1452,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const deleteBtn = document.createElement('button');
                 deleteBtn.type = 'button';
-                deleteBtn.className = 'text-red-600 hover:text-red-900 ml-2';
-                deleteBtn.textContent = 'Delete';
+                deleteBtn.className = 'inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2';
+                deleteBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                `;
                 deleteBtn.onclick = () => {
                     row.remove();
                     updateExternalCommitteesData();
@@ -1433,9 +1478,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load participation within university
     if (contractData.participation_within_text) {
         try {
-            console.log("Loading participation within data:", contractData.participation_within_text);
             const participations = JSON.parse(contractData.participation_within_text);
-            console.log("Parsed participation within data:", participations);
             
             // Clear the table first to prevent duplicates
             const tbody = document.getElementById('participationWithinTable').querySelector('tbody');
@@ -1444,7 +1487,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             participations.forEach((participation, index) => {
-                console.log(`Processing participation within item ${index}:`, participation);
                 // Ensure compatibility with both field naming conventions (details or remarks)
                 const data = {
                     activity: participation.activity || '',
@@ -1463,9 +1505,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load participation outside university
     if (contractData.participation_outside_text) {
         try {
-            console.log("Loading participation outside data:", contractData.participation_outside_text);
             const participations = JSON.parse(contractData.participation_outside_text);
-            console.log("Parsed participation outside data:", participations);
             
             // Clear the table first to prevent duplicates
             const tbody = document.getElementById('participationOutsideTable').querySelector('tbody');
@@ -1474,7 +1514,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             participations.forEach((participation, index) => {
-                console.log(`Processing participation outside item ${index}:`, participation);
                 // Ensure compatibility with both field naming conventions (details or remarks)
                 const data = {
                     activity: participation.activity || '',
@@ -1493,12 +1532,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load last research data
     if (contractData.last_research) {
         try {
-            console.log("Loading research history data:", contractData.last_research);
             const researchData = safelyParseJson(contractData.last_research);
-            console.log("Parsed research history data:", researchData);
             
             if (Array.isArray(researchData)) {
-                console.log(`Found ${researchData.length} research history items to load`);
                 // Clear the table first to prevent any existing entries
                 const tbody = researchHistoryTable.querySelector('tbody');
                 while (tbody.firstChild) {
@@ -1506,7 +1542,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 researchData.forEach((research, index) => {
-                    console.log(`Processing research history item ${index}:`, research);
                     addResearchHistoryRow(research);
                 });
                 updateResearchHistoryData();
@@ -1521,10 +1556,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load ongoing research data
     if (contractData.ongoing_research) {
         try {
-            console.log("Loading ongoing research data:", contractData.ongoing_research);
             const researchData = safelyParseJson(contractData.ongoing_research);
-            console.log("Parsed ongoing research data:", researchData);
-            
             if (Array.isArray(researchData)) {
                 console.log(`Found ${researchData.length} ongoing research items to load`);
                 // Clear the table first to prevent any existing entries
@@ -1572,7 +1604,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             <input type="date" value="${consultancy.endDate || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateConsultancyData();">Delete</button>
+                            <button type="button" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2" onclick="this.closest('tr').remove(); updateConsultancyData();">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Delete
+                            </button>
                         </td>
                     `;
                     
@@ -1679,7 +1716,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             <input type="text" value="${paper.doi || ''}" placeholder="Enter DOI" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateConferencePapersData();">Delete</button>
+                            <button type="button" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2" onclick="this.closest('tr').remove(); updateConferencePapersData();">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Delete
+                            </button>
                         </td>
                     `;
                     if (conferencePapersTable && conferencePapersTable.querySelector('tbody')) {
@@ -1783,104 +1825,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     {% endif %}
 
-    // Add Scopus publications fetching
-    const scopusInput = document.getElementById('scopus_id');
-    const fetchPublicationsBtn = document.getElementById('fetchPublicationsBtn');
-    const publicationsList = document.getElementById('publications-list');
-    const publicationsTextarea = document.getElementById('publications');
-
-    async function fetchPublications(scopusId) {
-        try {
-            const response = await fetch(`/contract/fetch-publications/${scopusId}/`);
-            const data = await response.json();
-            
-            if (data.success && Array.isArray(data.publications) && data.publications.length > 0) {
-                // Clear existing publications list
-                publicationsList.innerHTML = '';
-                
-                // Create formatted publications list
-                data.publications.forEach(pub => {
-                    if (!pub || !pub.formatted_citation) return; // Skip invalid entries
-                    
-                    const pubDiv = document.createElement('div');
-                    pubDiv.className = 'p-3 bg-gray-50 rounded-md mb-2';
-                    pubDiv.innerHTML = `
-                        <p class="text-gray-700">${pub.formatted_citation}</p>
-                        <div class="mt-1 text-sm text-gray-500">
-                            Citations: ${pub.citation_count || 0} | Year: ${pub.year || 'N/A'}
-                        </div>
-                    `;
-                    publicationsList.appendChild(pubDiv);
-                });
-
-                // Update the textarea with formatted citations
-                const formattedPublications = data.publications
-                    .filter(pub => pub && pub.formatted_citation) // Remove null/invalid entries
-                    .map(pub => pub.formatted_citation)
-                    .join('\n\n');
-                
-                if (formattedPublications) {
-                    publicationsTextarea.value = formattedPublications;
-                } else {
-                    publicationsTextarea.value = ''; // Set empty string if no valid publications
-                    throw new Error('No valid publications found');
-                }
-            } else {
-                publicationsTextarea.value = ''; // Clear textarea if no publications found
-                throw new Error(data.message || 'No publications found');
-            }
-        } catch (error) {
-            console.error('Error fetching publications:', error);
-            // Don't clear existing publications on error
-            if (!publicationsTextarea.value) {
-                publicationsTextarea.value = '';
-            }
-            alert('Error fetching publications. Please try again or enter manually.');
-        }
-    }
-
     // Initialize publications if they exist
     const existingPublications = document.getElementById('publications').value;
     if (existingPublications) {
         try {
-            const publications = JSON.parse(existingPublications);
-            if (Array.isArray(publications) && publications.length > 0) {
-                const formattedPublications = publications
-                    .filter(pub => pub && typeof pub === 'string')
-                    .join('\n\n');
-                document.getElementById('publications').value = formattedPublications;
-            }
+            // Check if it's JSON format (from older versions)
+            JSON.parse(existingPublications);
+            // If no error, it's in JSON format - keep as is
         } catch (e) {
-            console.error('Error parsing existing publications:', e);
-            // Keep the original value if it's not JSON
-            if (existingPublications !== 'null' && existingPublications !== 'undefined') {
-                document.getElementById('publications').value = existingPublications;
-            } else {
-                document.getElementById('publications').value = '';
-            }
+            // Not JSON, it's already text format - keep as is
         }
     }
-
-    // Auto-fetch when Scopus ID is entered (with debounce)
-    let timeout;
-    scopusInput.addEventListener('input', (e) => {
-        clearTimeout(timeout);
-        const scopusId = e.target.value.trim();
-        
-        if (scopusId) {
-            timeout = setTimeout(() => {
-                fetchPublications(scopusId);
-            }, 1000); // Wait 1 second after typing stops
-        }
-    });
-
-    // Manual fetch button
-    fetchPublicationsBtn.addEventListener('click', () => {
-        const scopusId = scopusInput.value.trim();
-        if (scopusId) {
-            fetchPublications(scopusId);
-        }
-    });
 
     // Display existing teaching modules if any
     {% if not is_edit_mode %}
@@ -1924,8 +1879,13 @@ document.addEventListener('DOMContentLoaded', function() {
         actionsCell.className = 'px-6 py-4 whitespace-nowrap text-right text-sm font-medium';
         
         const deleteButton = document.createElement('button');
-        deleteButton.className = 'text-red-600 hover:text-red-900';
-        deleteButton.textContent = 'Delete';
+        deleteButton.className = 'inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2';
+        deleteButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete
+        `;
         deleteButton.onclick = () => {
             row.remove();
             updateParticipationData(tableId);
@@ -1993,7 +1953,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="text" placeholder="Details" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right">
-                <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateAdministrativePositionsData();">Delete</button>
+                <button type="button" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2" onclick="this.closest('tr').remove(); updateAdministrativePositionsData();">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                </button>
             </td>
         `;
 
@@ -2006,7 +1971,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const positions = [];
         const rows = administrativePositionsTable.querySelectorAll('tbody tr');
 
-        console.log("Debug: Number of rows found:", rows.length);
 
         rows.forEach((row, index) => {
             const inputs = row.querySelectorAll('input');
@@ -2036,9 +2000,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 inputs[1].classList.add('border-red-500');
             }
         });
-
-        console.log("Debug: Final positions array:", positions);
-        console.log("Debug: JSON string to be sent:", JSON.stringify(positions));
         
         administrativePositionsInput.value = JSON.stringify(positions);
         return positions.length;
@@ -2046,7 +2007,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Also update when table changes
     administrativePositionsTable.addEventListener('change', function(e) {
-        console.log("Debug: Table changed");
         // Remove error highlighting when field is filled
         if (e.target.tagName === 'INPUT' && e.target.type === 'date') {
             if (e.target.value && e.target.value.trim() !== '') {
@@ -2115,8 +2075,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
-        deleteBtn.className = 'text-red-600 hover:text-red-900 ml-2';
-        deleteBtn.textContent = 'Delete';
+        deleteBtn.className = 'inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2';
+        deleteBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete
+        `;
         deleteBtn.onclick = () => {
             row.remove();
             updateUniversityCommitteesData();
@@ -2161,8 +2126,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
-        deleteBtn.className = 'text-red-600 hover:text-red-900 ml-2';
-        deleteBtn.textContent = 'Delete';
+        deleteBtn.className = 'inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2';
+        deleteBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete
+        `;
         deleteBtn.onclick = () => {
             row.remove();
             updateExternalCommitteesData();
@@ -2193,7 +2163,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 committees.push(committee);
             }
         });
-        console.log('Updating university committees:', committees); // Debug
         universityCommitteesInput.value = JSON.stringify(committees);
     }
 
@@ -2215,7 +2184,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 committees.push(committee);
             }
         });
-        console.log('Updating external committees:', committees); // Debug
         externalCommitteesInput.value = JSON.stringify(committees);
     }
 
@@ -2230,12 +2198,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add event listeners for input changes
     document.getElementById('universityCommitteesTable').addEventListener('input', function() {
-        console.log('University committees table changed'); // Debug
         updateUniversityCommitteesData();
     });
 
     document.getElementById('externalCommitteesTable').addEventListener('input', function() {
-        console.log('External committees table changed'); // Debug
         updateExternalCommitteesData();
     });
 
@@ -2245,7 +2211,6 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const committees = JSON.parse(universityCommitteesInput.value);
             committees.forEach(committee => createUniversityCommitteeRow(committee));
-            console.log('Initialized university committees:', committees); // Debug
         } catch (e) {
             console.error('Error parsing university committees:', e);
         }
@@ -2255,7 +2220,6 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const committees = JSON.parse(externalCommitteesInput.value);
             committees.forEach(committee => createExternalCommitteeRow(committee));
-            console.log('Initialized external committees:', committees); // Debug
         } catch (e) {
             console.error('Error parsing external committees:', e);
         }
@@ -2279,7 +2243,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="date" value="${data.endDate || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateConsultancyData();">Delete</button>
+                <button type="button" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2" onclick="this.closest('tr').remove(); updateConsultancyData();">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                </button>
             </td>
         `;
         consultancyTable.querySelector('tbody').appendChild(newRow);
@@ -2344,7 +2313,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="text" value="${data.grants || ''}" placeholder="Enter Grant Amount" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateResearchHistoryData();">Delete</button>
+                <button type="button" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2" onclick="this.closest('tr').remove(); updateResearchHistoryData();">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                </button>
             </td>
         `;
         researchHistoryTable.querySelector('tbody').appendChild(newRow);
@@ -2363,7 +2337,6 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         });
         researchHistoryInput.value = JSON.stringify(researchHistory);
-        console.log('Updated research history data:', researchHistoryInput.value);
     }
 
     addResearchHistoryBtn.addEventListener('click', () => addResearchHistoryRow({}));
@@ -2411,7 +2384,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="text" value="${data.grants || ''}" placeholder="Enter Grant Amount" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateOngoingResearchData();">Delete</button>
+                <button type="button" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2" onclick="this.closest('tr').remove(); updateOngoingResearchData();">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                </button>
             </td>
         `;
         ongoingResearchTable.querySelector('tbody').appendChild(newRow);
@@ -2430,7 +2408,6 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         });
         ongoingResearchInput.value = JSON.stringify(ongoingResearch);
-        console.log('Updated ongoing research data:', ongoingResearchInput.value);
     }
 
     addOngoingResearchBtn.addEventListener('click', () => addOngoingResearchRow({}));
@@ -2459,7 +2436,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="text" placeholder="Enter DOI" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateConferencePapersData();">Delete</button>
+                <button type="button" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2" onclick="this.closest('tr').remove(); updateConferencePapersData();">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                </button>
             </td>
         `;
         conferencePapersTable.querySelector('tbody').appendChild(newRow);
@@ -2486,8 +2468,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize dynamic tables if there's existing data
     {% if not is_edit_mode %}
-    // Only initialize from local input values if NOT in edit mode
-    console.log("Initializing tables from local values (not in edit mode)");
     
     if (consultancyInput.value && consultancyInput.value !== 'null') {
         try {
@@ -2503,7 +2483,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (researchHistoryInput.value && researchHistoryInput.value !== 'null') {
         try {
-            console.log("Initializing research history from local value:", researchHistoryInput.value);
             const researchData = JSON.parse(researchHistoryInput.value);
             if (Array.isArray(researchData)) {
                 researchData.forEach(item => addResearchHistoryRow(item));
@@ -2516,7 +2495,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (ongoingResearchInput.value && ongoingResearchInput.value !== 'null') {
         try {
-            console.log("Initializing ongoing research from local value:", ongoingResearchInput.value);
             const researchData = JSON.parse(ongoingResearchInput.value);
             if (Array.isArray(researchData)) {
                 researchData.forEach(item => {
@@ -2538,7 +2516,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             <input type="text" value="${item.grants || ''}" placeholder="Enter Grant Amount" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateOngoingResearchData();">Delete</button>
+                            <button type="button" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2" onclick="this.closest('tr').remove(); updateOngoingResearchData();">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Delete
+                            </button>
                         </td>
                     `;
                     ongoingResearchTable.querySelector('tbody').appendChild(newRow);
@@ -2577,7 +2560,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             <input type="text" value="${item.doi || ''}" placeholder="Enter DOI" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateConferencePapersData();">Delete</button>
+                            <button type="button" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2" onclick="this.closest('tr').remove(); updateConferencePapersData();">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Delete
+                            </button>
                         </td>
                     `;
                     conferencePapersTable.querySelector('tbody').appendChild(newRow);
@@ -2628,7 +2616,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="text" value="${data.organization || ''}" placeholder="Enter Awarding Organization" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateFellowshipsAwardsData();">Delete</button>
+                <button type="button" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2" onclick="this.closest('tr').remove(); updateFellowshipsAwardsData();">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                </button>
             </td>
         `;
         fellowshipsAwardsTable.querySelector('tbody').appendChild(newRow);
@@ -2700,7 +2693,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="date" value="${data.endDate || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateMentorshipData();">Delete</button>
+                <button type="button" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2" onclick="this.closest('tr').remove(); updateMentorshipData();">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                </button>
             </td>
         `;
         mentorshipTable.querySelector('tbody').appendChild(newRow);
@@ -2775,7 +2773,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="date" value="${data.endDate || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button type="button" class="text-red-600 hover:text-red-900 ml-2" onclick="this.closest('tr').remove(); updateGradSupervisionData();">Delete</button>
+                <button type="button" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2" onclick="this.closest('tr').remove(); updateGradSupervisionData();">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                </button>
             </td>
         `;
         gradSupervisionTable.querySelector('tbody').appendChild(newRow);
@@ -2831,24 +2834,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof updateFellowshipsAwardsData === 'function') updateFellowshipsAwardsData();
         if (typeof updateMentorshipData === 'function') updateMentorshipData();
         if (typeof updateGradSupervisionData === 'function') updateGradSupervisionData();
-        // --- Add debug logs for each major field/table ---
-        function logFieldValue(fieldIdOrName, label) {
-            var el = document.getElementById(fieldIdOrName) || document.querySelector('[name="' + fieldIdOrName + '"]');
-            if (el) {
-                console.log('DEBUG: ' + label + ' value before draft submit:', el.value);
-            }
-        }
-        logFieldValue('fellowships_awards_text', 'fellowships_awards_text');
-        logFieldValue('mentorship_text', 'mentorship_text');
-        logFieldValue('grad_supervision_text', 'grad_supervision_text');
-        // Debug for teaching_documents file input
-        var teachingDocInput = document.getElementById('teaching_documents');
-        if (teachingDocInput && teachingDocInput.files.length > 0) {
-            console.log('DEBUG: teaching_documents file selected:', teachingDocInput.files[0].name);
-        } else {
-            console.log('DEBUG: teaching_documents file selected: none');
-        }
-        // --- End debug logs ---
+
         // Use the form by id to ensure correct form is used
         const form = document.getElementById('contract-form');
         const formData = new FormData(form);
@@ -2907,7 +2893,654 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error parsing fellowships_awards_text:', e);
         }
     }
+
+    // Direct initialization from context variable for academic qualifications
+    {% if academic_qualifications_text and not is_edit_mode  %}
+    try {
+        const academicQualifications = JSON.parse('{{ academic_qualifications_text|escapejs }}');
+        if (Array.isArray(academicQualifications)) {
+            academicQualifications.forEach(qual => {
+                addQualificationRow(qual);
+            });
+            updateQualificationsData();
+        }
+    } catch(e) {
+        console.error('Error parsing academic_qualifications_text from context:', e);
+    }
+    {% endif %}
+    
+    // Direct initialization from context variable for teaching modules
+    {% if teaching_modules_text and not is_edit_mode %}
+    try {
+        const teachingModules = JSON.parse('{{ teaching_modules_text|escapejs }}');
+        if (Array.isArray(teachingModules)) {
+            teachingModules.forEach(module => {
+                createTeachingModuleRow({
+                    title: module.title || '',
+                    level: module.level || '',
+                    language: module.languageMedium || '',
+                    students: module.no_of_students || '',
+                    percentage: module.percentage_jointly_taught || '',
+                    hours: module.hrs_weekly || ''
+                });
+            });
+            updateTeachingModulesText();
+        }
+    } catch(e) {
+        console.error('Error parsing teaching_modules_text from context:', e);
+    }
+    {% endif %}
+
+    // Auto-populate conference attendance from appraisals
+    {% if conference_attendance_data and not is_edit_mode %}
+    try {
+        const attendanceData = JSON.parse('{{ conference_attendance_data|escapejs }}');
+        if (attendanceData && attendanceData.length > 0) {
+            attendanceData.forEach(event => {
+                const row = document.createElement('tr');
+                
+                // Event Name
+                const eventNameCell = document.createElement('td');
+                eventNameCell.className = 'px-6 py-4 whitespace-nowrap';
+                const eventNameInput = document.createElement('input');
+                eventNameInput.type = 'text';
+                eventNameInput.className = commonInputClasses;
+                eventNameInput.value = event.event_name;
+                eventNameCell.appendChild(eventNameInput);
+                row.appendChild(eventNameCell);
+                
+                // Type
+                const typeCell = document.createElement('td');
+                typeCell.className = 'px-6 py-4 whitespace-nowrap';
+                const typeInput = document.createElement('input');
+                typeInput.type = 'text';
+                typeInput.className = commonInputClasses;
+                typeInput.value = event.type;
+                typeCell.appendChild(typeInput);
+                row.appendChild(typeCell);
+                
+                // Date
+                const dateCell = document.createElement('td');
+                dateCell.className = 'px-6 py-4 whitespace-nowrap';
+                const dateInput = document.createElement('input');
+                dateInput.type = 'date';
+                dateInput.className = commonInputClasses;
+                dateInput.value = event.date;
+                dateCell.appendChild(dateInput);
+                row.appendChild(dateCell);
+                
+                // Location
+                const locationCell = document.createElement('td');
+                locationCell.className = 'px-6 py-4 whitespace-nowrap';
+                const locationInput = document.createElement('input');
+                locationInput.type = 'text';
+                locationInput.className = commonInputClasses;
+                locationInput.value = event.location;
+                locationCell.appendChild(locationInput);
+                row.appendChild(locationCell);
+                
+                // Role
+                const roleCell = document.createElement('td');
+                roleCell.className = 'px-6 py-4 whitespace-nowrap';
+                const roleInput = document.createElement('input');
+                roleInput.type = 'text';
+                roleInput.className = commonInputClasses;
+                roleInput.value = event.role;
+                roleCell.appendChild(roleInput);
+                row.appendChild(roleCell);
+                
+                // Details
+                const detailsCell = document.createElement('td');
+                detailsCell.className = 'px-6 py-4 whitespace-nowrap';
+                const detailsInput = document.createElement('input');
+                detailsInput.type = 'text';
+                detailsInput.className = commonInputClasses;
+                detailsInput.value = event.details;
+                detailsCell.appendChild(detailsInput);
+                row.appendChild(detailsCell);
+                
+                // Actions
+                const actionsCell = document.createElement('td');
+                actionsCell.className = 'px-6 py-4 whitespace-nowrap';
+                const deleteButton = document.createElement('button');
+                deleteButton.type = 'button';
+                deleteButton.className = 'inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2';
+                deleteButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                `;
+                deleteButton.addEventListener('click', function() {
+                    row.remove();
+                    updateAttendanceData();
+                });
+                actionsCell.appendChild(deleteButton);
+                row.appendChild(actionsCell);
+                
+                document.getElementById('conferenceAttendanceTable').appendChild(row);
+            });
+            
+            updateAttendanceData();
+        }
+    } catch (e) {
+        console.error('Error parsing conference attendance data:', e);
+    }
+    {% endif %}
+    
+    // Auto-populate administrative positions from appraisals
+    {% if administrative_positions_data and not is_edit_mode %}
+    try {
+        const positionsData = JSON.parse('{{ administrative_positions_data|escapejs }}');
+        if (positionsData && positionsData.length > 0) {
+            positionsData.forEach(position => {
+                const row = document.createElement('tr');
+                
+                // Position Title
+                const titleCell = document.createElement('td');
+                titleCell.className = 'px-6 py-4 whitespace-nowrap';
+                const titleInput = document.createElement('input');
+                titleInput.type = 'text';
+                titleInput.className = commonInputClasses;
+                titleInput.value = position.title;
+                titleCell.appendChild(titleInput);
+                row.appendChild(titleCell);
+                
+                // From Date
+                const fromDateCell = document.createElement('td');
+                fromDateCell.className = 'px-6 py-4 whitespace-nowrap';
+                const fromDateInput = document.createElement('input');
+                fromDateInput.type = 'date';
+                fromDateInput.className = commonInputClasses;
+                fromDateInput.value = position.from_date;
+                fromDateCell.appendChild(fromDateInput);
+                row.appendChild(fromDateCell);
+                
+                // To Date
+                const toDateCell = document.createElement('td');
+                toDateCell.className = 'px-6 py-4 whitespace-nowrap';
+                const toDateInput = document.createElement('input');
+                toDateInput.type = 'date';
+                toDateInput.className = commonInputClasses;
+                toDateInput.value = position.to_date;
+                toDateCell.appendChild(toDateInput);
+                row.appendChild(toDateCell);
+                
+                // Details
+                const detailsCell = document.createElement('td');
+                detailsCell.className = 'px-6 py-4 whitespace-nowrap';
+                const detailsInput = document.createElement('input');
+                detailsInput.type = 'text';
+                detailsInput.className = commonInputClasses;
+                detailsInput.value = position.details;
+                detailsCell.appendChild(detailsInput);
+                row.appendChild(detailsCell);
+                
+                // Actions
+                const actionsCell = document.createElement('td');
+                actionsCell.className = 'px-6 py-4 whitespace-nowrap';
+                const deleteButton = document.createElement('button');
+                deleteButton.type = 'button';
+                deleteButton.className = 'inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2';
+                deleteButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                `;
+                deleteButton.addEventListener('click', function() {
+                    row.remove();
+                    updateAdministrativePositionsData();
+                });
+                actionsCell.appendChild(deleteButton);
+                row.appendChild(actionsCell);
+                
+                document.getElementById('administrativePositionsTable').querySelector('tbody').appendChild(row);
+            });
+            
+            updateAdministrativePositionsData();
+        }
+    } catch (e) {
+        console.error('Error parsing administrative positions data:', e);
+    }
+    {% endif %}
+    
+    // Auto-populate university committees from appraisals
+    {% if university_committees_data and not is_edit_mode %}
+    try {
+        const committeesData = JSON.parse('{{ university_committees_data|escapejs }}');
+        if (committeesData && committeesData.length > 0) {
+            committeesData.forEach(committee => {
+                const row = document.createElement('tr');
+                
+                // Committee Name
+                const nameCell = document.createElement('td');
+                nameCell.className = 'px-6 py-4 whitespace-nowrap';
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.className = commonInputClasses;
+                nameInput.value = committee.committee_name;
+                nameCell.appendChild(nameInput);
+                row.appendChild(nameCell);
+                
+                // Position
+                const positionCell = document.createElement('td');
+                positionCell.className = 'px-6 py-4 whitespace-nowrap';
+                const positionInput = document.createElement('input');
+                positionInput.type = 'text';
+                positionInput.className = commonInputClasses;
+                positionInput.value = committee.position;
+                positionCell.appendChild(positionInput);
+                row.appendChild(positionCell);
+                
+                // From Date
+                const fromDateCell = document.createElement('td');
+                fromDateCell.className = 'px-6 py-4 whitespace-nowrap';
+                const fromDateInput = document.createElement('input');
+                fromDateInput.type = 'date';
+                fromDateInput.className = commonInputClasses;
+                fromDateInput.value = committee.from_date;
+                fromDateCell.appendChild(fromDateInput);
+                row.appendChild(fromDateCell);
+                
+                // To Date
+                const toDateCell = document.createElement('td');
+                toDateCell.className = 'px-6 py-4 whitespace-nowrap';
+                const toDateInput = document.createElement('input');
+                toDateInput.type = 'date';
+                toDateInput.className = commonInputClasses;
+                toDateInput.value = committee.to_date;
+                toDateCell.appendChild(toDateInput);
+                row.appendChild(toDateCell);
+                
+                // Details
+                const detailsCell = document.createElement('td');
+                detailsCell.className = 'px-6 py-4 whitespace-nowrap';
+                const detailsInput = document.createElement('input');
+                detailsInput.type = 'text';
+                detailsInput.className = commonInputClasses;
+                detailsInput.value = committee.details;
+                detailsCell.appendChild(detailsInput);
+                row.appendChild(detailsCell);
+                
+                // Actions
+                const actionsCell = document.createElement('td');
+                actionsCell.className = 'px-6 py-4 whitespace-nowrap';
+                const deleteButton = document.createElement('button');
+                deleteButton.type = 'button';
+                deleteButton.className = 'inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2';
+                deleteButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                `;
+                deleteButton.addEventListener('click', function() {
+                    row.remove();
+                    updateUniversityCommitteesData();
+                });
+                actionsCell.appendChild(deleteButton);
+                row.appendChild(actionsCell);
+                
+                document.getElementById('universityCommitteesTable').querySelector('tbody').appendChild(row);
+            });
+            
+            updateUniversityCommitteesData();
+        }
+    } catch (e) {
+        console.error('Error parsing university committees data:', e);
+    }
+    {% endif %}
+    
+    // Auto-populate external committees from appraisals
+    {% if external_committees_data and not is_edit_mode %}
+    try {
+        const committeesData = JSON.parse('{{ external_committees_data|escapejs }}');
+        if (committeesData && committeesData.length > 0) {
+            committeesData.forEach(committee => {
+                const row = document.createElement('tr');
+                
+                // Organization
+                const orgCell = document.createElement('td');
+                orgCell.className = 'px-6 py-4 whitespace-nowrap';
+                const orgInput = document.createElement('input');
+                orgInput.type = 'text';
+                orgInput.className = commonInputClasses;
+                orgInput.value = committee.organization;
+                orgCell.appendChild(orgInput);
+                row.appendChild(orgCell);
+                
+                // Position
+                const positionCell = document.createElement('td');
+                positionCell.className = 'px-6 py-4 whitespace-nowrap';
+                const positionInput = document.createElement('input');
+                positionInput.type = 'text';
+                positionInput.className = commonInputClasses;
+                positionInput.value = committee.position;
+                positionCell.appendChild(positionInput);
+                row.appendChild(positionCell);
+                
+                // From Date
+                const fromDateCell = document.createElement('td');
+                fromDateCell.className = 'px-6 py-4 whitespace-nowrap';
+                const fromDateInput = document.createElement('input');
+                fromDateInput.type = 'date';
+                fromDateInput.className = commonInputClasses;
+                fromDateInput.value = committee.from_date;
+                fromDateCell.appendChild(fromDateInput);
+                row.appendChild(fromDateCell);
+                
+                // To Date
+                const toDateCell = document.createElement('td');
+                toDateCell.className = 'px-6 py-4 whitespace-nowrap';
+                const toDateInput = document.createElement('input');
+                toDateInput.type = 'date';
+                toDateInput.className = commonInputClasses;
+                toDateInput.value = committee.to_date;
+                toDateCell.appendChild(toDateInput);
+                row.appendChild(toDateCell);
+                
+                // Details
+                const detailsCell = document.createElement('td');
+                detailsCell.className = 'px-6 py-4 whitespace-nowrap';
+                const detailsInput = document.createElement('input');
+                detailsInput.type = 'text';
+                detailsInput.className = commonInputClasses;
+                detailsInput.value = committee.details;
+                detailsCell.appendChild(detailsInput);
+                row.appendChild(detailsCell);
+                
+                // Actions
+                const actionsCell = document.createElement('td');
+                actionsCell.className = 'px-6 py-4 whitespace-nowrap';
+                const deleteButton = document.createElement('button');
+                deleteButton.type = 'button';
+                deleteButton.className = 'inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2';
+                deleteButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                `;
+                deleteButton.addEventListener('click', function() {
+                    row.remove();
+                    updateExternalCommitteesData();
+                });
+                actionsCell.appendChild(deleteButton);
+                row.appendChild(actionsCell);
+                
+                document.getElementById('externalCommitteesTable').querySelector('tbody').appendChild(row);
+            });
+            
+            updateExternalCommitteesData();
+        }
+    } catch (e) {
+        console.error('Error parsing external committees data:', e);
+    }
+    {% endif %}
+
+    // Auto-populate from appraisals if data is available
+    {% if conference_attendance_data and not is_edit_mode %}
+    try {
+        const attendanceData = JSON.parse('{{ conference_attendance_data|escapejs }}');
+        attendanceData.forEach(entry => {
+            createAttendanceRow(entry);
+        });
+    } catch (e) {
+        console.error("Error parsing conference_attendance_data:", e);
+    }
+    {% endif %}
+
+    {% if administrative_positions_data and not is_edit_mode %}
+    try {
+        const adminPositionsData = JSON.parse('{{ administrative_positions_data|escapejs }}');
+        adminPositionsData.forEach(position => {
+            // Create a new row
+            const row = document.createElement('tr');
+            
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="text" value="${position.title || ''}" placeholder="Enter Position" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="date" 
+                           value="${position.from_date || ''}"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                           pattern="\d{4}-\d{2}-\d{2}"
+                           placeholder="YYYY-MM-DD"
+                           required>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="date" 
+                           value="${position.to_date || ''}"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                           pattern="\d{4}-\d{2}-\d{2}"
+                           placeholder="YYYY-MM-DD">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="text" value="${position.details || ''}" placeholder="Details" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right">
+                    <button type="button" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2" onclick="this.closest('tr').remove(); updateAdministrativePositionsData();">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete
+                    </button>
+                </td>
+            `;
+
+            administrativePositionsTable.querySelector('tbody').appendChild(row);
+        });
+        updateAdministrativePositionsData();
+    } catch (e) {
+        console.error("Error parsing administrative_positions_data:", e);
+    }
+    {% endif %}
+
+    {% if university_committees_data and not is_edit_mode %}
+    try {
+        const committeesData = JSON.parse('{{ university_committees_data|escapejs }}');
+        committeesData.forEach(committee => {
+            createUniversityCommitteeRow({
+                name: committee.committee_name || '',
+                position: committee.position || '',
+                from_date: committee.from_date || '',
+                to_date: committee.to_date || '',
+                details: committee.details || ''
+            });
+        });
+        updateUniversityCommitteesData();
+    } catch (e) {
+        console.error("Error parsing university_committees_data:", e);
+    }
+    {% endif %}
+
+    {% if external_committees_data and not is_edit_mode %}
+    try {
+        const committeesData = JSON.parse('{{ external_committees_data|escapejs }}');
+        committeesData.forEach(committee => {
+            createExternalCommitteeRow({
+                organization: committee.organization || '',
+                position: committee.position || '',
+                from_date: committee.from_date || '',
+                to_date: committee.to_date || '',
+                details: committee.details || ''
+            });
+        });
+        updateExternalCommitteesData();
+    } catch (e) {
+        console.error("Error parsing external_committees_data:", e);
+    }
+    {% endif %}
+
+    {% if consultancy_work_data and not is_edit_mode %}
+    try {
+        const consultancyData = JSON.parse('{{ consultancy_work_data|escapejs }}');
+        consultancyData.forEach(entry => {
+            // Create a new row for consultancy work
+            const newRow = document.createElement('tr');
+            
+            // Set the HTML content of the row
+            newRow.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="text" value="${entry.title || ''}" placeholder="Title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="text" value="${entry.company_institute || ''}" placeholder="Company/Institute" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="date" value="${entry.start_date || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="date" value="${entry.end_date || ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right">
+                    <button type="button" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2" onclick="this.closest('tr').remove(); updateConsultancyData();">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete
+                    </button>
+                </td>
+            `;
+            
+            // Append the row to the consultancy work table
+            if (consultancyTable && consultancyTable.querySelector('tbody')) {
+                consultancyTable.querySelector('tbody').appendChild(newRow);
+            } else {
+                console.error("Cannot find consultancy table tbody:", consultancyTable);
+            }
+        });
+        
+        // Update the hidden input field with the consultancy work data
+        updateConsultancyData();
+    } catch (e) {
+        console.error("Error parsing consultancy_work_data:", e);
+    }
+    {% endif %}
+
+    {% if conference_papers_data and not is_edit_mode %}
+    try {
+        const papersData = JSON.parse('{{ conference_papers_data|escapejs }}');
+        papersData.forEach(paper => {
+            const row = document.createElement('tr');
+            
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="text" value="${paper.author || ''}" placeholder="Author(s)" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="text" value="${paper.year || ''}" placeholder="Year" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="text" value="${paper.title || ''}" placeholder="Title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="text" value="${paper.volume || ''}" placeholder="Volume" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="text" value="${paper.pages || ''}" placeholder="Pages" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="text" value="${paper.doi || ''}" placeholder="DOI" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right">
+                    <button type="button" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2" onclick="this.closest('tr').remove(); updateConferencePapersData();">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete
+                    </button>
+                </td>
+            `;
+            
+            conferencePapersTable.querySelector('tbody').appendChild(row);
+        });
+        updateConferencePapersData();
+    } catch (e) {
+    }
+    {% endif %}
+
+    {% if participation_within_data and not is_edit_mode %}
+    try {
+        const activitiesData = JSON.parse('{{ participation_within_data|escapejs }}');
+        activitiesData.forEach(activity => {
+            createParticipationRow('participationWithinTable', {
+                activity: activity.activity || '',
+                role: activity.role || '',
+                date: activity.date || '',
+                remarks: activity.remarks || ''
+            });
+        });
+    } catch (e) {
+    }
+    {% endif %}
+
+    {% if participation_outside_data and not is_edit_mode %}
+    try {
+        const activitiesData = JSON.parse('{{ participation_outside_data|escapejs }}');
+        activitiesData.forEach(activity => {
+            createParticipationRow('participationOutsideTable', {
+                activity: activity.activity || '',
+                role: activity.role || '',
+                date: activity.date || '',
+                remarks: activity.remarks || ''
+            });
+        });
+    } catch (e) {
+    }
+    {% endif %}
+    // Add form validation before submission
+
+    // Function to update consultancy work data
+    function updateConsultancyWorkData() {
+        const consultancyData = [];
+        const rows = consultancyTable.querySelectorAll('tbody tr');
+        
+        rows.forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            consultancyData.push({
+                title: inputs[0].value || '',
+                company_institute: inputs[1].value || '',
+                start_date: inputs[2].value || '',
+                end_date: inputs[3].value || ''
+            });
+        });
+        
+        document.getElementById('consultancy_work').value = JSON.stringify(consultancyData);
+        return consultancyData.length;
+    }
+    
+    // Add event listener for consultancy table changes
+    consultancyTable.addEventListener('change', updateConsultancyWorkData);
+    
+    // Auto-populate from appraisals if data is available
 });
+
+// Function to update consultancy work data
+function updateConsultancyWorkData() {
+    const consultancyData = [];
+    const rows = consultancyTable.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const inputs = row.querySelectorAll('input');
+        consultancyData.push({
+            title: inputs[0].value || '',
+            company_institute: inputs[1].value || '',
+            start_date: inputs[2].value || '',
+            end_date: inputs[3].value || ''
+        });
+    });
+    
+    document.getElementById('consultancy_work').value = JSON.stringify(consultancyData);
+    return consultancyData.length;
+}
+
+// Add event listener for consultancy table changes
+consultancyTable.addEventListener('change', updateConsultancyWorkData);
+
+// Auto-populate from appraisals if data is available
 </script>
 
 <style>

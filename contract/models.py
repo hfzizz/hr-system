@@ -58,7 +58,7 @@ class Contract(models.Model):
     higher_degree_students_supervised = models.TextField(blank=True, null=True)
     last_research = models.JSONField(blank=True, null=True)
     ongoing_research = models.JSONField(blank=True, null=True)
-    publications = models.JSONField(blank=True, null=True)
+    publications = models.TextField(blank=True, null=True)
     attendance = models.TextField(blank=True, null=True)
     conference_papers = models.JSONField(blank=True, null=True)
     consultancy_work = models.JSONField(blank=True, null=True)

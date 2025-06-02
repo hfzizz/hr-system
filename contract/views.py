@@ -5,7 +5,7 @@ from django.http import JsonResponse, HttpResponseForbidden, HttpResponse, FileR
 from django.core.cache import cache
 from .models import Contract, AdministrativePosition, DeanReview, SMTReview, MOEReview, PeerReview
 from .forms import ContractRenewalForm, ContractForm
-from appraisals.models import Appraisal
+from appraisals.models import Appraisal, Module, AppraisalPublication
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
@@ -52,6 +52,8 @@ import os
 from PIL import Image
 from zipfile import ZipFile
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+import difflib
+from appraisals.models import CompletedResearch, OngoingResearch
 
 
 class ContractSubmissionView(LoginRequiredMixin, CreateView):
@@ -97,8 +99,271 @@ class ContractSubmissionView(LoginRequiredMixin, CreateView):
             if previous_contract:
                 context['previous_contract'] = previous_contract
                 
+            # --- Auto-populate academic qualifications for new contract ---
+            # Only if not editing an existing contract (i.e., not a draft or previous_contract)
+            if not self.request.GET.get('edit') and not previous_contract:
+                employee = self.request.user.employee
+                qualifications = employee.get_qualifications().order_by('-from_date')
+                qual_list = []
+                for qual in qualifications:
+                    qual_list.append({
+                        'degree_diploma': qual.degree_diploma,
+                        'university_college': qual.university_college,
+                        'from_date': qual.from_date.strftime('%Y-%m-%d'),
+                        'to_date': qual.to_date.strftime('%Y-%m-%d'),
+                    })
+                import json
+                context['academic_qualifications_text'] = json.dumps(qual_list)
+                
+                # --- Auto-populate teaching modules for new contract ---
+                modules = Module.objects.filter(employee=employee).order_by('code')
+                modules_list = []
+                for module in modules:
+                    modules_list.append({
+                        'title': module.title,
+                        'level': module.level,
+                        'languageMedium': module.languageMedium,
+                        'no_of_students': module.no_of_students,
+                        'percentage_jointly_taught': module.percentage_jointly_taught,
+                        'hrs_weekly': module.hrs_weekly,
+                    })
+                context['teaching_modules_text'] = json.dumps(modules_list)
+                
+                # --- Auto-populate publications from completed appraisals ---
+                # Get all completed appraisals for this employee
+                
+                # First check all appraisals regardless of status
+                all_appraisals = Appraisal.objects.filter(employee=employee)
+                
+                # Now get only completed appraisals - order by date_created (oldest first)
+                completed_appraisals = Appraisal.objects.filter(
+                    employee=employee,
+                    status='completed'
+                ).order_by('date_created')  # Changed from '-date_created' to 'date_created' for oldest first
+                
+                # Get all publications from these appraisals
+                publications = []
+                if completed_appraisals.exists():
+                    # Get unique publications from all completed appraisals
+                    appraisal_publications = AppraisalPublication.objects.filter(
+                        appraisal__in=completed_appraisals
+                    ).order_by('year')  # Changed from '-year' to 'year' for oldest first
+                    
+                    # Format publications as text entries
+                    for pub in appraisal_publications:
+                        publications.append(f"{pub.title} ({pub.year})")
+                
+                # Check if there are publications directly in the Appraisal model
+                all_publications_texts = []
+                
+                for appraisal in completed_appraisals:
+                    if appraisal.publications:
+                        all_publications_texts.append(appraisal.publications)
+                
+                # Combine all sources of publications
+                if publications:
+                    # If we have AppraisalPublication entries, use those
+                    context['publications_text'] = '\n\n'.join(publications)
+                elif all_publications_texts:
+                    # Otherwise, use publications from Appraisal.publications field
+                    context['publications_text'] = '\n\n'.join(all_publications_texts)
+                else:
+                    # If no publications found, check the Publication model as a last resort
+                    from employees.models import Publication
+                    employee_publications = Publication.objects.filter(employee=employee)
+                    
+                    if employee_publications.exists():
+                        direct_publications = []
+                        for pub in employee_publications:
+                            pub_year = pub.year if pub.year else "N/A"
+                            direct_publications.append(f"{pub.title} ({pub_year})")
+                        
+                        context['publications_text'] = '\n\n'.join(direct_publications)
+                    else:
+                        context['publications_text'] = ""
+                
+                # --- Auto-populate data from the 3 latest appraisals ---
+                latest_appraisals = Appraisal.objects.filter(
+                    employee=employee,
+                    status='completed'  # Only use completed appraisals
+                ).order_by('-date_created')[:3]
+                
+                # 1. Conference Attendance
+                conference_attendance = []
+                for appraisal in latest_appraisals:
+                    attendance_entries = appraisal.conference_attendances.all()
+                    for entry in attendance_entries:
+                        conference_attendance.append({
+                            'event_name': entry.event_name,
+                            'type': entry.type,
+                            'date': entry.date.isoformat() if entry.date else '',
+                            'location': entry.location or '',
+                            'role': entry.role or '',
+                            'details': entry.details or ''
+                        })
+                context['conference_attendance_data'] = json.dumps(conference_attendance)
+                
+                # 2. Administrative Positions
+                administrative_positions = []
+                for appraisal in latest_appraisals:
+                    admin_posts = appraisal.admin_post_entries.all()
+                    for post in admin_posts:
+                        administrative_positions.append({
+                            'title': post.position,
+                            'from_date': post.from_date.isoformat() if post.from_date else '',
+                            'to_date': post.to_date.isoformat() if post.to_date else '',
+                            'details': post.details or ''
+                        })
+                context['administrative_positions_data'] = json.dumps(administrative_positions)
+                
+                # 3. University Committees
+                university_committees = []
+                for appraisal in latest_appraisals:
+                    committees = appraisal.university_committee_memberships.all()
+                    for committee in committees:
+                        university_committees.append({
+                            'committee_name': committee.committee_name,
+                            'position': committee.position,
+                            'from_date': committee.from_date.isoformat() if committee.from_date else '',
+                            'to_date': committee.to_date.isoformat() if committee.to_date else '',
+                            'details': committee.details or ''
+                        })
+                context['university_committees_data'] = json.dumps(university_committees)
+                
+                # 4. External Committees
+                external_committees = []
+                for appraisal in latest_appraisals:
+                    committees = appraisal.outside_committee_memberships.all()
+                    for committee in committees:
+                        external_committees.append({
+                            'organization': committee.organization,
+                            'position': committee.position,
+                            'from_date': committee.from_date.isoformat() if committee.from_date else '',
+                            'to_date': committee.to_date.isoformat() if committee.to_date else '',
+                            'details': committee.details or ''
+                        })
+                context['external_committees_data'] = json.dumps(external_committees)
+                
+                # 5. Consultancy Work
+                consultancy_work = []
+                for appraisal in latest_appraisals:
+                    consultancy_entries = appraisal.consultancy_works.all()
+                    for entry in consultancy_entries:
+                        consultancy_work.append({
+                            'title': entry.title,
+                            'company_institute': entry.company_institute,
+                            'start_date': entry.start_date.isoformat() if entry.start_date else '',
+                            'end_date': entry.end_date.isoformat() if entry.end_date else ''
+                        })
+                context['consultancy_work_data'] = json.dumps(consultancy_work)
+                
+                # 6. Conference Papers
+                conference_papers = []
+                for appraisal in latest_appraisals:
+                    paper_entries = appraisal.conference_paper_entries.all()
+                    for paper in paper_entries:
+                        conference_papers.append({
+                            'author': paper.author,
+                            'year': paper.year,
+                            'title': paper.title,
+                            'volume': paper.volume or '',
+                            'pages': paper.pages or '',
+                            'doi': paper.doi or ''
+                        })
+                context['conference_papers_data'] = json.dumps(conference_papers)
+                
+                # 7. Participation Within University
+                participation_within = []
+                for appraisal in latest_appraisals:
+                    activities = appraisal.within_university_activities.all()
+                    for activity in activities:
+                        participation_within.append({
+                            'activity': activity.activity,
+                            'role': activity.role,
+                            'date': activity.date.isoformat() if activity.date else '',
+                            'remarks': activity.remarks or ''
+                        })
+                context['participation_within_data'] = json.dumps(participation_within)
+                
+                # 8. Participation Outside University
+                participation_outside = []
+                for appraisal in latest_appraisals:
+                    activities = appraisal.outside_university_activities.all()
+                    for activity in activities:
+                        participation_outside.append({
+                            'activity': activity.activity,
+                            'role': activity.role,
+                            'date': activity.date.isoformat() if activity.date else '',
+                            'remarks': activity.remarks or ''
+                        })
+                context['participation_outside_data'] = json.dumps(participation_outside)
+        
         # Add contract type choices
         context['contract_type_choices'] = Contract.CONTRACT_TYPE_CHOICES
+        
+        # --- Auto-populate completed and ongoing research from latest 3 appraisals ---
+        # Only for new contract forms (not editing/drafts)
+        latest_appraisals = Appraisal.objects.filter(
+            employee=employee,
+            status='completed'
+        ).order_by('-date_created')[:3]
+
+        research_entries = []  # List of (title, status, entry_dict, appraisal_date)
+        for appraisal in latest_appraisals:
+            # Completed research
+            for entry in appraisal.completed_researches.all():
+                research_entries.append((entry.title.strip(), 'completed', {
+                    'title': entry.title,
+                    'startDate': entry.start_date.isoformat() if entry.start_date else '',
+                    'endDate': entry.end_date.isoformat() if entry.end_date else '',
+                    'fundingAgency': entry.funding_agency or '',
+                    'grants': entry.grants or ''
+                }, appraisal.date_created))
+            # Ongoing research
+            for entry in appraisal.ongoing_researches.all():
+                research_entries.append((entry.title.strip(), 'ongoing', {
+                    'title': entry.title,
+                    'startDate': entry.start_date.isoformat() if entry.start_date else '',
+                    'endDate': entry.end_date.isoformat() if entry.end_date else '',
+                    'fundingAgency': entry.funding_agency or '',
+                    'grants': entry.grants or ''
+                }, appraisal.date_created))
+
+        # Fuzzy group by title, preferring 'completed' if both exist
+        grouped = []  # List of dicts
+        used = set()
+        threshold = 0.85
+        for i, (title, status, entry_dict, date) in enumerate(research_entries):
+            if i in used:
+                continue
+            # Find all similar titles
+            group = [(i, title, status, entry_dict, date)]
+            for j in range(i+1, len(research_entries)):
+                if j in used:
+                    continue
+                other_title, other_status, other_entry, other_date = research_entries[j][0], research_entries[j][1], research_entries[j][2], research_entries[j][3]
+                ratio = difflib.SequenceMatcher(None, title.lower(), other_title.lower()).ratio()
+                if ratio >= threshold:
+                    group.append((j, other_title, other_status, other_entry, other_date))
+                    used.add(j)
+            # From the group, prefer the most recent 'completed', else most recent 'ongoing'
+            group.sort(key=lambda x: (x[2] == 'completed', x[4]), reverse=True)
+            grouped.append(group[0][3])
+            used.add(i)
+        # Separate into completed and ongoing
+        completed_research = []
+        ongoing_research = []
+        for entry in grouped:
+            # Find the original status in research_entries
+            for t, s, e, d in research_entries:
+                if e == entry:
+                    if s == 'completed':
+                        completed_research.append(entry)
+                    else:
+                        ongoing_research.append(entry)
+                    break
+        context['completed_research_data'] = json.dumps(completed_research)
+        context['ongoing_research_data'] = json.dumps(ongoing_research)
         
         return context
 
@@ -159,6 +424,10 @@ class ContractSubmissionView(LoginRequiredMixin, CreateView):
                 form.instance.ongoing_research = '[]'
         else:
             form.instance.ongoing_research = '[]'
+
+        # Handle publications (now as text)
+        publications = self.request.POST.get('publications')
+        form.instance.publications = publications if publications else ''
 
         # Handle conference papers
         conference_papers = self.request.POST.get('conference_papers')
@@ -561,96 +830,10 @@ def get_employee_data(request, employee_id):
             
             return '\n'.join(unique_objectives) if unique_objectives else ''
 
-        # Process appraiser comments
-        appraiser_comments_history = []
-        for appraisal in appraisals:
-            if appraisal.appraiser_comments and appraisal.appraiser_comments.strip():
-                comment_data = {
-                    'comment': appraisal.appraiser_comments.strip(),
-                    'date': appraisal.date_of_last_appraisal.strftime('%Y-%m-%d'),
-                    'appraiser_name': appraisal.appraiser.get_full_name() if appraisal.appraiser else 'Unknown Appraiser'
-                }
-                appraiser_comments_history.append(comment_data)
-
-        # Process academic qualifications
-        unique_qualifications = set()
-        all_qualifications = []
-        
-        for appraisal in appraisals:
-            qualifications = appraisal.academic_qualifications.all().order_by('-to_date')
-            for qual in qualifications:
-                qual_identifier = (
-                    qual.degree_diploma.lower(),
-                    qual.university_college.lower(),
-                    qual.from_date.isoformat(),
-                    qual.to_date.isoformat()
-                )
-                if qual_identifier not in unique_qualifications:
-                    unique_qualifications.add(qual_identifier)
-                    all_qualifications.append({
-                        'degree_diploma': qual.degree_diploma,
-                        'university_college': qual.university_college,
-                        'from_date': qual.from_date.strftime('%Y-%m-%d'),
-                        'to_date': qual.to_date.strftime('%Y-%m-%d')
-                    })
-
-        # Process current enrollment
-        current_enrollments = []
-        seen_enrollments = set()
-        
-        for appraisal in appraisals:
-            if appraisal.current_enrollment:
-                enrollments = [e.strip() for e in appraisal.current_enrollment.split('\n') if e.strip()]
-                for enrollment in enrollments:
-                    if enrollment not in seen_enrollments:
-                        seen_enrollments.add(enrollment)
-                        current_enrollments.append(enrollment)
-        
         contract_count = Contract.objects.filter(employee=employee).count() + 1
-
-        combined_data = {
-            # Basic information
-            'first_name': employee.first_name,
-            'last_name': employee.last_name,
-            'ic_no': employee.ic_no,
-            'ic_colour': employee.ic_colour,
-            'phone_number': employee.phone_number,
-            'department': employee.department.name if employee.department else '',
-            'department_id': employee.department.id if employee.department else '',
-            'contract_count': contract_count, 
-            
-            # Academic qualifications
-            'academic_qualifications_text': json.dumps(all_qualifications),
-            
-            # Appraiser comments
-            'appraiser_comments_history': appraiser_comments_history,
-            
-            # Current enrollment
-            'current_enrollment': '\n'.join(current_enrollments),
-            
-            # Status fields
-            'publications': process_status_fields('publications'),
-            'conference_papers': process_status_fields('conference_papers'),
-            'consultancy_work': process_status_fields('consultancy_work'),
-            'administrative_posts': process_status_fields('administrative_posts'),
-            'higher_degree_students_supervised': process_status_fields('higher_degree_students_supervised'),
-            'participation_within_university': process_status_fields('participation_within_university'),
-            'participation_outside_university': process_status_fields('participation_outside_university'),
-            'attendance': process_status_fields('attendance'),
-            
-            # Latest values
-            'present_post': latest_appraisal.present_post,
-            'salary_scale_division': latest_appraisal.salary_scale_division,
-            'objectives_next_year': process_objectives(),
-            'incremental_date': latest_appraisal.incremental_date.strftime('%Y-%m-%d') if latest_appraisal.incremental_date else '',
-            'date_of_last_appraisal': latest_appraisal.date_of_last_appraisal.strftime('%Y-%m-%d') if latest_appraisal.date_of_last_appraisal else '',
-            'last_research': last_research,
-            'ongoing_research': ongoing_research,
-        }
 
         return JsonResponse({
             'success': True,
-            'data': combined_data
         })
 
     except Exception as e:
@@ -1474,6 +1657,8 @@ def review_contract(request, contract_id):
         'ongoing_research': ongoing_research,
         'conference_papers': conference_papers,
         'fellowships_awards': fellowships_awards,
+        # Publications are now handled as text, no parsing needed
+        'publications': contract.publications,
         # ... rest of your context data ...
     }
     
@@ -1587,6 +1772,9 @@ class EditSubmissionView(LoginRequiredMixin, UpdateView):
         # Add contract table data to context
         contract = self.get_object()
         
+        # Define employee variable here to fix the UnboundLocalError
+        employee = contract.employee
+        
         # Get administrative positions and convert to JSON
         admin_positions = contract.administrative_positions.all().values('title', 'from_date', 'to_date', 'details')
         admin_positions_list = list(admin_positions)
@@ -1598,15 +1786,7 @@ class EditSubmissionView(LoginRequiredMixin, UpdateView):
                 position['to_date'] = position['to_date'].strftime('%Y-%m-%d')
             # Map title to position for consistency with the form
             position['position'] = position['title']
-        
-        # Print for debugging
-        print(f"Last research: {contract.last_research}")
-        print(f"Ongoing research: {contract.ongoing_research}")
-        print(f"Conference papers: {contract.conference_papers}")
-        print(f"Consultancy work: {contract.consultancy_work}")
-        
-        
-            
+    
         # Make sure JSON fields are handled correctly
         # Handle JSON fields that might already be strings or might be objects
         def ensure_json_string(field_value):
@@ -1652,6 +1832,96 @@ class EditSubmissionView(LoginRequiredMixin, UpdateView):
         
         context['contract_data_json'] = json.dumps(contract_data)
         
+        # Parse academic qualifications data
+        if contract.academic_qualifications_text:
+            context['academic_qualifications_text'] = ensure_json_string(contract.academic_qualifications_text)
+        
+        # Parse teaching modules data
+        if contract.teaching_modules_text:
+            context['teaching_modules_text'] = ensure_json_string(contract.teaching_modules_text)
+        
+        # Publications are now handled as text, no parsing needed
+        if contract.publications:
+            context['publications_text'] = contract.publications
+        else:
+            # If no publications in contract, try to get them from appraisals
+            # employee is already defined above
+            completed_appraisals = Appraisal.objects.filter(
+                employee=employee,
+                status='completed'
+            ).order_by('date_created')  # Changed from '-date_created' to 'date_created' for oldest first
+            
+            # Check if there are publications directly in the Appraisal model
+            all_publications_texts = []
+            for appraisal in completed_appraisals:
+                if appraisal.publications:
+                    all_publications_texts.append(appraisal.publications)
+            
+            if all_publications_texts:
+                context['publications_text'] = '\n\n'.join(all_publications_texts)
+        
+        # --- Auto-populate data from the 3 latest appraisals ---
+        latest_appraisals = Appraisal.objects.filter(
+            employee=employee,
+            status='completed'  # Only use completed appraisals
+        ).order_by('-date_created')[:3]
+        
+        # 1. Conference Attendance
+        conference_attendance = []
+        for appraisal in latest_appraisals:
+            attendance_entries = appraisal.conference_attendances.all()
+            for entry in attendance_entries:
+                conference_attendance.append({
+                    'event_name': entry.event_name,
+                    'type': entry.type,
+                    'date': entry.date.isoformat() if entry.date else '',
+                    'location': entry.location or '',
+                    'role': entry.role or '',
+                    'details': entry.details or ''
+                })
+        context['conference_attendance_data'] = json.dumps(conference_attendance)
+        
+        # 2. Administrative Positions
+        administrative_positions = []
+        for appraisal in latest_appraisals:
+            admin_posts = appraisal.admin_post_entries.all()
+            for post in admin_posts:
+                administrative_positions.append({
+                    'title': post.position,
+                    'from_date': post.from_date.isoformat() if post.from_date else '',
+                    'to_date': post.to_date.isoformat() if post.to_date else '',
+                    'details': post.details or ''
+                })
+        context['administrative_positions_data'] = json.dumps(administrative_positions)
+        
+        # 3. University Committees
+        university_committees = []
+        for appraisal in latest_appraisals:
+            committees = appraisal.university_committee_memberships.all()
+            for committee in committees:
+                university_committees.append({
+                    'committee_name': committee.committee_name,
+                    'position': committee.position,
+                    'from_date': committee.from_date.isoformat() if committee.from_date else '',
+                    'to_date': committee.to_date.isoformat() if committee.to_date else '',
+                    'details': committee.details or ''
+                })
+        context['university_committees_data'] = json.dumps(university_committees)
+        
+        # 4. External Committees
+        external_committees = []
+        for appraisal in latest_appraisals:
+            committees = appraisal.outside_committee_memberships.all()
+            for committee in committees:
+                external_committees.append({
+                    'organization': committee.organization,
+                    'position': committee.position,
+                    'from_date': committee.from_date.isoformat() if committee.from_date else '',
+                    'to_date': committee.to_date.isoformat() if committee.to_date else '',
+                    'details': committee.details or ''
+                })
+        context['external_committees_data'] = json.dumps(external_committees)
+        
         return context
     
     def form_valid(self, form):
@@ -1666,8 +1936,10 @@ class EditSubmissionView(LoginRequiredMixin, UpdateView):
             form.instance.status = 'pending'
             form.instance.is_draft = False
         
+        # Handle publications (now as text)
+        publications = self.request.POST.get('publications')
+        form.instance.publications = publications if publications else ''
 
-        
         # Handle consultancy work
         consultancy_data = self.request.POST.get('consultancy_work')
         
