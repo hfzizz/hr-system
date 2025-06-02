@@ -1198,6 +1198,15 @@ def bulk_confirm_create(request):
             department_obj = department if department else None
 
         # Create Employee
+        if data.get('ic_no') and Employee.objects.filter(ic_no=data.get('ic_no')).exists():
+            already_exists.append({
+                'first_name': data.get('first_name', ''),
+                'last_name': data.get('last_name', ''),
+                'email': data.get('email', ''),
+                'ic_no': data.get('ic_no', ''),
+                'index': idx,
+            })
+            continue
         Employee.objects.create(
             user=user,
             first_name=data.get('first_name', ''),
