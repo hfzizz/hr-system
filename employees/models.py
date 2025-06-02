@@ -51,11 +51,7 @@ class Employee(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    phone_number = models.CharField(
-        max_length=15,
-        null=True,
-        blank=True,
-    )
+    phone_number = models.CharField(max_length=15, null=True, blank=True)
     gender = models.CharField(
         max_length=1,
         choices=Gender.choices,
