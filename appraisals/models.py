@@ -39,8 +39,10 @@ class Appraisal(models.Model):
         ('pending', 'Pending'),
         ('primary_review', 'Under Primary Appraiser Review'),
         ('secondary_review', 'Under Secondary Appraiser Review'),
-        ('pending_response', 'Pending Response'),
+        ('returned_to_appraisee', 'Returned to Appraisee for Revision'),
+        ('appraisee_review', 'Appraisee Review'),
         ('disagreed', 'Disagreed'),
+        ('hr_review', 'Under HR Review'),
         ('reassigned', 'Reassigned'),
         ('reassigned_review', 'Under Reassigned Appraiser Review'),
         ('completed', 'Completed')
@@ -68,7 +70,7 @@ class Appraisal(models.Model):
     date_created = models.DateTimeField(default=timezone.now)
     appraisal_year = models.IntegerField(default=now().year)
     status = models.CharField(
-        max_length=20, 
+        max_length=25, 
         choices=STATUS_CHOICES, 
         default='pending'
     )
@@ -334,5 +336,163 @@ class AppraisalSection(models.Model):
         
     def __str__(self):
         return f"Section {self.section_name} for Appraisal {self.appraisal.appraisal_id} by {self.appraiser.name}"
+
+class CompletedResearch(models.Model):
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.CASCADE, related_name='completed_researches')
+    title = models.CharField(max_length=255)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    funding_agency = models.CharField(max_length=255, null=True, blank=True)
+    grants = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Completed Research'
+        verbose_name_plural = 'Completed Researches'
+        ordering = ['-end_date', 'title']
+
+    def __str__(self):
+        return f"{self.title} ({self.start_date} - {self.end_date})"
+
+class OngoingResearch(models.Model):
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.CASCADE, related_name='ongoing_researches')
+    title = models.CharField(max_length=255)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    funding_agency = models.CharField(max_length=255, null=True, blank=True)
+    grants = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Ongoing Research'
+        verbose_name_plural = 'Ongoing Researches'
+        ordering = ['-end_date', 'title']
+
+    def __str__(self):
+        return f"{self.title} ({self.start_date} - {self.end_date})"
+
+class ConferenceAttendance(models.Model):
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.CASCADE, related_name='conference_attendances')
+    event_name = models.CharField(max_length=255)
+    type = models.CharField(max_length=100)
+    date = models.DateField(null=True, blank=True)
+    location = models.CharField(max_length=255, null=True, blank=True)
+    role = models.CharField(max_length=100, null=True, blank=True)
+    details = models.TextField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Conference Attendance'
+        verbose_name_plural = 'Conference Attendances'
+        ordering = ['-date', 'event_name']
+
+    def __str__(self):
+        return f"{self.event_name} ({self.date})"
+
+class ConferencePaper(models.Model):
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.CASCADE, related_name='conference_paper_entries')
+    author = models.CharField(max_length=255)
+    year = models.IntegerField(null=True, blank=True)
+    title = models.CharField(max_length=500)
+    volume = models.CharField(max_length=100, null=True, blank=True)
+    pages = models.CharField(max_length=50, null=True, blank=True)
+    doi = models.CharField(max_length=100, null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Conference Paper'
+        verbose_name_plural = 'Conference Papers'
+        ordering = ['-year', 'title']
+
+    def __str__(self):
+        return f"{self.title} ({self.year})"
+
+class ConsultancyWork(models.Model):
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.CASCADE, related_name='consultancy_works')
+    title = models.CharField(max_length=255)
+    company_institute = models.CharField(max_length=255)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Consultancy Work'
+        verbose_name_plural = 'Consultancy Works'
+        ordering = ['-end_date', 'title']
+
+    def __str__(self):
+        return f"{self.title} at {self.company_institute} ({self.start_date} - {self.end_date})"
+
+class AdministrativePost(models.Model):
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.CASCADE, related_name='admin_post_entries')
+    position = models.CharField(max_length=255)
+    from_date = models.DateField()
+    to_date = models.DateField(null=True, blank=True)
+    details = models.TextField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Administrative Post'
+        verbose_name_plural = 'Administrative Posts'
+        ordering = ['-from_date', 'position']
+
+    def __str__(self):
+        return f"{self.position} ({self.from_date} - {self.to_date})"
+
+class WithinUniversityActivity(models.Model):
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.CASCADE, related_name='within_university_activities')
+    activity = models.CharField(max_length=255)
+    role = models.CharField(max_length=100)
+    date = models.DateField(null=True, blank=True)
+    remarks = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Within University Activity'
+        verbose_name_plural = 'Within University Activities'
+        ordering = ['-date', 'activity']
+
+    def __str__(self):
+        return f"{self.activity} ({self.role}) - {self.date}"
+
+class OutsideUniversityActivity(models.Model):
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.CASCADE, related_name='outside_university_activities')
+    activity = models.CharField(max_length=255)
+    role = models.CharField(max_length=100)
+    date = models.DateField(null=True, blank=True)
+    remarks = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Outside University Activity'
+        verbose_name_plural = 'Outside University Activities'
+        ordering = ['-date', 'activity']
+
+    def __str__(self):
+        return f"{self.activity} ({self.role}) - {self.date}"
+
+class UniversityCommitteeMembership(models.Model):
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.CASCADE, related_name='university_committee_memberships')
+    committee_name = models.CharField(max_length=255)
+    position = models.CharField(max_length=100)
+    from_date = models.DateField(null=True, blank=True)
+    to_date = models.DateField(null=True, blank=True)
+    details = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'University Committee Membership'
+        verbose_name_plural = 'University Committee Memberships'
+        ordering = ['-from_date', 'committee_name']
+
+    def __str__(self):
+        return f"{self.committee_name} ({self.position})"
+
+class OutsideCommitteeMembership(models.Model):
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.CASCADE, related_name='outside_committee_memberships')
+    organization = models.CharField(max_length=255)
+    position = models.CharField(max_length=100)
+    from_date = models.DateField(null=True, blank=True)
+    to_date = models.DateField(null=True, blank=True)
+    details = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Outside Committee Membership'
+        verbose_name_plural = 'Outside Committee Memberships'
+        ordering = ['-from_date', 'organization']
+
+    def __str__(self):
+        return f"{self.organization} ({self.position})"
     
     

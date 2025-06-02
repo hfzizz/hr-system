@@ -30,9 +30,8 @@
         <!-- My Profile -->
         {% if request.user.is_authenticated and request.user.employee %}
         <li>
-          <a href="{% url 'employees:profile' request.user.employee.pk %}"
-             class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 {% if 'profile' in request.path %}bg-gray-100 text-gray-900{% endif %}">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 flex-shrink-0">
+          <a href="{% url 'employees:profile' request.user.employee.pk  %}" class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 {% if request.resolver_match.url_name == 'profile' and request.resolver_match.kwargs.pk|stringformat:'i' == request.user.employee.pk|stringformat:'i' %}bg-gray-100 text-gray-900{% endif %}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
             </svg>
             <div>
@@ -79,7 +78,7 @@
         <!-- Departments (for HR only) -->
         {% if is_hr %}
         <li>
-          <a href="{% url 'employees:department_list' %}" class="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 {% if 'department' in request.path %}bg-gray-100 text-gray-900{% endif %}">
+          <a href="{% url 'employees:department_list' %}" class="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900  {% if request.resolver_match.url_name == 'department_list' or request.resolver_match.url_name == 'department_detail' %}bg-gray-100 text-gray-900{% endif %}">
             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M19 21V5C19 3.89543 18.1046 3 17 3H7C5.89543 3 5 3.89543 5 5V21M19 21H5M19 21H21M5 21H3M9 6.99998H15M9 11H15M9 15H12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
@@ -137,7 +136,9 @@
                 </span>
               </summary>
 
+            
               <ul class="mt-2 space-y-1 px-4">
+                {% if is_hr %}
                 <li>
                   <a
                     href="{% url 'appraisals:appraiser_list' %}"
@@ -146,6 +147,7 @@
                     Appraisers
                   </a>
                 </li>
+                {% endif %}
 
                 <li>
                   <a
@@ -174,20 +176,85 @@
 
       <!-- Contract Renewal -->
       {% if perms.contract.view_contract %}
-        {% if contract_enabled or is_hr_contract or is_dean or user.groups.all.0.name == 'SMT' %}
           <li>
-            <a href="{% if is_hr_contract %}{% url 'contract:list' %}{% elif is_dean %}{% url 'contract:dean_department_contracts' %}{% elif user.groups.all.0.name == 'SMT' %}{% url 'contract:smt_contracts' %}{% else %}{% url 'contract:employee_contracts' %}{% endif %}" 
-               class="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 {% if 'contract' in request.path %}bg-gray-100 text-gray-900{% endif %}">
-              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M8 7V15C8 16.1046 8.89543 17 10 17H16M8 7V5C8 3.89543 8.89543 3 10 3H14L20 9V15C20 16.1046 19.1046 17 18 17H16M8 7H6C4.89543 7 4 7.89543 4 9V19C4 20.1046 4.89543 21 6 21H14C15.1046 21 16 20.1046 16 19V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M14 3V9H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <div>
-                <span class="whitespace-nowrap overflow-hidden">Contract Renewal</span>
-              </div>
-            </a>
+            <details class="group [&_summary::-webkit-details-marker]:hidden"
+            {% if 'contract' in request.path %}open{% endif %}>
+              <summary
+                class="flex cursor-point items-center gap-3 rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-700"
+              > 
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8 7V15C8 16.1046 8.89543 17 10 17H16M8 7V5C8 3.89543 8.89543 3 10 3H14L20 9V15C20 16.1046 19.1046 17 18 17H16M8 7H6C4.89543 7 4 7.89543 4 9V19C4 20.1046 4.89543 21 6 21H14C15.1046 21 16 20.1046 16 19V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M14 3V9H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div>
+                  <span class="text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"> Contract Renewal </span>
+                </div>
+                
+                <span class="shrink-0 transition duration-300 group-open:-rotate-180">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="size-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                    fill-rule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clip-rule="evenodd"
+                  />
+                  </svg>
+                </span>
+              </summary>
+
+              <ul class="mt-2 space-y-1 px-4">
+                {% if is_hr_contract %}
+                <li>
+                  <a
+                    href="{% url 'contract:list' %}"
+                    class="block rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 {% if 'contract/list' in request.path %}bg-gray-100 text-gray-900{% endif %}"
+                  >
+                    Employee Contracts
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="{% url 'contract:view_all_submissions' %}"
+                    class="block rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 {% if 'all_submissions' in request.path %}bg-gray-100 text-gray-900{% endif %}"
+                  >
+                    All Submissions
+                  </a>
+                </li>
+                {% elif is_dean %}
+                <li>
+                  <a
+                    href="{% url 'contract:dean_department_contracts' %}"
+                    class="block rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 {% if 'dean_department' in request.path %}bg-gray-100 text-gray-900{% endif %}"
+                  >
+                    Department Contracts
+                  </a>
+                </li>
+                {% elif user.groups.all.0.name == 'SMT' %}
+                <li>
+                  <a
+                    href="{% url 'contract:smt_contracts' %}"
+                    class="block rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 {% if 'smt_contracts' in request.path %}bg-gray-100 text-gray-900{% endif %}"
+                  >
+                    SMT Review
+                  </a>
+                </li>
+                {% else %}
+                <li>
+                  <a
+                    href="{% url 'contract:employee_contracts' %}"
+                    class="block rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 {% if 'employee_contracts' in request.path %}bg-gray-100 text-gray-900{% endif %}"
+                  >
+                    My Contracts
+                  </a>
+                </li>
+                {% endif %}
+              </ul>
+            </details>
           </li>
-        {% endif %}
       {% endif %}
       <!-- Teaching Portfolio -->
       <li>
@@ -217,3 +284,13 @@
       </ul>
     </nav> 
 </aside>
+
+<!-- Add this somewhere in your sidebar for debugging -->
+<!-- 
+Debug info:
+contract_enabled: {{ contract_enabled }}
+is_hr_contract: {{ is_hr_contract }}
+is_dean: {{ is_dean }}
+is_smt: {{ is_smt }}
+user.groups.all.0.name: {{ user.groups.all.0.name }}
+-->

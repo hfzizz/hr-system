@@ -2,26 +2,47 @@
 {% load appraisal_tags %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
-        <!-- Header -->
-        <div class="border-b pb-4">
+<form method="post" class="space-y-3 px-8">
+<!-- Header -->
+<div class="pb-3 bg-gradient-to-r from-blue-50 to-white rounded-t-lg">
+    <div class="px-8 py-3 flex items-center">
+        <div class="bg-blue-100 rounded-full p-2 mr-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+        </div>
+        <div>
             <h2 class="text-2xl font-bold text-gray-900">Section A: Personal Details</h2>
             <p class="mt-1 text-sm text-gray-600">To be completed by the appraisee in consultation with the appraiser</p>
         </div>
+    </div>
+</div>
 
-        <form method="post" class="space-y-8">
-            {% csrf_token %}
 
-                <!-- Employee/Appraiser Info -->
-                <div class="grid grid-cols-2 gap-6 pt-6">
+    {% csrf_token %}
+
+    <!-- Employee/Appraiser Info -->
+        <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-lg">
+            <div class="border-b border-gray-200 bg-gradient-to-r from-amber-50 to-white">
+                <div class="px-5 py-3 flex items-center">
+                    <div class="bg-amber-100 rounded-full p-2 mr-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Personnel Information</h3>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div class="grid grid-cols-2 gap-6">
                     {% for field in form %}
                         {% if field.name == 'employee' or field.name == 'appraiser' %}
-                            <div class="form-group">
-                                <label class="block text-sm font-medium text-gray-700">
+                            <div class="form-group bg-white p-4 border border-gray-100 rounded-md shadow-sm">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
                                     {{ field.label }}
                                 </label>
-                                <div class="mt-1 px-3 py-2 bg-gray-50 text-gray-700 border border-gray-300 rounded-md">
+                                <div class="mt-1 px-3 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-md">
                                     {% if field.name == 'employee' %}
                                         {{ form.instance.employee.get_full_name }}
                                     {% else %}
@@ -33,9 +54,24 @@
                         {% endif %}
                     {% endfor %}
                 </div>
-
-                <!-- Personal Information Section -->
-                <div class="space-y-6 pt-6">
+            </div>
+        </div>
+    
+        <!-- Personal Information Section -->
+        <div class="pt-4">
+            <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-lg">
+                <div class="border-b border-gray-200 bg-gradient-to-r from-teal-50 to-white">
+                    <div class="px-6 py-3 flex items-center">
+                        <div class="bg-teal-100 rounded-full p-2 mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-teal-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900">Identity Details</h3>
+                    </div>
+                </div>
+                
+                <div class="p-6">
                     <div class="grid grid-cols-3 gap-6">
                         {% for field in form %}
                             {% if field.name in 'ic_no,ic_colour,date_of_birth' %}
@@ -44,214 +80,310 @@
                                         {{ field.label }}
                                     </label>
                                     <div class="mt-1">
-                                        {{ field|addclass:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
+                                        {{ field|addclass:"px-3 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-teal-600 sm:text-sm sm:leading-6" }}
                                     </div>
                                 </div>
                             {% endif %}
                         {% endfor %}
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Replace the Appointments section with: -->
-                <div class="rounded-lg bg-white shadow">
-                    <div class="px-4 py-5 sm:p-6">
-                        <h3 class="text-base font-semibold leading-6 text-gray-900">Appointments</h3>
-                        <div class="mt-4 overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-300">
-                                <thead>
-                                    <tr>
-                                        <th class="w-48 px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Appointment Type</th>
-                                        <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">First Post</th>
-                                        <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Faculty/Programme</th>
-                                        <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">From</th>
-                                        <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">To</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200 bg-white">
-                                    <!-- Government Service Row -->
-                                    <tr>
-                                        <td class="px-3 py-4 text-sm font-medium text-gray-900">
-                                            <div class="break-words max-w-[200px]">
-                                                First appointment in Brunei Government service, if applicable
+        <!-- Appointments Section -->
+        <div class="pt-4">
+            <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-lg">
+                <div class="border-b border-gray-200 bg-gradient-to-r from-purple-50 to-white">
+                    <div class="px-6 py-3 flex items-center">
+                        <div class="bg-purple-100 rounded-full p-2 mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900">Appointments</h3>
+                    </div>
+                </div>
+                
+                <div class="px-6 py-4">
+                    <p class="text-sm text-gray-600 mb-4">Please provide details of your appointments in chronological order</p>
+                    
+                    <div class="mt-4 overflow-x-auto ring-1 ring-gray-300 rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="w-48 px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Appointment Type</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">First Post</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Faculty/Programme</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">From</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">To</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white">
+                                <!-- Government Service Row -->
+                                <tr class="transition-colors hover:bg-gray-50">
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-900">
+                                        <div class="break-words max-w-[200px] flex items-center">
+                                            <div class="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center mr-3">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                </svg>
                                             </div>
-                                        </td>
-                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                            <input type="text" 
-                                                   name="first_post_govt" 
-                                                   id="first_post_govt"
-                                                   value="{{ form.first_post_govt.value|default:'' }}"
-                                                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                        </td>
-                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                            <input type="text" 
-                                                   name="faculty_programme_govt" 
-                                                   id="faculty_programme_govt"
-                                                   value="{{ form.faculty_programme_govt.value|default:'' }}"
-                                                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                        </td>
-                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                            <input type="date" 
-                                                   name="date_from_govt" 
-                                                   id="date_from_govt"
-                                                   value="{{ form.date_from_govt.value|date:'Y-m-d'|default:'' }}"
-                                                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                        </td>
-                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                            <input type="date" 
-                                                   name="date_to_govt" 
-                                                   id="date_to_govt"
-                                                   value="{{ form.date_to_govt.value|date:'Y-m-d'|default:'' }}"
-                                                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                        </td>
-                                    </tr>
-                                    <!-- UBD Row -->
-                                    <tr>
-                                        <td class="px-3 py-4 text-sm font-medium text-gray-900">
-                                            <div class="break-words max-w-[200px]">
-                                                First appointment in Universiti Brunei Darussalam
+                                            First appointment in Brunei Government service
+                                        </div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="text" 
+                                            name="first_post_govt" 
+                                            id="first_post_govt"
+                                            value="{{ form.first_post_govt.value|default:'' }}"
+                                            class="px-3 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-purple-600 sm:text-sm sm:leading-6">
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="text" 
+                                            name="faculty_programme_govt" 
+                                            id="faculty_programme_govt"
+                                            value="{{ form.faculty_programme_govt.value|default:'' }}"
+                                            class="px-3 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-purple-600 sm:text-sm sm:leading-6">
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="date" 
+                                            name="date_from_govt" 
+                                            id="date_from_govt"
+                                            value="{{ form.date_from_govt.value|date:'Y-m-d'|default:'' }}"
+                                            class="px-3 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-purple-600 sm:text-sm sm:leading-6">
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="date" 
+                                            name="date_to_govt" 
+                                            id="date_to_govt"
+                                            value="{{ form.date_to_govt.value|date:'Y-m-d'|default:'' }}"
+                                            class="px-3 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-purple-600 sm:text-sm sm:leading-6">
+                                    </td>
+                                </tr>
+                                <!-- UBD Row -->
+                                <tr class="transition-colors hover:bg-gray-50">
+                                    <td class="px-4 py-4 text-sm font-medium text-gray-900">
+                                        <div class="break-words max-w-[200px] flex items-center">
+                                            <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path d="M12 14l9-5-9-5-9 5 9 5z" />
+                                                    <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+                                                </svg>
                                             </div>
-                                        </td>
-                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                            <input type="text" 
-                                                   name="first_post_ubd" 
-                                                   id="first_post_ubd"
-                                                   value="{{ form.first_post_ubd.value|default:'' }}"
-                                                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                        </td>
-                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                            <input type="text" 
-                                                   name="faculty_programme_ubd" 
-                                                   id="faculty_programme_ubd"
-                                                   value="{{ form.faculty_programme_ubd.value|default:'' }}"
-                                                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                        </td>
-                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                            <input type="date" 
-                                                   name="date_from_ubd" 
-                                                   id="date_from_ubd"
-                                                   value=
-                                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                        </td>
-                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                            <input type="date" 
-                                                name="date_to_ubd" 
-                                                id="date_to_ubd"
-                                                value="{{ form.date_to_ubd.value|date:'Y-m-d'|default:'' }}"
-                                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                                            First appointment in Universiti Brunei Darussalam
+                                        </div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="text" 
+                                            name="first_post_ubd" 
+                                            id="first_post_ubd"
+                                            value="{{ form.first_post_ubd.value|default:'' }}"
+                                            class="px-3 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-purple-600 sm:text-sm sm:leading-6">
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="text" 
+                                            name="faculty_programme_ubd" 
+                                            id="faculty_programme_ubd"
+                                            value="{{ form.faculty_programme_ubd.value|default:'' }}"
+                                            class="px-3 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-purple-600 sm:text-sm sm:leading-6">
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="date" 
+                                            name="date_from_ubd" 
+                                            id="date_from_ubd"
+                                            value="{{ form.date_from_ubd.value|date:'Y-m-d'|default:'' }}"
+                                            class="px-3 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-purple-600 sm:text-sm sm:leading-6">
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="date" 
+                                            name="date_to_ubd" 
+                                            id="date_to_ubd"
+                                            value="{{ form.date_to_ubd.value|date:'Y-m-d'|default:'' }}"
+                                            class="px-3 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-purple-600 sm:text-sm sm:leading-6">
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="flex items-center mt-4 text-xs bg-purple-50 text-purple-700 p-3 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Please leave the "To" field blank for current active appointments.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Position Information Section -->
+        <div class="pt-3">
+            <div class="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-md">
+                <div class="border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-white">
+                    <div class="px-4 py-2 flex items-center">
+                        <div class="bg-indigo-100 rounded-full p-1.5 mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-base font-semibold text-gray-900">Current Position</h3>
+                    </div>
+                </div>
+                
+                <div class="p-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        {% for field in form %}
+                            {% if field.name == 'present_post' or field.name == 'salary_scale_division' %}
+                                <div class="form-group">
+                                    <label for="{{ field.id_for_label }}" class="block font-medium text-sm text-gray-700">
+                                        {{ field.label }}
+                                    </label>
+                                    <div class="mt-1">
+                                        {{ field|addclass:"px-3 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dates Information Section -->
+        <div class="pt-3">
+            <div class="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-md">
+                <div class="border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-white">
+                    <div class="px-4 py-2 flex items-center">
+                        <div class="bg-emerald-100 rounded-full p-1.5 mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-base font-semibold text-gray-900">Important Dates</h3>
+                    </div>
+                </div>
+                
+                <div class="p-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        {% for field in form %}
+                            {% if field.name == 'incremental_date_of_present_post' or field.name == 'date_of_last_appraisal' %}
+                                <div class="form-group">
+                                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                        {{ field.label }}
+                                    </label>
+                                    <div class="mt-1">
+                                        {{ field|addclass:"px-3 lock w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6" }}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Academic Qualifications Section -->
+        <div class="pt-8">
+            <div class="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-md">
+                <div class="border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+                    <div class="px-6 py-4 flex items-center">
+                        <div class="bg-blue-100 rounded-full p-2 mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path d="M12 14l9-5-9-5-9 5 9 5z" />
+                                <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998a12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-900">Academic Qualifications</h3>
+                            <p class="mt-0.5 text-sm text-gray-500">List your academic degrees and qualifications</p>
                         </div>
                     </div>
                 </div>
-
-                <!-- Position Information -->
-                <div class="grid grid-cols-2 gap-6">
-                    {% for field in form %}
-                        {% if field.name in 'present_post,salary_scale_division' %}
-                            <div class="form-group">
-                                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                    {{ field.label }}
-                                </label>
-                                <div class="mt-1">
-                                    {{ field|addclass:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
-                                </div>
-                            </div>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-
-                <!-- Dates Information -->
-                <div class="grid grid-cols-2 gap-6">
-                    {% for field in form %}
-                        {% if field.name in 'incremental_date_of_present_post,date_of_last_appraisal' %}
-                            <div class="form-group">
-                                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                    {{ field.label }}
-                                </label>
-                                <div class="mt-1">
-                                    {{ field|addclass:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
-                                </div>
-                            </div>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-
-                <!-- Academic Qualifications Section -->
-                <div class="pt-6">
-                    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
-                        <h3 class="text-lg font-medium leading-6 text-gray-900 mb-6">Academic Qualifications</h3>
-                        {{ qualification_formset.management_form }}
-                        <div class="overflow-x-auto ring-1 ring-gray-300 rounded-lg w-full">
-                            <table class="min-w-full divide-y divide-gray-300">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Degree/Diploma</th>
-                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">University/College</th>
-                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">From Date</th>
-                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">To Date</th>
-                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
+                
+                <div class="px-4 py-4">
+                    {{ qualification_formset.management_form }}
+                    <div class="overflow-x-auto ring-1 ring-gray-300 rounded-lg w-full">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="py-2 pl-3 pr-2 text-left text-sm font-semibold text-gray-900 sm:pl-4">Degree/Diploma</th>
+                                    <th scope="col" class="px-2 py-2 text-left text-sm font-semibold text-gray-900">University/College</th>
+                                    <th scope="col" class="px-2 py-2 text-left text-sm font-semibold text-gray-900">From</th>
+                                    <th scope="col" class="px-2 py-2 text-left text-sm font-semibold text-gray-900">To</th>
+                                    <th scope="col" class="px-2 py-2 text-left text-sm font-semibold text-gray-900">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white" id="qualification-formset">
+                                {% for form in qualification_formset %}
+                                    <tr class="qualification-form hover:bg-gray-50 transition-colors">
+                                        {{ form.id }}
+                                        <input type="hidden" name="qualification_set-{{ forloop.counter0 }}-employee" value="{{ form.instance.employee.id }}">
+                                        
+                                        <td class="whitespace-nowrap py-2 pl-3 pr-2 text-sm text-gray-900 sm:pl-4">
+                                            <input type="text" 
+                                                name="qualification_set-{{ forloop.counter0 }}-degree_diploma" 
+                                                id="id_qualification_set-{{ forloop.counter0 }}-degree_diploma"
+                                                value="{{ form.degree_diploma.value|default:'' }}"
+                                                placeholder="e.g. BSc, PhD"
+                                                class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:leading-6">
+                                        </td>
+                                        <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                            <input type="text" 
+                                                name="qualification_set-{{ forloop.counter0 }}-university_college" 
+                                                id="id_qualification_set-{{ forloop.counter0 }}-university_college"
+                                                value="{{ form.university_college.value|default:'' }}"
+                                                placeholder="e.g. Harvard University"
+                                                class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:leading-6">
+                                        </td>
+                                        <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                            <input type="date" 
+                                                name="qualification_set-{{ forloop.counter0 }}-from_date" 
+                                                id="id_qualification_set-{{ forloop.counter0 }}-from_date"
+                                                value="{{ form.from_date.value|date:'Y-m-d'|default:'' }}"
+                                                class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:leading-6">
+                                        </td>
+                                        <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                            <input type="date" 
+                                                name="qualification_set-{{ forloop.counter0 }}-to_date" 
+                                                id="id_qualification_set-{{ forloop.counter0 }}-to_date"
+                                                value="{{ form.to_date.value|date:'Y-m-d'|default:'' }}"
+                                                class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:leading-6">
+                                        </td>
+                                        <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                            <input type="hidden" 
+                                                name="qualification_set-${formCount}-DELETE" 
+                                                id="id_qualification_set-${formCount}-DELETE">
+                                            <button type="button" 
+                                                    onclick="deleteQualification(this)"
+                                                    class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                                Delete
+                                            </button>
+                                        
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200 bg-white" id="qualification-formset">
-                                    {% for form in qualification_formset %}
-                                        <tr class="qualification-form">
-                                            {{ form.id }}
-                                            <input type="hidden" name="qualification_set-{{ forloop.counter0 }}-employee" value="{{ form.instance.employee.id }}">
-                                            
-                                            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
-                                                <input type="text" 
-                                                    name="qualification_set-{{ forloop.counter0 }}-degree_diploma" 
-                                                    id="id_qualification_set-{{ forloop.counter0 }}-degree_diploma"
-                                                    value="{{ form.degree_diploma.value|default:'' }}"
-                                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                            </td>
-                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                                <input type="text" 
-                                                    name="qualification_set-{{ forloop.counter0 }}-university_college" 
-                                                    id="id_qualification_set-{{ forloop.counter0 }}-university_college"
-                                                    value="{{ form.university_college.value|default:'' }}"
-                                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                            </td>
-                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                                <input type="date" 
-                                                    name="qualification_set-{{ forloop.counter0 }}-from_date" 
-                                                    id="id_qualification_set-{{ forloop.counter0 }}-from_date"
-                                                    value="{{ form.from_date.value|date:'Y-m-d'|default:'' }}"
-                                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                            </td>
-                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                                <input type="date" 
-                                                    name="qualification_set-{{ forloop.counter0 }}-to_date" 
-                                                    id="id_qualification_set-{{ forloop.counter0 }}-to_date"
-                                                    value="{{ form.to_date.value|date:'Y-m-d'|default:'' }}"
-                                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                            </td>
-                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                                <input type="hidden" 
-                                                    name="qualification_set-{{ forloop.counter0 }}-DELETE" 
-                                                    id="id_qualification_set-{{ forloop.counter0 }}-DELETE">
-                                                <button type="button" 
-                                                        onclick="deleteQualification(this)"
-                                                        class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
-                                                    Delete
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="mt-6">
-                            <button type="button" 
-                                    onclick="addQualification()"
-                                    class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                                Add Another Qualification
-                            </button>
-                        </div>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3 flex items-center">
+                        <button type="button" 
+                                onclick="addQualification()"
+                                class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            Add Another Qualification
+                        </button>
+                        <span class="ml-2 text-sm text-gray-500">Please list your qualifications in chronological order, most recent first.</span>
                     </div>
                 </div>
+            </div>
+        </div>
 
                 <!-- Replace the Current Enrollment Details section with: -->
                 <div class="pt-6">
@@ -360,23 +492,30 @@
                                             </td>
                                             <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                                                 <input type="hidden" 
-                                                    name="module_set-{{ forloop.counter0 }}-DELETE" 
-                                                    id="id_module_set-{{ forloop.counter0 }}-DELETE">
+                                                    name="module_set-${formCount}-DELETE" 
+                                                    id="id_module_set-${formCount}-DELETE">
                                                 <button type="button" 
                                                     onclick="deleteModule(this)"
-                                                    class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
+                                                    class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
                                                     Delete
                                                 </button>
+                                            
                                             </td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
-                        <div class="mt-6">
+                        <div class="mt-3 flex items-center">
                             <button type="button" 
                                 onclick="addModule()"
-                                class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
                                 Add Another Module
                             </button>
                         </div>
@@ -400,104 +539,816 @@
                 </div>   
 
                 
-                <div class="pt-6">
-                    <!-- Research Sections -->
-                    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
-                        <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Research Details</h3>
-
-                        <!-- Last Research -->
-                        <div class="space-y-6">
-                            {% for field in form %}
-                                {% if field.name == 'last_research' %}
-                                    <div class="space-y-1">
-                                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                            Title of last research undertaken and date project completed
-                                        </label>
-                                        <div class="mt-2">
-                                            {{ field|addclass:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
-                                        </div>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-
-                            <!-- Ongoing Research -->
-                            {% for field in form %}
-                                {% if field.name == 'ongoing_research' %}
-                                    <div class="space-y-1">
-                                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                            Title of ongoing research undertaken and period of research project
-                                        </label>
-                                        <div class="mt-2">
-                                            {{ field|addclass:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
-                                        </div>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-
-                    <!-- Publications Section -->
-                    <div class="space-y-4">
-                        <h3 class="text-lg font-medium text-gray-900">Publications</h3>
-                            <!-- Comment out the original complex implementation -->
-                            {% comment %}
-                                <div class="flex justify-between items-center">
-                                    <h3 class="text-lg font-medium text-gray-900">Publications</h3>
-                                        <button type="button" id="addPublication" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                            Add Publication
-                                        </button>
+                <!-- Research Sections -->
+                <div class="pt-8">
+                    <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-lg">
+                        <div class="border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-white">
+                            <div class="px-6 py-4 flex items-center">
+                                <div class="bg-indigo-100 rounded-full p-2 mr-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                                    </svg>
                                 </div>
-
-                                <div id="publicationsList" class="space-y-3">
-                                    {% if publications %}
-                                        {% for publication in publications %}
-                                        <div class="bg-white p-4 rounded-lg shadow" id="publication-{{ publication.id }}">
-                                            <h3 class="font-semibold text-lg">{{ publication.title }}</h3>
-                                            <p class="text-gray-600">{{ publication.authors }}</p>
-                                            <p class="text-gray-500">
-                                                {% if publication.publication_type == 'JOURNAL' %}
-                                                    {{ publication.journal_name }}
-                                                {% elif publication.publication_type == 'CONFERENCE' %}
-                                                    {{ publication.conference_name }}
-                                                {% else %}
-                                                    {{ publication.publisher }}
-                                                {% endif %}
-                                                ({{ publication.year }})
-                                            </p>
-                                            {% if publication.doi %}
-                                                <p class="text-sm text-blue-600">
-                                                    <a href="https://doi.org/{{ publication.doi }}" target="_blank">DOI: {{ publication.doi }}</a>
-                                                </p>
+                                <div>
+                                    <h3 class="text-xl font-semibold text-gray-900">Research Details</h3>
+                                    <p class="mt-1 text-sm text-gray-600">Information about your past and ongoing research activities</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="px-6 py-5 space-y-8">
+                            <!-- Completed Research Table -->
+                            <div>
+                                <h4 class="text-base font-semibold text-gray-900 mb-2">Completed Research</h4>
+                                {% if completed_research_formset.non_form_errors %}
+                                    <div class="text-red-600 text-sm mb-2">
+                                        {{ completed_research_formset.non_form_errors }}
+                                                </div>
                                             {% endif %}
-                                            {% if publication.url %}
-                                                <p class="text-sm text-blue-600">
-                                                    <a href="{{ publication.url }}" target="_blank">View Publication</a>
-                                                </p>
-                                            {% endif %}
-                                        </div>
+                                {{ completed_research_formset.management_form }}
+                                <div class="overflow-x-auto ring-1 ring-gray-300 rounded-lg w-full">
+                                    <table class="min-w-full divide-y divide-gray-300">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Title/Project</th>
+                                                <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Start Date</th>
+                                                <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">End Date</th>
+                                                <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Funding Agency</th>
+                                                <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Grants</th>
+                                                <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-200 bg-white" id="completed-research-formset">
+                                            {% for form in completed_research_formset %}
+                                            <tr class="completed-research-form hover:bg-gray-50 transition-colors">
+                                                {{ form.id }}
+                                                <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                                    <input type="text" name="completed_research_set-{{ forloop.counter0 }}-title" id="id_completed_research_set-{{ forloop.counter0 }}-title" value="{{ form.title.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                                    {% for error in form.title.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                                </td>
+                                                <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                                    <input type="date" name="completed_research_set-{{ forloop.counter0 }}-start_date" id="id_completed_research_set-{{ forloop.counter0 }}-start_date" value="{{ form.start_date.value|date:'Y-m-d'|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                                    {% for error in form.start_date.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                                </td>
+                                                <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                                    <input type="date" name="completed_research_set-{{ forloop.counter0 }}-end_date" id="id_completed_research_set-{{ forloop.counter0 }}-end_date" value="{{ form.end_date.value|date:'Y-m-d'|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                                    {% for error in form.end_date.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                                </td>
+                                                <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                                    <input type="text" name="completed_research_set-{{ forloop.counter0 }}-funding_agency" id="id_completed_research_set-{{ forloop.counter0 }}-funding_agency" value="{{ form.funding_agency.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                                    {% for error in form.funding_agency.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                                </td>
+                                                <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                                    <input type="text" name="completed_research_set-{{ forloop.counter0 }}-grants" id="id_completed_research_set-{{ forloop.counter0 }}-grants" value="{{ form.grants.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                                    {% for error in form.grants.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                                </td>
+                                                <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                                    <input type="hidden" name="completed_research_set-{{ forloop.counter0 }}-DELETE" id="id_completed_research_set-{{ forloop.counter0 }}-DELETE">
+                                                    <button type="button" onclick="deleteCompletedResearch(this)" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
                                         {% endfor %}
-                                    {% else %}
-                                        <p class="text-gray-500 text-center py-4 no-publications-message">No publications added yet.</p>
-                                    {% endif %}
-                                </div>
-                            {% endcomment %}
-
-                            <!-- Temporary Publications -->        
-                            {% for field in form %}
-                                {% if field.name == 'publications' %}
-                                    <div class="space-y-1">
-                                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                            List of publications (include title, authors, journal/conference, year, DOI if applicable)
-                                        </label>
-                                        <div class="mt-2">
-                                            {{ field|addclass:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
+                                        </tbody>
+                                    </table>
                                         </div>
-                                        <p class="text-xs text-gray-500 mt-1">
-                                            Please list your publications in a consistent format such as APA, MLA, or Harvard style.
-                                        </p>
-                                        {% if field.errors %}
-                                            <div class="mt-2 text-sm text-red-600">
-                                                {{ field.errors|join:", " }}
+                                <div class="mt-3 flex items-center">
+                                    <button type="button" onclick="addCompletedResearch()" class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                        Add Another Completed Research
+                                    </button>
+                                    </div>
+                                                    </div>
+                            <!-- Ongoing Research Table -->
+                            <div>
+                                <h4 class="text-base font-semibold text-gray-900 mb-2">Ongoing Research</h4>
+                                {% if ongoing_research_formset.non_form_errors %}
+                                    <div class="text-red-600 text-sm mb-2">
+                                        {{ ongoing_research_formset.non_form_errors }}
+                                                </div>
+                                            {% endif %}
+                                {{ ongoing_research_formset.management_form }}
+                                <div class="overflow-x-auto ring-1 ring-gray-300 rounded-lg w-full">
+                                    <table class="min-w-full divide-y divide-gray-300">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Title/Project</th>
+                                                <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Start Date</th>
+                                                <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">End Date</th>
+                                                <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Funding Agency</th>
+                                                <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Grants</th>
+                                                <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-200 bg-white" id="ongoing-research-formset">
+                                            {% for form in ongoing_research_formset %}
+                                            <tr class="ongoing-research-form hover:bg-gray-50 transition-colors">
+                                                {{ form.id }}
+                                                <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                                    <input type="text" name="ongoing_research_set-{{ forloop.counter0 }}-title" id="id_ongoing_research_set-{{ forloop.counter0 }}-title" value="{{ form.title.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                                    {% for error in form.title.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                                </td>
+                                                <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                                    <input type="date" name="ongoing_research_set-{{ forloop.counter0 }}-start_date" id="id_ongoing_research_set-{{ forloop.counter0 }}-start_date" value="{{ form.start_date.value|date:'Y-m-d'|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                                    {% for error in form.start_date.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                                </td>
+                                                <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                                    <input type="date" name="ongoing_research_set-{{ forloop.counter0 }}-end_date" id="id_ongoing_research_set-{{ forloop.counter0 }}-end_date" value="{{ form.end_date.value|date:'Y-m-d'|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                                    {% for error in form.end_date.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                                </td>
+                                                <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                                    <input type="text" name="ongoing_research_set-{{ forloop.counter0 }}-funding_agency" id="id_ongoing_research_set-{{ forloop.counter0 }}-funding_agency" value="{{ form.funding_agency.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                                    {% for error in form.funding_agency.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                                </td>
+                                                <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                                    <input type="text" name="ongoing_research_set-{{ forloop.counter0 }}-grants" id="id_ongoing_research_set-{{ forloop.counter0 }}-grants" value="{{ form.grants.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                                    {% for error in form.grants.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                                </td>
+                                                <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                                    <input type="hidden" name="ongoing_research_set-{{ forloop.counter0 }}-DELETE" id="id_ongoing_research_set-{{ forloop.counter0 }}-DELETE">
+                                                    <button type="button" onclick="deleteOngoingResearch(this)" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                    </div>
+                                <div class="mt-3 flex items-center">
+                                    <button type="button" onclick="addOngoingResearch()" class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                        Add Another Ongoing Research
+                                    </button>
+                                        </div>
+                                    </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Publications Section -->
+                <div class="pt-6">
+                    <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-lg">
+                        <div class="border-b border-gray-200 bg-gradient-to-r from-purple-50 to-white">
+                            <div class="px-6 py-4 flex items-center">
+                                <div class="bg-purple-100 rounded-full p-2 mr-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                            </svg>
+                                    </div>
+                                    <div>
+                                    <h3 class="text-xl font-semibold text-gray-900">Publications</h3>
+                                        <p class="mt-1 text-sm text-gray-600">List your academic publications and research papers</p>
+                                    </div>
+                                </div>
+                        </div>
+                        <div class="px-6 py-5">
+                                {% for field in form %}
+                                    {% if field.name == 'publications' %}
+                                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                                List of publications
+                                            </label>
+                                            <p class="text-sm text-gray-500 mb-4">Include title, authors, journal/conference, year, DOI if applicable</p>
+                                            <div class="mt-2">
+                                                {{ field|addclass:"block w-full rounded-md border-0 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 sm:text-sm sm:leading-6" }}
                                             </div>
-                                        {% endif %}
+                                            <div class="flex items-center mt-3 text-xs bg-indigo-50 text-indigo-700 p-2 rounded">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                Please list your publications in a consistent format such as APA, MLA, or Harvard style.
+                                            </div>
+                                            {% if field.errors %}
+                                                <div class="mt-2 text-sm text-red-600">
+                                                    {{ field.errors|join:", " }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conference Attendance Table -->
+                <div class="pt-8">
+                    <h4 class="text-base font-semibold text-gray-900 mb-2">Attendance at Conferences, Seminars, Workshops and Role Played</h4>
+                    {% if conference_attendance_formset.non_form_errors %}
+                        <div class="text-red-600 text-sm mb-2">
+                            {{ conference_attendance_formset.non_form_errors }}
+                                    </div>
+                                {% endif %}
+                    {{ conference_attendance_formset.management_form }}
+                    <div class="overflow-x-auto ring-1 ring-gray-300 rounded-lg w-full">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Event Name</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Type</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Date</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Location</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Role</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Details</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white" id="conference-attendance-formset">
+                                {% for form in conference_attendance_formset %}
+                                <tr class="conference-attendance-form hover:bg-gray-50 transition-colors">
+                                    {{ form.id }}
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="text" name="conference_attendance_set-{{ forloop.counter0 }}-event_name" id="id_conference_attendance_set-{{ forloop.counter0 }}-event_name" value="{{ form.event_name.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.event_name.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="text" name="conference_attendance_set-{{ forloop.counter0 }}-type" id="id_conference_attendance_set-{{ forloop.counter0 }}-type" value="{{ form.type.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.type.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="date" name="conference_attendance_set-{{ forloop.counter0 }}-date" id="id_conference_attendance_set-{{ forloop.counter0 }}-date" value="{{ form.date.value|date:'Y-m-d'|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.date.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="text" name="conference_attendance_set-{{ forloop.counter0 }}-location" id="id_conference_attendance_set-{{ forloop.counter0 }}-location" value="{{ form.location.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.location.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="text" name="conference_attendance_set-{{ forloop.counter0 }}-role" id="id_conference_attendance_set-{{ forloop.counter0 }}-role" value="{{ form.role.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.role.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="text" name="conference_attendance_set-{{ forloop.counter0 }}-details" id="id_conference_attendance_set-{{ forloop.counter0 }}-details" value="{{ form.details.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.details.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="hidden" name="conference_attendance_set-{{ forloop.counter0 }}-DELETE" id="id_conference_attendance_set-{{ forloop.counter0 }}-DELETE">
+                                        <button type="button" onclick="deleteConferenceAttendance(this)" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        </div>    
+                    <div class="mt-3 flex items-center">
+                        <button type="button" onclick="addConferenceAttendance()" class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            Add Another Conference Attendance
+                        </button>
+                    </div>     
+                </div>
+
+                <!-- Conference Paper Table -->
+                <div class="pt-8">
+                    <h4 class="text-base font-semibold text-gray-900 mb-2">Conference Paper, if any</h4>
+                    {% if conference_paper_formset.non_form_errors %}
+                        <div class="text-red-600 text-sm mb-2">
+                            {{ conference_paper_formset.non_form_errors }}
+                                    </div>
+                                {% endif %}
+                    {{ conference_paper_formset.management_form }}
+                    <div class="overflow-x-auto ring-1 ring-gray-300 rounded-lg w-full">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Author</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Year</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Title</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Volume</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Pages</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">DOI</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white" id="conference-paper-formset">
+                                {% for form in conference_paper_formset %}
+                                <tr class="conference-paper-form hover:bg-gray-50 transition-colors">
+                                    {{ form.id }}
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="text" name="conference_paper_set-{{ forloop.counter0 }}-author" id="id_conference_paper_set-{{ forloop.counter0 }}-author" value="{{ form.author.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.author.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="number" name="conference_paper_set-{{ forloop.counter0 }}-year" id="id_conference_paper_set-{{ forloop.counter0 }}-year" value="{{ form.year.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.year.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="text" name="conference_paper_set-{{ forloop.counter0 }}-title" id="id_conference_paper_set-{{ forloop.counter0 }}-title" value="{{ form.title.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.title.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="text" name="conference_paper_set-{{ forloop.counter0 }}-volume" id="id_conference_paper_set-{{ forloop.counter0 }}-volume" value="{{ form.volume.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.volume.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="text" name="conference_paper_set-{{ forloop.counter0 }}-pages" id="id_conference_paper_set-{{ forloop.counter0 }}-pages" value="{{ form.pages.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.pages.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="text" name="conference_paper_set-{{ forloop.counter0 }}-doi" id="id_conference_paper_set-{{ forloop.counter0 }}-doi" value="{{ form.doi.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.doi.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="hidden" name="conference_paper_set-{{ forloop.counter0 }}-DELETE" id="id_conference_paper_set-{{ forloop.counter0 }}-DELETE">
+                                        <button type="button" onclick="deleteConferencePaper(this)" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        </div>    
+                    <div class="mt-3 flex items-center">
+                        <button type="button" onclick="addConferencePaper()" class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            Add Another Conference Paper
+                        </button>
+                    </div>     
+                </div>
+
+                <!-- Consultancy Work Table -->
+                <div class="pt-8">
+                    <h4 class="text-base font-semibold text-gray-900 mb-2">Consultancy and other outside professional work undertaken</h4>
+                    {% if consultancy_work_formset.non_form_errors %}
+                        <div class="text-red-600 text-sm mb-2">
+                            {{ consultancy_work_formset.non_form_errors }}
+                                        </div>
+                                {% endif %}
+                    {{ consultancy_work_formset.management_form }}
+                    <div class="overflow-x-auto ring-1 ring-gray-300 rounded-lg w-full">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Title/Project</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Company/Institute</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Start Date</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">End Date</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white" id="consultancy-work-formset">
+                                {% for form in consultancy_work_formset %}
+                                <tr class="consultancy-work-form hover:bg-gray-50 transition-colors">
+                                    {{ form.id }}
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="text" name="consultancy_work_set-{{ forloop.counter0 }}-title" id="id_consultancy_work_set-{{ forloop.counter0 }}-title" value="{{ form.title.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.title.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="text" name="consultancy_work_set-{{ forloop.counter0 }}-company_institute" id="id_consultancy_work_set-{{ forloop.counter0 }}-company_institute" value="{{ form.company_institute.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.company_institute.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="date" name="consultancy_work_set-{{ forloop.counter0 }}-start_date" id="id_consultancy_work_set-{{ forloop.counter0 }}-start_date" value="{{ form.start_date.value|date:'Y-m-d'|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.start_date.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="date" name="consultancy_work_set-{{ forloop.counter0 }}-end_date" id="id_consultancy_work_set-{{ forloop.counter0 }}-end_date" value="{{ form.end_date.value|date:'Y-m-d'|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.end_date.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="hidden" name="consultancy_work_set-{{ forloop.counter0 }}-DELETE" id="id_consultancy_work_set-{{ forloop.counter0 }}-DELETE">
+                                        <button type="button" onclick="deleteConsultancyWork(this)" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        </div>    
+                    <div class="mt-3 flex items-center">
+                        <button type="button" onclick="addConsultancyWork()" class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            Add Another Consultancy Work
+                        </button>
+                    </div>     
+                </div>
+
+               <!-- Administrative Post Table -->
+                <div class="pt-8">
+                    <h4 class="text-base font-semibold text-gray-900 mb-2">Administrative posts held</h4>
+                    {% if administrative_post_formset.non_form_errors %}
+                        <div class="text-red-600 text-sm mb-2">
+                            {{ administrative_post_formset.non_form_errors }}
+                                    </div>
+                                {% endif %}
+                    {{ administrative_post_formset.management_form }}
+                    <div class="overflow-x-auto ring-1 ring-gray-300 rounded-lg w-full">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Position</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">From</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">To</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Details</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white" id="administrative-post-formset">
+                                {% for form in administrative_post_formset %}
+                                <tr class="administrative-post-form hover:bg-gray-50 transition-colors">
+                                    {{ form.id }}
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="text" name="administrative_post_set-{{ forloop.counter0 }}-position" id="id_administrative_post_set-{{ forloop.counter0 }}-position" value="{{ form.position.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.position.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="date" name="administrative_post_set-{{ forloop.counter0 }}-from_date" id="id_administrative_post_set-{{ forloop.counter0 }}-from_date" value="{{ form.from_date.value|date:'Y-m-d'|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.from_date.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="date" name="administrative_post_set-{{ forloop.counter0 }}-to_date" id="id_administrative_post_set-{{ forloop.counter0 }}-to_date" value="{{ form.to_date.value|date:'Y-m-d'|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.to_date.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="text" name="administrative_post_set-{{ forloop.counter0 }}-details" id="id_administrative_post_set-{{ forloop.counter0 }}-details" value="{{ form.details.value|default:'' }}" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        {% for error in form.details.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-900">
+                                        <input type="hidden" name="administrative_post_set-{{ forloop.counter0 }}-DELETE" id="id_administrative_post_set-{{ forloop.counter0 }}-DELETE">
+                                        <button type="button" onclick="deleteAdministrativePost(this)" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        </div>    
+                    <div class="mt-3 flex items-center">
+                        <button type="button" onclick="addAdministrativePost()" class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            Add Another Administrative Post
+                        </button>
+                    </div>     
+                </div>
+
+                <!-- Participation in Other Activities: Grouped -->
+                 <div class="pt-6">
+                    <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-lg">
+                  
+                      <!-- Header with Icon and Description -->
+                      <div class="border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-white">
+                        <div class="px-6 py-4 flex items-center">
+                          <div class="bg-indigo-100 rounded-full p-2 mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2l4-4M7 7h10v10H7z" />
+                            </svg>
+                                        </div>
+                          <div>
+                            <h3 class="text-xl font-semibold text-gray-900">Participation in Other Activities</h3>
+                            <p class="mt-1 text-sm text-gray-600">Involvement in institutional, outreach, or collaborative roles beyond core research</p>
+                                    </div>
+                        </div>
+                      </div>
+                  
+                      <!-- Content -->
+                      <div class="px-6 py-5 space-y-8">
+                  
+                        <!-- Within University -->
+                        <div>
+                          <h4 class="text-base font-semibold text-gray-700 mb-2">Within University</h4>
+                          {{ within_university_activity_formset.management_form }}
+                          {% if within_university_activity_formset.non_form_errors %}
+                            <div class="text-red-600 text-sm mb-2">{{ within_university_activity_formset.non_form_errors }}</div>
+                                {% endif %}
+                          <div class="overflow-x-auto ring-1 ring-gray-300 rounded-lg w-full">
+                            <table class="min-w-full divide-y divide-gray-300">
+                              <thead class="bg-gray-50">
+                                <tr>
+                                  <th class="py-2 pl-3 pr-2 text-left text-sm font-semibold text-gray-900 sm:pl-4">Activity/Event</th>
+                                  <th class="px-2 py-2 text-left text-sm font-semibold text-gray-900">Role/Position</th>
+                                  <th class="px-2 py-2 text-left text-sm font-semibold text-gray-900">Date</th>
+                                  <th class="px-2 py-2 text-left text-sm font-semibold text-gray-900">Remarks</th>
+                                  <th class="px-2 py-2 text-left text-sm font-semibold text-gray-900">Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody class="divide-y divide-gray-200 bg-white" id="within-university-activity-formset">
+                                {% for form in within_university_activity_formset %}
+                                <tr class="within-university-activity-form hover:bg-gray-50 transition-colors">
+                                  {{ form.id }}
+                                  <td class="whitespace-nowrap py-2 pl-3 pr-2 text-sm text-gray-900 sm:pl-4">
+                                    <input type="text" name="within_university_activity_set-{{ forloop.counter0 }}-activity" id="id_within_university_activity_set-{{ forloop.counter0 }}-activity" value="{{ form.activity.value|default:'' }}" class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-blue-600 sm:leading-6">
+                                    {% for error in form.activity.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                  </td>
+                                  <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                    <input type="text" name="within_university_activity_set-{{ forloop.counter0 }}-role" id="id_within_university_activity_set-{{ forloop.counter0 }}-role" value="{{ form.role.value|default:'' }}" class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-blue-600 sm:leading-6">
+                                    {% for error in form.role.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                  </td>
+                                  <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                    <input type="date" name="within_university_activity_set-{{ forloop.counter0 }}-date" id="id_within_university_activity_set-{{ forloop.counter0 }}-date" value="{{ form.date.value|date:'Y-m-d'|default:'' }}" class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-blue-600 sm:leading-6">
+                                    {% for error in form.date.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                  </td>
+                                  <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                    <input type="text" name="within_university_activity_set-{{ forloop.counter0 }}-remarks" id="id_within_university_activity_set-{{ forloop.counter0 }}-remarks" value="{{ form.remarks.value|default:'' }}" class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-blue-600 sm:leading-6">
+                                    {% for error in form.remarks.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                  </td>
+                                  <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                    <input type="hidden" name="within_university_activity_set-{{ forloop.counter0 }}-DELETE" id="id_within_university_activity_set-{{ forloop.counter0 }}-DELETE">
+                                    <button type="button" onclick="deleteWithinUniversityActivity(this)" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        Delete
+                                    </button>
+                                  </td>
+                                </tr>
+                            {% endfor %}
+                              </tbody>
+                            </table>
+                        </div>    
+                          <div class="mt-3 flex items-center">
+                            <button type="button" onclick="addWithinUniversityActivity()" class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                              </svg>
+                              Add Another Activity
+                            </button>
+                    </div>     
+                </div>
+
+                        <!-- Outside University -->
+                        <div>
+                          <h4 class="text-base font-semibold text-gray-700 mb-2">Outside University</h4>
+                          {{ outside_university_activity_formset.management_form }}
+                          {% if outside_university_activity_formset.non_form_errors %}
+                            <div class="text-red-600 text-sm mb-2">{{ outside_university_activity_formset.non_form_errors }}</div>
+                          {% endif %}
+                          <div class="overflow-x-auto ring-1 ring-gray-300 rounded-lg w-full">
+                            <table class="min-w-full divide-y divide-gray-300">
+                              <thead class="bg-gray-50">
+                                <tr>
+                                  <th class="py-2 pl-3 pr-2 text-left text-sm font-semibold text-gray-900 sm:pl-4">Activity/Event</th>
+                                  <th class="px-2 py-2 text-left text-sm font-semibold text-gray-900">Role/Position</th>
+                                  <th class="px-2 py-2 text-left text-sm font-semibold text-gray-900">Date</th>
+                                  <th class="px-2 py-2 text-left text-sm font-semibold text-gray-900">Remarks</th>
+                                  <th class="px-2 py-2 text-left text-sm font-semibold text-gray-900">Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody class="divide-y divide-gray-200 bg-white" id="outside-university-activity-formset">
+                                {% for form in outside_university_activity_formset %}
+                                <tr class="outside-university-activity-form hover:bg-gray-50 transition-colors">
+                                  {{ form.id }}
+                                  <td class="whitespace-nowrap py-2 pl-3 pr-2 text-sm text-gray-900 sm:pl-4">
+                                    <input type="text" name="outside_university_activity_set-{{ forloop.counter0 }}-activity" id="id_outside_university_activity_set-{{ forloop.counter0 }}-activity" value="{{ form.activity.value|default:'' }}" class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-blue-600 sm:leading-6">
+                                    {% for error in form.activity.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                  </td>
+                                  <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                    <input type="text" name="outside_university_activity_set-{{ forloop.counter0 }}-role" id="id_outside_university_activity_set-{{ forloop.counter0 }}-role" value="{{ form.role.value|default:'' }}" class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-blue-600 sm:leading-6">
+                                    {% for error in form.role.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                  </td>
+                                  <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                    <input type="date" name="outside_university_activity_set-{{ forloop.counter0 }}-date" id="id_outside_university_activity_set-{{ forloop.counter0 }}-date" value="{{ form.date.value|date:'Y-m-d'|default:'' }}" class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-blue-600 sm:leading-6">
+                                    {% for error in form.date.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                  </td>
+                                  <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                    <input type="text" name="outside_university_activity_set-{{ forloop.counter0 }}-remarks" id="id_outside_university_activity_set-{{ forloop.counter0 }}-remarks" value="{{ form.remarks.value|default:'' }}" class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-blue-600 sm:leading-6">
+                                    {% for error in form.remarks.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                  </td>
+                                  <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                    <input type="hidden" name="outside_university_activity_set-{{ forloop.counter0 }}-DELETE" id="id_outside_university_activity_set-{{ forloop.counter0 }}-DELETE">
+                                    <button type="button" onclick="deleteOutsideUniversityActivity(this)" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                        Delete
+                                    </button>
+                                  </td>
+                                </tr>
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                                </div>
+                          <div class="mt-3 flex items-center">
+                            <button type="button" onclick="addOutsideUniversityActivity()" class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                              </svg>
+                              Add Another Activity
+                            </button>
+                            </div>
+                        </div>
+                        
+                      </div>
+                    </div>
+                  </div>
+                <!-- END Participation in Other Activities: Grouped -->
+
+                <!-- Membership of Committees: Grouped -->
+                <div class="pt-8">
+                    <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-lg">
+                      <div class="border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-white">
+                        <div class="px-6 py-4 flex items-center">
+                          <div class="bg-indigo-100 rounded-full p-2 mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                                                    </svg>
+                                            </div>
+                          <div>
+                            <h3 class="text-xl font-semibold text-gray-900">Membership of Committees</h3>
+                            <p class="mt-1 text-sm text-gray-600">Details of your university and outside university committee memberships</p>
+                                        </div>
+                        </div>
+                      </div>
+                      <div class="px-6 py-5 space-y-8">
+                        <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
+                          <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Membership of Committees</h3>
+                          <div class="mb-8">
+                            <h4 class="text-base font-semibold text-gray-700 mb-2">University Committees</h4>
+                            {{ university_committee_formset.management_form }}
+                            {% if university_committee_formset.non_form_errors %}
+                              <div class="text-red-600 text-sm mb-2">{{ university_committee_formset.non_form_errors }}</div>
+                                    {% endif %}
+                            <div class="overflow-x-auto ring-1 ring-gray-300 rounded-lg w-full">
+                              <table class="min-w-full divide-y divide-gray-300">
+                                <thead class="bg-gray-50">
+                                  <tr>
+                                    <th class="py-2 pl-3 pr-2 text-left text-sm font-semibold text-gray-900 sm:pl-4">Committee Name</th>
+                                    <th class="px-2 py-2 text-left text-sm font-semibold text-gray-900">Position</th>
+                                    <th class="px-2 py-2 text-left text-sm font-semibold text-gray-900">From</th>
+                                    <th class="px-2 py-2 text-left text-sm font-semibold text-gray-900">To</th>
+                                    <th class="px-2 py-2 text-left text-sm font-semibold text-gray-900">Details</th>
+                                    <th class="px-2 py-2 text-left text-sm font-semibold text-gray-900">Actions</th>
+                                  </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 bg-white" id="university-committee-formset">
+                                  {% for form in university_committee_formset %}
+                                  <tr class="university-committee-form hover:bg-gray-50 transition-colors">
+                                    {{ form.id }}
+                                    <td class="whitespace-nowrap py-2 pl-3 pr-2 text-sm text-gray-900 sm:pl-4">
+                                      <input type="text" name="university_committee_set-{{ forloop.counter0 }}-committee_name" id="id_university_committee_set-{{ forloop.counter0 }}-committee_name" value="{{ form.committee_name.value|default:'' }}" class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:leading-6">
+                                      {% for error in form.committee_name.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                      <input type="text" name="university_committee_set-{{ forloop.counter0 }}-position" id="id_university_committee_set-{{ forloop.counter0 }}-position" value="{{ form.position.value|default:'' }}" class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:leading-6">
+                                      {% for error in form.position.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                      <input type="date" name="university_committee_set-{{ forloop.counter0 }}-from_date" id="id_university_committee_set-{{ forloop.counter0 }}-from_date" value="{{ form.from_date.value|date:'Y-m-d'|default:'' }}" class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:leading-6">
+                                      {% for error in form.from_date.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                      <input type="date" name="university_committee_set-{{ forloop.counter0 }}-to_date" id="id_university_committee_set-{{ forloop.counter0 }}-to_date" value="{{ form.to_date.value|date:'Y-m-d'|default:'' }}" class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:leading-6">
+                                      {% for error in form.to_date.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                      <input type="text" name="university_committee_set-{{ forloop.counter0 }}-details" id="id_university_committee_set-{{ forloop.counter0 }}-details" value="{{ form.details.value|default:'' }}" class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:leading-6">
+                                      {% for error in form.details.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                      <input type="hidden" name="university_committee_set-{{ forloop.counter0 }}-DELETE" id="id_university_committee_set-{{ forloop.counter0 }}-DELETE">
+                                      <button type="button" onclick="deleteUniversityCommittee(this)" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        Delete
+                                    </button>
+                                    </td>
+                                  </tr>
+                                {% endfor %}
+                                </tbody>
+                              </table>
+                            </div>
+                            <div class="mt-3 flex items-center">
+                              <button type="button" onclick="addUniversityCommittee()" class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                    </svg>
+                                Add Another Committee
+                              </button>
+                                            </div>
+                                        </div>
+                  
+                          <div>
+                            <h4 class="text-base font-semibold text-gray-700 mb-2 mt-8">Outside University</h4>
+                            {{ outside_committee_formset.management_form }}
+                            {% if outside_committee_formset.non_form_errors %}
+                              <div class="text-red-600 text-sm mb-2">{{ outside_committee_formset.non_form_errors }}</div>
+                                    {% endif %}
+                            <div class="overflow-x-auto ring-1 ring-gray-300 rounded-lg w-full">
+                              <table class="min-w-full divide-y divide-gray-300">
+                                <thead class="bg-gray-50">
+                                  <tr>
+                                    <th class="py-2 pl-3 pr-2 text-left text-sm font-semibold text-gray-900 sm:pl-4">Organization</th>
+                                    <th class="px-2 py-2 text-left text-sm font-semibold text-gray-900">Position</th>
+                                    <th class="px-2 py-2 text-left text-sm font-semibold text-gray-900">From</th>
+                                    <th class="px-2 py-2 text-left text-sm font-semibold text-gray-900">To</th>
+                                    <th class="px-2 py-2 text-left text-sm font-semibold text-gray-900">Details</th>
+                                    <th class="px-2 py-2 text-left text-sm font-semibold text-gray-900">Actions</th>
+                                  </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 bg-white" id="outside-committee-formset">
+                                  {% for form in outside_committee_formset %}
+                                  <tr class="outside-committee-form hover:bg-gray-50 transition-colors">
+                                    {{ form.id }}
+                                    <td class="whitespace-nowrap py-2 pl-3 pr-2 text-sm text-gray-900 sm:pl-4">
+                                      <input type="text" name="outside_committee_set-{{ forloop.counter0 }}-organization" id="id_outside_committee_set-{{ forloop.counter0 }}-organization" value="{{ form.organization.value|default:'' }}" class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:leading-6">
+                                      {% for error in form.organization.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                      <input type="text" name="outside_committee_set-{{ forloop.counter0 }}-position" id="id_outside_committee_set-{{ forloop.counter0 }}-position" value="{{ form.position.value|default:'' }}" class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:leading-6">
+                                      {% for error in form.position.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                      <input type="date" name="outside_committee_set-{{ forloop.counter0 }}-from_date" id="id_outside_committee_set-{{ forloop.counter0 }}-from_date" value="{{ form.from_date.value|date:'Y-m-d'|default:'' }}" class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:leading-6">
+                                      {% for error in form.from_date.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                      <input type="date" name="outside_committee_set-{{ forloop.counter0 }}-to_date" id="id_outside_committee_set-{{ forloop.counter0 }}-to_date" value="{{ form.to_date.value|date:'Y-m-d'|default:'' }}" class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:leading-6">
+                                      {% for error in form.to_date.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                      <input type="text" name="outside_committee_set-{{ forloop.counter0 }}-details" id="id_outside_committee_set-{{ forloop.counter0 }}-details" value="{{ form.details.value|default:'' }}" class="px-3 block w-full rounded-md border-0 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:leading-6">
+                                      {% for error in form.details.errors %}<div class="text-red-600 text-xs mt-1">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                                      <input type="hidden" name="outside_committee_set-{{ forloop.counter0 }}-DELETE" id="id_outside_committee_set-{{ forloop.counter0 }}-DELETE">
+                                      <button type="button" onclick="deleteOutsideCommittee(this)" class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        Delete
+                                    </button>
+                                    </td>
+                                  </tr>
+                                {% endfor %}
+                                </tbody>
+                              </table>
+                            </div>
+                            <div class="mt-3 flex items-center">
+                              <button type="button" onclick="addOutsideCommittee()" class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                Add Another Committee
+                              </button>
+                            </div>
+                          </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                  
+
+                <!-- Teaching and Research Objectives -->
+                <div class="pt-3">
+                    <div class="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-md">
+                        <div class="border-b border-gray-200 bg-gradient-to-r from-amber-50 to-white">
+                            <div class="px-4 py-2 flex items-center">
+                                <div class="bg-amber-100 rounded-full p-1.5 mr-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                    </svg>
+                                </div>
+                                <h3 class="text-base font-semibold text-gray-900">Teaching and Research Objectives</h3>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4">
+                            {% for field in form %}
+                                {% if field.name == 'objectives_next_year' %}
+                                    <div class="form-group">
+                                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                            Objectives for the following year
+                                        </label>
+                                        <p class="text-xs text-gray-500 mb-2">Please outline your teaching and research plans and goals for the upcoming academic year</p>
+                                        <div class="mt-1">
+                                            {{ field|addclass:"px-3 block w-full rounded-md border-0 py-1.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-amber-600 sm:leading-6" }}
+                                        </div>
                                     </div>
                                 {% endif %}
                             {% endfor %}
@@ -505,164 +1356,45 @@
                     </div>
                 </div>
 
-                <!--Attendance at conferences, seminars, workshops and role played-->
-                <div class="pt-6">
-                    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
-                        <div class="space-y-6">
-                            {% for field in form %}
-                                {% if field.name == 'attendance' %}
-                                    <div class="space-y-1">
-                                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                            Attendance at Conferences, Seminars, Workshops and Role Played
-                                        </label>
-                                        <div class="mt-2">
-                                            {{ field|addclass:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
-                                        </div>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>    
-                    </div>     
-                </div>
-
-                <!-- Conference papaer, if any -->
-                <div class="pt-6">
-                    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
-                        <div class="space-y-6">
-                            {% for field in form %}
-                                {% if field.name == 'conference_papers' %}
-                                    <div class="space-y-1">
-                                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                            Conference papaer, if any
-                                        </label>
-                                        <div class="mt-2">
-                                            {{ field|addclass:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
-                                        </div>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>    
-                    </div>     
-                </div>
-
-                <!-- Consultancy and other outside professional work undertaken -->
-                <div class="pt-6">
-                    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
-                        <div class="space-y-6">
-                            {% for field in form %}
-                                {% if field.name == 'consultancy_work' %}
-                                    <div class="space-y-1">
-                                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                            Consultancy and other outside professional work undertaken
-                                        </label>
-                                        <div class="mt-2">
-                                            {{ field|addclass:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
-                                        </div>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>    
-                    </div>     
-                </div>
-
-                <!-- Administrative posts held -->
-                 <div class="pt-6">
-                    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
-                        <div class="space-y-6">
-                            {% for field in form %}
-                                {% if field.name == 'administrative_posts' %}
-                                    <div class="space-y-1">
-                                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                            Administrative posts held
-                                        </label>
-                                        <div class="mt-2">
-                                            {{ field|addclass:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
-                                        </div>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>    
-                    </div>     
-                </div>
-
-                <!-- Memberships of Commitees (skip for now because this will use inlineformset) -->
-
-                <!-- Participation in other activities -->
-                <div class="pt-6">
-                    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
-                        <h3 class="text-lg font-medium leading-6 text-gray-900 mb-6">Participation in other activities</h3>
-
-                        <div class="space-y-6">
-                            {% for field in form %}
-                                {% if field.name == 'participation_other_activities_university' %}
-                                    <div class="space-y-1">
-                                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                            Within University
-                                        </label>
-                                        <div class="mt-2">
-                                            {{ field|addclass:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
-                                        </div>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
+                <!-- Appraiser Comments Section -->
+                <div class="pt-3">
+                    <div class="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-md">
+                        <div class="border-b border-gray-200 bg-gradient-to-r from-purple-50 to-white">
+                            <div class="px-4 py-2 flex items-center">
+                                <div class="bg-purple-100 rounded-full p-1.5 mr-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-purple-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                    </svg>
+                                </div>
+                                <h3 class="text-base font-semibold text-gray-900">Appraiser Comments</h3>
+                            </div>
                         </div>
-
-                        <div class="space-y-6">
-                            {% for field in form %}
-                                {% if field.name == 'participation_other_activities_outside' %}
-                                    <div class="space-y-1">
-                                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                            Outside University
-                                        </label>
-                                        <div class="mt-2">
-                                            {{ field|addclass:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
-                                        </div>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-
-                    </div>     
-                </div>
-
-                <!-- State your teaching andd research objectives for the following year -->
-                <div class="pt-6">
-                    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
-                        <div class="space-y-6">
-                            {% for field in form %}
-                                {% if field.name == 'objectives_next_year' %}
-                                    <div class="space-y-1">
-                                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                            State your teaching andd research objectives for the following year
-                                        </label>
-                                        <div class="mt-2">
-                                            {{ field|addclass:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
-                                        </div>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>    
-                    </div>     
-                </div>
-
-                <!--Appraiser comments if he does not agree-->
-                <div class="pt-6">
-                    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
-                        <div class="space-y-6">
+                        
+                        <div class="p-4">
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 mb-3">
+                                <div class="flex items-center mb-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span class="text-sm font-medium text-gray-700">Note for Appraiser</span>
+                                </div>
+                                <p class="text-xs text-gray-600">Please provide comments only if you disagree with any entries made by the appraisee in this section.</p>
+                            </div>
+                            
                             {% for field in form %}
                                 {% if field.name == 'appraiser_comments' %}
-                                    <div class="space-y-1">
-                                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                            Comments of the appraiser if he does not aggree with any entry made by the appraisee in this Section
+                                    <div class="form-group">
+                                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                            Comments
                                         </label>
-                                        <div class="mt-2">
-                                            {{ field|addclass:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" }}
+                                        <div class="mt-1">
+                                            {{ field|addclass:"px-3 block w-full h-20 rounded-md border-0 py-1.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-purple-600 sm:leading-6" }}
                                         </div>
                                     </div>
                                 {% endif %}
                             {% endfor %}
-                        </div>    
-                    </div>     
+                        </div>
+                    </div>
                 </div>
 
 
@@ -677,10 +1409,10 @@
                         Save as Draft
                     </button>
                     <button type="submit" 
-                            class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                           class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                         Submit
                     </button>
-                </div>
+                </div> 
         </form>
                 {% comment %}    
                 {% include 'appraisals/wizard/publication_modal.html' %}
@@ -907,5 +1639,496 @@ function removePublication(id) {
     }
 }
 
+function addCompletedResearch() {
+    const tbody = document.getElementById('completed-research-formset');
+    const totalForms = document.getElementById('id_completed_research_set-TOTAL_FORMS');
+    const formCount = tbody.children.length;
+    const emptyRow = tbody.querySelector('tr.completed-research-form');
+    let newRow;
+    if (emptyRow) {
+        newRow = emptyRow.cloneNode(true);
+        // Clear input values
+        newRow.querySelectorAll('input, select, textarea').forEach(input => {
+            if (input.type === 'hidden' && input.name.endsWith('-id')) {
+                input.value = '';
+            } else if (input.type === 'checkbox' || input.type === 'radio') {
+                input.checked = false;
+            } else {
+                input.value = '';
+            }
+        });
+        tbody.appendChild(newRow);
+        totalForms.value = formCount + 1;
+    }
+}
+function deleteCompletedResearch(button) {
+    const row = button.closest('tr');
+    const deleteInput = row.querySelector('input[type="hidden"][name$="-DELETE"]');
+    if (deleteInput) {
+        deleteInput.value = 'on'; // Mark for deletion
+        row.style.display = 'none'; // Hide the row
+    } else {
+        row.remove();
+    }
+}
+function addOngoingResearch() {
+    const tbody = document.getElementById('ongoing-research-formset');
+    const totalForms = document.getElementById('id_ongoing_research_set-TOTAL_FORMS');
+    const formCount = tbody.children.length;
+    const emptyRow = tbody.querySelector('tr.ongoing-research-form');
+    let newRow;
+    if (emptyRow) {
+        newRow = emptyRow.cloneNode(true);
+        newRow.querySelectorAll('input, select, textarea').forEach(input => {
+            if (input.type === 'hidden' && input.name.endsWith('-id')) {
+                input.value = '';
+            } else if (input.type === 'checkbox' || input.type === 'radio') {
+                input.checked = false;
+            } else {
+                input.value = '';
+            }
+        });
+        tbody.appendChild(newRow);
+        totalForms.value = formCount + 1;
+    }
+}
+function deleteOngoingResearch(button) {
+    const row = button.closest('tr');
+    const deleteInput = row.querySelector('input[type="hidden"][name$="-DELETE"]');
+    if (deleteInput) {
+        deleteInput.value = 'on'; // Mark for deletion
+        row.style.display = 'none'; // Hide the row
+    } else {
+        row.remove();
+    }
+}
+
+// Conference Attendance functions
+function addConferenceAttendance() {
+    const tbody = document.getElementById('conference-attendance-formset');
+    const totalForms = document.getElementById('id_conference_attendance_set-TOTAL_FORMS');
+    const formCount = tbody.children.length;
+    const emptyRow = tbody.querySelector('tr.conference-attendance-form');
+    let newRow;
+    if (emptyRow) {
+        newRow = emptyRow.cloneNode(true);
+        // Clear input values
+        newRow.querySelectorAll('input, select, textarea').forEach(input => {
+            if (input.type === 'hidden' && input.name.endsWith('-id')) {
+                input.value = '';
+            } else if (input.type === 'checkbox' || input.type === 'radio') {
+                input.checked = false;
+            } else {
+                input.value = '';
+            }
+            
+            // Update the indices in the name and id attributes
+            if (input.name) {
+                input.name = input.name.replace(/conference_attendance_set-\d+/, `conference_attendance_set-${formCount}`);
+            }
+            if (input.id) {
+                input.id = input.id.replace(/id_conference_attendance_set-\d+/, `id_conference_attendance_set-${formCount}`);
+            }
+        });
+        tbody.appendChild(newRow);
+        totalForms.value = formCount + 1;
+    }
+}
+
+function deleteConferenceAttendance(button) {
+    const row = button.closest('tr');
+    const deleteInput = row.querySelector('input[type="hidden"][name$="-DELETE"]');
+    if (deleteInput) {
+        deleteInput.value = 'on'; // Mark for deletion
+        row.style.display = 'none'; // Hide the row
+    } else {
+        row.remove();
+    }
+}
+
+// Conference Paper functions
+function addConferencePaper() {
+    const tbody = document.getElementById('conference-paper-formset');
+    const totalForms = document.getElementById('id_conference_paper_set-TOTAL_FORMS');
+    const formCount = tbody.children.length;
+    const emptyRow = tbody.querySelector('tr.conference-paper-form');
+    let newRow;
+    if (emptyRow) {
+        newRow = emptyRow.cloneNode(true);
+        // Clear input values
+        newRow.querySelectorAll('input, select, textarea').forEach(input => {
+            if (input.type === 'hidden' && input.name.endsWith('-id')) {
+                input.value = '';
+            } else if (input.type === 'checkbox' || input.type === 'radio') {
+                input.checked = false;
+            } else {
+                input.value = '';
+            }
+            
+            // Update the indices in the name and id attributes
+            if (input.name) {
+                input.name = input.name.replace(/conference_paper_set-\d+/, `conference_paper_set-${formCount}`);
+            }
+            if (input.id) {
+                input.id = input.id.replace(/id_conference_paper_set-\d+/, `id_conference_paper_set-${formCount}`);
+            }
+        });
+        tbody.appendChild(newRow);
+        totalForms.value = formCount + 1;
+    }
+}
+
+function deleteConferencePaper(button) {
+    const row = button.closest('tr');
+    const deleteInput = row.querySelector('input[type="hidden"][name$="-DELETE"]');
+    if (deleteInput) {
+        deleteInput.value = 'on'; // Mark for deletion
+        row.style.display = 'none'; // Hide the row
+    } else {
+        row.remove();
+    }
+}
+
+// Consultancy Work functions
+function addConsultancyWork() {
+    const tbody = document.getElementById('consultancy-work-formset');
+    const totalForms = document.getElementById('id_consultancy_work_set-TOTAL_FORMS');
+    const formCount = tbody.children.length;
+    const emptyRow = tbody.querySelector('tr.consultancy-work-form');
+    let newRow;
+    if (emptyRow) {
+        newRow = emptyRow.cloneNode(true);
+        // Clear input values
+        newRow.querySelectorAll('input, select, textarea').forEach(input => {
+            if (input.type === 'hidden' && input.name.endsWith('-id')) {
+                input.value = '';
+            } else if (input.type === 'checkbox' || input.type === 'radio') {
+                input.checked = false;
+            } else {
+                input.value = '';
+            }
+            
+            // Update the indices in the name and id attributes
+            if (input.name) {
+                input.name = input.name.replace(/consultancy_work_set-\d+/, `consultancy_work_set-${formCount}`);
+            }
+            if (input.id) {
+                input.id = input.id.replace(/id_consultancy_work_set-\d+/, `id_consultancy_work_set-${formCount}`);
+            }
+        });
+        tbody.appendChild(newRow);
+        totalForms.value = formCount + 1;
+    }
+}
+
+function deleteConsultancyWork(button) {
+    const row = button.closest('tr');
+    const deleteInput = row.querySelector('input[type="hidden"][name$="-DELETE"]');
+    if (deleteInput) {
+        deleteInput.value = 'on'; // Mark for deletion
+        row.style.display = 'none'; // Hide the row
+    } else {
+        row.remove();
+    }
+}
+
+// Administrative Post functions
+function addAdministrativePost() {
+    const tbody = document.getElementById('administrative-post-formset');
+    const totalForms = document.getElementById('id_administrative_post_set-TOTAL_FORMS');
+    const formCount = tbody.children.length;
+    const emptyRow = tbody.querySelector('tr.administrative-post-form');
+    let newRow;
+    if (emptyRow) {
+        newRow = emptyRow.cloneNode(true);
+        // Clear input values
+        newRow.querySelectorAll('input, select, textarea').forEach(input => {
+            if (input.type === 'hidden' && input.name.endsWith('-id')) {
+                input.value = '';
+            } else if (input.type === 'checkbox' || input.type === 'radio') {
+                input.checked = false;
+            } else {
+                input.value = '';
+            }
+            
+            // Update the indices in the name and id attributes
+            if (input.name) {
+                input.name = input.name.replace(/administrative_post_set-\d+/, `administrative_post_set-${formCount}`);
+            }
+            if (input.id) {
+                input.id = input.id.replace(/id_administrative_post_set-\d+/, `id_administrative_post_set-${formCount}`);
+            }
+        });
+        tbody.appendChild(newRow);
+        totalForms.value = formCount + 1;
+    }
+}
+
+function deleteAdministrativePost(button) {
+    const row = button.closest('tr');
+    const deleteInput = row.querySelector('input[type="hidden"][name$="-DELETE"]');
+    if (deleteInput) {
+        deleteInput.value = 'on'; // Mark for deletion
+        row.style.display = 'none'; // Hide the row
+    } else {
+        row.remove();
+    }
+}
+
+function addModule() {
+    const tbody = document.getElementById('module-formset');
+    const formCount = tbody.children.length;
+    const totalForms = document.getElementById('id_module_set-TOTAL_FORMS');
+    
+    // Create new row
+    const newRow = document.createElement('tr');
+    newRow.className = 'module-form';
+    
+    // Set the HTML for the new row
+    newRow.innerHTML = `
+        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
+            <input type="text" 
+                name="module_set-${formCount}-code" 
+                id="id_module_set-${formCount}-code"
+                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+        </td>
+        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+            <input type="text" 
+                name="module_set-${formCount}-title" 
+                id="id_module_set-${formCount}-title"
+                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+        </td>
+        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+            <input type="text" 
+                name="module_set-${formCount}-level" 
+                id="id_module_set-${formCount}-level"
+                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+        </td>
+        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+            <input type="text" 
+                name="module_set-${formCount}-languageMedium" 
+                id="id_module_set-${formCount}-languageMedium"
+                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+        </td>
+        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+            <input type="number" 
+                name="module_set-${formCount}-no_of_students" 
+                id="id_module_set-${formCount}-no_of_students"
+                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+        </td>
+        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+            <input type="number" 
+                name="module_set-${formCount}-percentage_jointly_taught" 
+                id="id_module_set-${formCount}-percentage_jointly_taught"
+                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+        </td>
+        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+            <input type="number" 
+                name="module_set-${formCount}-hrs_weekly" 
+                id="id_module_set-${formCount}-hrs_weekly"
+                step="0.1"
+                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+        </td>
+        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+            <input type="hidden" 
+                name="module_set-${formCount}-DELETE" 
+                id="id_module_set-${formCount}-DELETE">
+            <button type="button" 
+                onclick="deleteModule(this)"
+                class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete
+            </button>
+        </td>
+    `;
+    
+    tbody.appendChild(newRow);
+    totalForms.value = formCount + 1;
+}
+
+function deleteModule(button) {
+    const row = button.closest('tr');
+    const deleteInput = row.querySelector('input[name$="-DELETE"]');
+    if (deleteInput) {
+        deleteInput.value = 'on';
+        row.style.display = 'none';
+    } else {
+        row.remove();
+    }
+}
+
+// Within University Activity functions
+function addWithinUniversityActivity() {
+    const tbody = document.getElementById('within-university-activity-formset');
+    const totalForms = document.getElementById('id_within_university_activity_set-TOTAL_FORMS');
+    const formCount = tbody.children.length;
+    const emptyRow = tbody.querySelector('tr.within-university-activity-form');
+    let newRow;
+    if (emptyRow) {
+        newRow = emptyRow.cloneNode(true);
+        // Clear input values
+        newRow.querySelectorAll('input, select, textarea').forEach(input => {
+            if (input.type === 'hidden' && input.name.endsWith('-id')) {
+                input.value = '';
+            } else if (input.type === 'checkbox' || input.type === 'radio') {
+                input.checked = false;
+            } else {
+                input.value = '';
+            }
+            
+            // Update the indices in the name and id attributes
+            if (input.name) {
+                input.name = input.name.replace(/within_university_activity_set-\d+/, `within_university_activity_set-${formCount}`);
+            }
+            if (input.id) {
+                input.id = input.id.replace(/id_within_university_activity_set-\d+/, `id_within_university_activity_set-${formCount}`);
+            }
+        });
+        tbody.appendChild(newRow);
+        totalForms.value = formCount + 1;
+    }
+}
+
+function deleteWithinUniversityActivity(button) {
+    const row = button.closest('tr');
+    const deleteInput = row.querySelector('input[type="hidden"][name$="-DELETE"]');
+    if (deleteInput) {
+        deleteInput.value = 'on'; // Mark for deletion
+        row.style.display = 'none'; // Hide the row
+    } else {
+        row.remove();
+    }
+}
+
+// Outside University Activity functions
+function addOutsideUniversityActivity() {
+    const tbody = document.getElementById('outside-university-activity-formset');
+    const totalForms = document.getElementById('id_outside_university_activity_set-TOTAL_FORMS');
+    const formCount = tbody.children.length;
+    const emptyRow = tbody.querySelector('tr.outside-university-activity-form');
+    let newRow;
+    if (emptyRow) {
+        newRow = emptyRow.cloneNode(true);
+        // Clear input values
+        newRow.querySelectorAll('input, select, textarea').forEach(input => {
+            if (input.type === 'hidden' && input.name.endsWith('-id')) {
+                input.value = '';
+            } else if (input.type === 'checkbox' || input.type === 'radio') {
+                input.checked = false;
+            } else {
+                input.value = '';
+            }
+            
+            // Update the indices in the name and id attributes
+            if (input.name) {
+                input.name = input.name.replace(/outside_university_activity_set-\d+/, `outside_university_activity_set-${formCount}`);
+            }
+            if (input.id) {
+                input.id = input.id.replace(/id_outside_university_activity_set-\d+/, `id_outside_university_activity_set-${formCount}`);
+            }
+        });
+        tbody.appendChild(newRow);
+        totalForms.value = formCount + 1;
+    }
+}
+
+function deleteOutsideUniversityActivity(button) {
+    const row = button.closest('tr');
+    const deleteInput = row.querySelector('input[type="hidden"][name$="-DELETE"]');
+    if (deleteInput) {
+        deleteInput.value = 'on'; // Mark for deletion
+        row.style.display = 'none'; // Hide the row
+    } else {
+        row.remove();
+    }
+}
+
+// University Committee functions
+function addUniversityCommittee() {
+    const tbody = document.getElementById('university-committee-formset');
+    const totalForms = document.getElementById('id_university_committee_set-TOTAL_FORMS');
+    const formCount = tbody.children.length;
+    const emptyRow = tbody.querySelector('tr.university-committee-form');
+    let newRow;
+    if (emptyRow) {
+        newRow = emptyRow.cloneNode(true);
+        // Clear input values
+        newRow.querySelectorAll('input, select, textarea').forEach(input => {
+            if (input.type === 'hidden' && input.name.endsWith('-id')) {
+                input.value = '';
+            } else if (input.type === 'checkbox' || input.type === 'radio') {
+                input.checked = false;
+            } else {
+                input.value = '';
+            }
+            
+            // Update the indices in the name and id attributes
+            if (input.name) {
+                input.name = input.name.replace(/university_committee_set-\d+/, `university_committee_set-${formCount}`);
+            }
+            if (input.id) {
+                input.id = input.id.replace(/id_university_committee_set-\d+/, `id_university_committee_set-${formCount}`);
+            }
+        });
+        tbody.appendChild(newRow);
+        totalForms.value = formCount + 1;
+    }
+}
+
+function deleteUniversityCommittee(button) {
+    const row = button.closest('tr');
+    const deleteInput = row.querySelector('input[type="hidden"][name$="-DELETE"]');
+    if (deleteInput) {
+        deleteInput.value = 'on'; // Mark for deletion
+        row.style.display = 'none'; // Hide the row
+    } else {
+        row.remove();
+    }
+}
+
+// Outside Committee functions
+function addOutsideCommittee() {
+    const tbody = document.getElementById('outside-committee-formset');
+    const totalForms = document.getElementById('id_outside_committee_set-TOTAL_FORMS');
+    const formCount = tbody.children.length;
+    const emptyRow = tbody.querySelector('tr.outside-committee-form');
+    let newRow;
+    if (emptyRow) {
+        newRow = emptyRow.cloneNode(true);
+        // Clear input values
+        newRow.querySelectorAll('input, select, textarea').forEach(input => {
+            if (input.type === 'hidden' && input.name.endsWith('-id')) {
+                input.value = '';
+            } else if (input.type === 'checkbox' || input.type === 'radio') {
+                input.checked = false;
+            } else {
+                input.value = '';
+            }
+            
+            // Update the indices in the name and id attributes
+            if (input.name) {
+                input.name = input.name.replace(/outside_committee_set-\d+/, `outside_committee_set-${formCount}`);
+            }
+            if (input.id) {
+                input.id = input.id.replace(/id_outside_committee_set-\d+/, `id_outside_committee_set-${formCount}`);
+            }
+        });
+        tbody.appendChild(newRow);
+        totalForms.value = formCount + 1;
+    }
+}
+
+function deleteOutsideCommittee(button) {
+    const row = button.closest('tr');
+    const deleteInput = row.querySelector('input[type="hidden"][name$="-DELETE"]');
+    if (deleteInput) {
+        deleteInput.value = 'on'; // Mark for deletion
+        row.style.display = 'none'; // Hide the row
+    } else {
+        row.remove();
+    }
+}
 </script>
 {% endblock %}

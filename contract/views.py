@@ -5,7 +5,7 @@ from django.http import JsonResponse, HttpResponseForbidden, HttpResponse, FileR
 from django.core.cache import cache
 from .models import Contract, AdministrativePosition, DeanReview, SMTReview, MOEReview, PeerReview
 from .forms import ContractRenewalForm, ContractForm
-from appraisals.models import Appraisal
+from appraisals.models import Appraisal, Module, AppraisalPublication
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
@@ -50,6 +50,10 @@ from django.conf import settings
 import tempfile
 import os
 from PIL import Image
+from zipfile import ZipFile
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+import difflib
+from appraisals.models import CompletedResearch, OngoingResearch
 
 
 class ContractSubmissionView(LoginRequiredMixin, CreateView):
@@ -95,15 +99,298 @@ class ContractSubmissionView(LoginRequiredMixin, CreateView):
             if previous_contract:
                 context['previous_contract'] = previous_contract
                 
+            # --- Auto-populate academic qualifications for new contract ---
+            # Only if not editing an existing contract (i.e., not a draft or previous_contract)
+            if not self.request.GET.get('edit') and not previous_contract:
+                employee = self.request.user.employee
+                qualifications = employee.get_qualifications().order_by('-from_date')
+                qual_list = []
+                for qual in qualifications:
+                    qual_list.append({
+                        'degree_diploma': qual.degree_diploma,
+                        'university_college': qual.university_college,
+                        'from_date': qual.from_date.strftime('%Y-%m-%d'),
+                        'to_date': qual.to_date.strftime('%Y-%m-%d'),
+                    })
+                import json
+                context['academic_qualifications_text'] = json.dumps(qual_list)
+                
+                # --- Auto-populate teaching modules for new contract ---
+                modules = Module.objects.filter(employee=employee).order_by('code')
+                modules_list = []
+                for module in modules:
+                    modules_list.append({
+                        'title': module.title,
+                        'level': module.level,
+                        'languageMedium': module.languageMedium,
+                        'no_of_students': module.no_of_students,
+                        'percentage_jointly_taught': module.percentage_jointly_taught,
+                        'hrs_weekly': module.hrs_weekly,
+                    })
+                context['teaching_modules_text'] = json.dumps(modules_list)
+                
+                # --- Auto-populate publications from completed appraisals ---
+                # Get all completed appraisals for this employee
+                
+                # First check all appraisals regardless of status
+                all_appraisals = Appraisal.objects.filter(employee=employee)
+                
+                # Now get only completed appraisals - order by date_created (oldest first)
+                completed_appraisals = Appraisal.objects.filter(
+                    employee=employee,
+                    status='completed'
+                ).order_by('date_created')  # Changed from '-date_created' to 'date_created' for oldest first
+                
+                # Get all publications from these appraisals
+                publications = []
+                if completed_appraisals.exists():
+                    # Get unique publications from all completed appraisals
+                    appraisal_publications = AppraisalPublication.objects.filter(
+                        appraisal__in=completed_appraisals
+                    ).order_by('year')  # Changed from '-year' to 'year' for oldest first
+                    
+                    # Format publications as text entries
+                    for pub in appraisal_publications:
+                        publications.append(f"{pub.title} ({pub.year})")
+                
+                # Check if there are publications directly in the Appraisal model
+                all_publications_texts = []
+                
+                for appraisal in completed_appraisals:
+                    if appraisal.publications:
+                        all_publications_texts.append(appraisal.publications)
+                
+                # Combine all sources of publications
+                if publications:
+                    # If we have AppraisalPublication entries, use those
+                    context['publications_text'] = '\n\n'.join(publications)
+                elif all_publications_texts:
+                    # Otherwise, use publications from Appraisal.publications field
+                    context['publications_text'] = '\n\n'.join(all_publications_texts)
+                else:
+                    # If no publications found, check the Publication model as a last resort
+                    from employees.models import Publication
+                    employee_publications = Publication.objects.filter(employee=employee)
+                    
+                    if employee_publications.exists():
+                        direct_publications = []
+                        for pub in employee_publications:
+                            pub_year = pub.year if pub.year else "N/A"
+                            direct_publications.append(f"{pub.title} ({pub_year})")
+                        
+                        context['publications_text'] = '\n\n'.join(direct_publications)
+                    else:
+                        context['publications_text'] = ""
+                
+                # --- Auto-populate data from the 3 latest appraisals ---
+                latest_appraisals = Appraisal.objects.filter(
+                    employee=employee,
+                    status='completed'  # Only use completed appraisals
+                ).order_by('-date_created')[:3]
+                
+                # 1. Conference Attendance
+                conference_attendance = []
+                for appraisal in latest_appraisals:
+                    attendance_entries = appraisal.conference_attendances.all()
+                    for entry in attendance_entries:
+                        conference_attendance.append({
+                            'event_name': entry.event_name,
+                            'type': entry.type,
+                            'date': entry.date.isoformat() if entry.date else '',
+                            'location': entry.location or '',
+                            'role': entry.role or '',
+                            'details': entry.details or ''
+                        })
+                context['conference_attendance_data'] = json.dumps(conference_attendance)
+                
+                # 2. Administrative Positions
+                administrative_positions = []
+                for appraisal in latest_appraisals:
+                    admin_posts = appraisal.admin_post_entries.all()
+                    for post in admin_posts:
+                        administrative_positions.append({
+                            'title': post.position,
+                            'from_date': post.from_date.isoformat() if post.from_date else '',
+                            'to_date': post.to_date.isoformat() if post.to_date else '',
+                            'details': post.details or ''
+                        })
+                context['administrative_positions_data'] = json.dumps(administrative_positions)
+                
+                # 3. University Committees
+                university_committees = []
+                for appraisal in latest_appraisals:
+                    committees = appraisal.university_committee_memberships.all()
+                    for committee in committees:
+                        university_committees.append({
+                            'committee_name': committee.committee_name,
+                            'position': committee.position,
+                            'from_date': committee.from_date.isoformat() if committee.from_date else '',
+                            'to_date': committee.to_date.isoformat() if committee.to_date else '',
+                            'details': committee.details or ''
+                        })
+                context['university_committees_data'] = json.dumps(university_committees)
+                
+                # 4. External Committees
+                external_committees = []
+                for appraisal in latest_appraisals:
+                    committees = appraisal.outside_committee_memberships.all()
+                    for committee in committees:
+                        external_committees.append({
+                            'organization': committee.organization,
+                            'position': committee.position,
+                            'from_date': committee.from_date.isoformat() if committee.from_date else '',
+                            'to_date': committee.to_date.isoformat() if committee.to_date else '',
+                            'details': committee.details or ''
+                        })
+                context['external_committees_data'] = json.dumps(external_committees)
+                
+                # 5. Consultancy Work
+                consultancy_work = []
+                for appraisal in latest_appraisals:
+                    consultancy_entries = appraisal.consultancy_works.all()
+                    for entry in consultancy_entries:
+                        consultancy_work.append({
+                            'title': entry.title,
+                            'company_institute': entry.company_institute,
+                            'start_date': entry.start_date.isoformat() if entry.start_date else '',
+                            'end_date': entry.end_date.isoformat() if entry.end_date else ''
+                        })
+                context['consultancy_work_data'] = json.dumps(consultancy_work)
+                
+                # 6. Conference Papers
+                conference_papers = []
+                for appraisal in latest_appraisals:
+                    paper_entries = appraisal.conference_paper_entries.all()
+                    for paper in paper_entries:
+                        conference_papers.append({
+                            'author': paper.author,
+                            'year': paper.year,
+                            'title': paper.title,
+                            'volume': paper.volume or '',
+                            'pages': paper.pages or '',
+                            'doi': paper.doi or ''
+                        })
+                context['conference_papers_data'] = json.dumps(conference_papers)
+                
+                # 7. Participation Within University
+                participation_within = []
+                for appraisal in latest_appraisals:
+                    activities = appraisal.within_university_activities.all()
+                    for activity in activities:
+                        participation_within.append({
+                            'activity': activity.activity,
+                            'role': activity.role,
+                            'date': activity.date.isoformat() if activity.date else '',
+                            'remarks': activity.remarks or ''
+                        })
+                context['participation_within_data'] = json.dumps(participation_within)
+                
+                # 8. Participation Outside University
+                participation_outside = []
+                for appraisal in latest_appraisals:
+                    activities = appraisal.outside_university_activities.all()
+                    for activity in activities:
+                        participation_outside.append({
+                            'activity': activity.activity,
+                            'role': activity.role,
+                            'date': activity.date.isoformat() if activity.date else '',
+                            'remarks': activity.remarks or ''
+                        })
+                context['participation_outside_data'] = json.dumps(participation_outside)
+        
         # Add contract type choices
         context['contract_type_choices'] = Contract.CONTRACT_TYPE_CHOICES
+        
+        # --- Auto-populate completed and ongoing research from latest 3 appraisals ---
+        # Only for new contract forms (not editing/drafts)
+        latest_appraisals = Appraisal.objects.filter(
+            employee=employee,
+            status='completed'
+        ).order_by('-date_created')[:3]
+
+        research_entries = []  # List of (title, status, entry_dict, appraisal_date)
+        for appraisal in latest_appraisals:
+            # Completed research
+            for entry in appraisal.completed_researches.all():
+                research_entries.append((entry.title.strip(), 'completed', {
+                    'title': entry.title,
+                    'startDate': entry.start_date.isoformat() if entry.start_date else '',
+                    'endDate': entry.end_date.isoformat() if entry.end_date else '',
+                    'fundingAgency': entry.funding_agency or '',
+                    'grants': entry.grants or ''
+                }, appraisal.date_created))
+            # Ongoing research
+            for entry in appraisal.ongoing_researches.all():
+                research_entries.append((entry.title.strip(), 'ongoing', {
+                    'title': entry.title,
+                    'startDate': entry.start_date.isoformat() if entry.start_date else '',
+                    'endDate': entry.end_date.isoformat() if entry.end_date else '',
+                    'fundingAgency': entry.funding_agency or '',
+                    'grants': entry.grants or ''
+                }, appraisal.date_created))
+
+        # Fuzzy group by title, preferring 'completed' if both exist
+        grouped = []  # List of dicts
+        used = set()
+        threshold = 0.85
+        for i, (title, status, entry_dict, date) in enumerate(research_entries):
+            if i in used:
+                continue
+            # Find all similar titles
+            group = [(i, title, status, entry_dict, date)]
+            for j in range(i+1, len(research_entries)):
+                if j in used:
+                    continue
+                other_title, other_status, other_entry, other_date = research_entries[j][0], research_entries[j][1], research_entries[j][2], research_entries[j][3]
+                ratio = difflib.SequenceMatcher(None, title.lower(), other_title.lower()).ratio()
+                if ratio >= threshold:
+                    group.append((j, other_title, other_status, other_entry, other_date))
+                    used.add(j)
+            # From the group, prefer the most recent 'completed', else most recent 'ongoing'
+            group.sort(key=lambda x: (x[2] == 'completed', x[4]), reverse=True)
+            grouped.append(group[0][3])
+            used.add(i)
+        # Separate into completed and ongoing
+        completed_research = []
+        ongoing_research = []
+        for entry in grouped:
+            # Find the original status in research_entries
+            for t, s, e, d in research_entries:
+                if e == entry:
+                    if s == 'completed':
+                        completed_research.append(entry)
+                    else:
+                        ongoing_research.append(entry)
+                    break
+        context['completed_research_data'] = json.dumps(completed_research)
+        context['ongoing_research_data'] = json.dumps(ongoing_research)
         
         return context
 
 
     def form_valid(self, form):
+        is_draft = self.request.POST.get('is_draft') == 'true'
         form.instance.employee = self.request.user.employee
-        form.instance.status = 'pending'
+        if is_draft:
+            existing_draft = Contract.objects.filter(employee=self.request.user.employee, status='draft').first()
+            if existing_draft:
+                # Update the existing draft instead of creating a new one
+                for field in form.Meta.fields:
+                    if field not in ['id', 'pk', 'employee', 'submission_date', 'status']:
+                        setattr(existing_draft, field, getattr(form.instance, field))
+                existing_draft.is_draft = True
+                existing_draft.draft_saved_at = timezone.now()
+                existing_draft.draft_saved_by = self.request.user.employee
+                existing_draft.status = 'draft'
+                form.instance = existing_draft  # Use the updated draft for the rest of the method
+            else:
+                form.instance.is_draft = True
+                form.instance.draft_saved_at = timezone.now()
+                form.instance.draft_saved_by = self.request.user.employee
+                form.instance.status = 'draft'
+        else:
+            form.instance.is_draft = False
+            form.instance.status = 'pending'
 
         # Handle consultancy work
         consultancy_data = self.request.POST.get('consultancy_work')
@@ -137,6 +424,10 @@ class ContractSubmissionView(LoginRequiredMixin, CreateView):
                 form.instance.ongoing_research = '[]'
         else:
             form.instance.ongoing_research = '[]'
+
+        # Handle publications (now as text)
+        publications = self.request.POST.get('publications')
+        form.instance.publications = publications if publications else ''
 
         # Handle conference papers
         conference_papers = self.request.POST.get('conference_papers')
@@ -182,23 +473,34 @@ class ContractSubmissionView(LoginRequiredMixin, CreateView):
             form.instance.attendance = '[]'
             
         # Handle administrative positions data
-        response = super().form_valid(form)
         administrative_positions_data = self.request.POST.get('administrative_positions_text')
         form.instance.administrative_positions_text = '[]'  # Default to empty list
         if administrative_positions_data:
             try:
                 positions = json.loads(administrative_positions_data)
                 for position in positions:
+                    # Debug log
+                    print(f"Debug - Administrative position data: {position}")
+                    
+                    # Get the date values
+                    from_date = position.get('from_date', None) or position.get('fromDate', None)
+                    to_date = position.get('to_date', None) or position.get('toDate', None)
+                    
+                    # Skip creating records with missing from_date
+                    if not from_date:
+                        print(f"Warning - Skipping administrative position due to missing from_date: {position}")
+                        continue
+                        
                     # Create and save each administrative position
                     AdministrativePosition.objects.create(
                         contract=form.instance,
                         title=position.get('position', ''),
-                        from_date=position.get('fromDate', None),
-                        to_date=position.get('toDate', None),
+                        from_date=from_date,
+                        to_date=to_date or from_date,  # Use from_date as fallback if to_date is missing
                         details=position.get('details', '')
                     )
-            except json.JSONDecodeError:
-                pass
+            except (json.JSONDecodeError, Exception) as e:
+                print(f"Error processing administrative positions: {str(e)}")
         
         # Handle university committees data
         university_committees_data = self.request.POST.get('university_committees_text')
@@ -234,61 +536,67 @@ class ContractSubmissionView(LoginRequiredMixin, CreateView):
         
         # Handle fellowships and awards data
         fellowships_awards_data = self.request.POST.get('fellowships_awards_text')
-        print(f"DEBUG - Fellowships and awards data from form: {fellowships_awards_data}")
         if fellowships_awards_data:
             try:
                 fellowships_json = json.loads(fellowships_awards_data)
-                print(f"DEBUG - Parsed fellowships and awards data: {fellowships_json}")
                 form.instance.fellowships_awards_text = fellowships_awards_data
             except json.JSONDecodeError:
-                print("DEBUG - JSON decode error for fellowships_awards_text")
                 form.instance.fellowships_awards_text = '[]'
         else:
-            print("DEBUG - No fellowships_awards_text data found in form")
             form.instance.fellowships_awards_text = '[]'
         
-            # Create notification for HR users
-        try:
-            hr_group = Group.objects.get(name='HR')
-            hr_users = hr_group.user_set.all()
-            submission_date = form.instance.submission_date.strftime('%B %d, %Y')
-            message = f"{self.request.user.employee.get_full_name()} has submitted a contract renewal form on {submission_date}"
-            
-            for hr_user in hr_users:
-                try:
-                    hr_employee = Employee.objects.get(user=hr_user)
-                    ContractNotification.objects.create(
-                        employee=hr_employee,
-                        message=message,
-                        read=False,
-                        contract=form.instance
-                    )
-                except Employee.DoesNotExist:
-                    continue
-        except Group.DoesNotExist:
-            print("HR group not found")
-        except Exception as e:
-            print(f"Error creating HR notification: {str(e)}")
-        
-        contract = form.save()
+        response = super().form_valid(form)
+
+        # Only notify HR if not saving as draft
+        if not is_draft:
+            try:
+                hr_group = Group.objects.get(name='HR')
+                hr_users = hr_group.user_set.all()
+                submission_date = form.instance.submission_date.strftime('%B %d, %Y')
+                message = f"{self.request.user.employee.get_full_name()} has submitted a contract renewal form on {submission_date}"
+                for hr_user in hr_users:
+                    try:
+                        hr_employee = Employee.objects.get(user=hr_user)
+                        ContractNotification.objects.create(
+                            employee=hr_employee,
+                            message=message,
+                            read=False,
+                            contract=form.instance
+                        )
+                    except Employee.DoesNotExist:
+                        continue
+            except Group.DoesNotExist:
+                print("HR group not found")
+            except Exception as e:
+                print(f"Error creating HR notification: {str(e)}")
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'redirect_url': '/contract/employee-contracts/'
+            })
         return response
 
     def get(self, request, *args, **kwargs):
+        # If a draft exists for this user, load it for editing
+        draft = Contract.objects.filter(employee=request.user.employee, is_draft=True).first()
+        if draft:
+            return redirect('contract:edit_submission', pk=draft.pk)
         # Check if user has a pending submission
         existing_submission = Contract.objects.filter(
             employee=request.user.employee,
             status__in=['pending', 'smt_review', 'sent_back']
         ).first()
-        
         if existing_submission:
             return render(request, 'contract/submission_exists.html', {
                 'submission': existing_submission
             })
-            
         return super().get(request, *args, **kwargs)
 
     def get_success_url(self):
         return reverse_lazy('contract:thank_you')
+
+    def form_invalid(self, form):
+        return super().form_invalid(form)
 
 def get_employee_data(request, employee_id):
     try:
@@ -522,96 +830,10 @@ def get_employee_data(request, employee_id):
             
             return '\n'.join(unique_objectives) if unique_objectives else ''
 
-        # Process appraiser comments
-        appraiser_comments_history = []
-        for appraisal in appraisals:
-            if appraisal.appraiser_comments and appraisal.appraiser_comments.strip():
-                comment_data = {
-                    'comment': appraisal.appraiser_comments.strip(),
-                    'date': appraisal.date_of_last_appraisal.strftime('%Y-%m-%d'),
-                    'appraiser_name': appraisal.appraiser.get_full_name() if appraisal.appraiser else 'Unknown Appraiser'
-                }
-                appraiser_comments_history.append(comment_data)
-
-        # Process academic qualifications
-        unique_qualifications = set()
-        all_qualifications = []
-        
-        for appraisal in appraisals:
-            qualifications = appraisal.academic_qualifications.all().order_by('-to_date')
-            for qual in qualifications:
-                qual_identifier = (
-                    qual.degree_diploma.lower(),
-                    qual.university_college.lower(),
-                    qual.from_date.isoformat(),
-                    qual.to_date.isoformat()
-                )
-                if qual_identifier not in unique_qualifications:
-                    unique_qualifications.add(qual_identifier)
-                    all_qualifications.append({
-                        'degree_diploma': qual.degree_diploma,
-                        'university_college': qual.university_college,
-                        'from_date': qual.from_date.strftime('%Y-%m-%d'),
-                        'to_date': qual.to_date.strftime('%Y-%m-%d')
-                    })
-
-        # Process current enrollment
-        current_enrollments = []
-        seen_enrollments = set()
-        
-        for appraisal in appraisals:
-            if appraisal.current_enrollment:
-                enrollments = [e.strip() for e in appraisal.current_enrollment.split('\n') if e.strip()]
-                for enrollment in enrollments:
-                    if enrollment not in seen_enrollments:
-                        seen_enrollments.add(enrollment)
-                        current_enrollments.append(enrollment)
-        
         contract_count = Contract.objects.filter(employee=employee).count() + 1
-
-        combined_data = {
-            # Basic information
-            'first_name': employee.first_name,
-            'last_name': employee.last_name,
-            'ic_no': employee.ic_no,
-            'ic_colour': employee.ic_colour,
-            'phone_number': employee.phone_number,
-            'department': employee.department.name if employee.department else '',
-            'department_id': employee.department.id if employee.department else '',
-            'contract_count': contract_count, 
-            
-            # Academic qualifications
-            'academic_qualifications_text': json.dumps(all_qualifications),
-            
-            # Appraiser comments
-            'appraiser_comments_history': appraiser_comments_history,
-            
-            # Current enrollment
-            'current_enrollment': '\n'.join(current_enrollments),
-            
-            # Status fields
-            'publications': process_status_fields('publications'),
-            'conference_papers': process_status_fields('conference_papers'),
-            'consultancy_work': process_status_fields('consultancy_work'),
-            'administrative_posts': process_status_fields('administrative_posts'),
-            'higher_degree_students_supervised': process_status_fields('higher_degree_students_supervised'),
-            'participation_within_university': process_status_fields('participation_within_university'),
-            'participation_outside_university': process_status_fields('participation_outside_university'),
-            'attendance': process_status_fields('attendance'),
-            
-            # Latest values
-            'present_post': latest_appraisal.present_post,
-            'salary_scale_division': latest_appraisal.salary_scale_division,
-            'objectives_next_year': process_objectives(),
-            'incremental_date': latest_appraisal.incremental_date.strftime('%Y-%m-%d') if latest_appraisal.incremental_date else '',
-            'date_of_last_appraisal': latest_appraisal.date_of_last_appraisal.strftime('%Y-%m-%d') if latest_appraisal.date_of_last_appraisal else '',
-            'last_research': last_research,
-            'ongoing_research': ongoing_research,
-        }
 
         return JsonResponse({
             'success': True,
-            'data': combined_data
         })
 
     except Exception as e:
@@ -843,6 +1065,9 @@ class ContractReviewView(LoginRequiredMixin, UpdateView):
                 
         context['fellowships_awards'] = fellowships_awards
 
+        # Add SMT approved flag for template logic
+        context['smt_approved'] = contract.smt_reviews.filter(decision='smt_approved').exists()
+
         return context
     
     def get_form(self, form_class=None):
@@ -885,15 +1110,20 @@ def enable_contract(request):
         data = json.loads(request.body)
         employee_ids = data.get('employee_ids', [])
         action = data.get('action')  # 'enable' or 'disable'
+        newly_enabled = []
         
         for employee_id in employee_ids:
             status, created = ContractRenewalStatus.objects.get_or_create(
                 employee_id=employee_id
             )
+            was_enabled = status.is_enabled
             status.is_enabled = (action == 'enable')
             status.save()
+            # Only add if we are enabling and it was not enabled before
+            if action == 'enable' and not was_enabled:
+                newly_enabled.append(employee_id)
         
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({'status': 'success', 'newly_enabled': newly_enabled})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
@@ -904,54 +1134,38 @@ def send_notification(request):
         return JsonResponse({'error': 'Unauthorized'}, status=403)
     
     try:
-        # Get all contract employees with enabled contract renewal status
-        contract_employees = Employee.objects.filter(
-            appointment_type='Contract',
-            contractrenewalstatus__is_enabled=True
-        ).select_related('department')
-        
-        today = timezone.now().date()
+        data = json.loads(request.body)
+        employee_ids = data.get('employee_ids', [])
+        if not employee_ids:
+            return JsonResponse({'status': 'info', 'message': 'No employees specified for notification'})
         notifications_sent = 0
+
+        employees = Employee.objects.filter(id__in=employee_ids)
+        today = timezone.now().date()
         
-        for employee in contract_employees:
+        for employee in employees:
             # Calculate next renewal date
             renewal_date = employee.hire_date + relativedelta(years=3)
             while renewal_date < today:
                 renewal_date += relativedelta(years=3)
-            
-            # Calculate months remaining
-            months_remaining = ((renewal_date.year - today.year) * 12 + 
-                              renewal_date.month - today.month)
-            
-            # Get the correct URL using reverse()
+            months_remaining = ((renewal_date.year - today.year) * 12 + renewal_date.month - today.month)
             submission_url = '/contract/form/'
-            
-            # Create notification with link to contract renewal form
             message = (
                 f"Your contract renewal is due on {renewal_date.strftime('%B %d, %Y')}. "
                 f"You have {months_remaining} months remaining. "
                 "Please submit your contract renewal application. Use the link below:<br/>"
                 f'<a href="{submission_url}" class="text-blue-600 hover:underline">Click here to submit</a>'
             )
-            
-            # Create notification
             ContractNotification.objects.create(
                 employee=employee,
                 message=message
             )
             notifications_sent += 1
-        
-        if notifications_sent > 0:
+        # Move the return statement here, after the loop
             return JsonResponse({
                 'status': 'success',
                 'message': f'Notifications sent to {notifications_sent} employees'
             })
-        else:
-            return JsonResponse({
-                'status': 'info',
-                'message': 'No employees with enabled contract renewal found'
-            })
-        
     except Exception as e:
         print(f"Error sending notifications: {str(e)}")
         return JsonResponse({'error': str(e)}, status=400)
@@ -1021,7 +1235,7 @@ def forward_to_smt(request, contract_id):
         except Group.DoesNotExist:
             pass
         
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({'status': 'success', 'redirect_url': reverse('contract:view_all_submissions')})
     except Contract.DoesNotExist:
         return JsonResponse({'error': 'Contract not found'}, status=404)
     except Exception as e:
@@ -1048,7 +1262,7 @@ class ViewAllSubmissionsView(LoginRequiredMixin, View):
 
     def get(self, request):
         if not (request.user.groups.filter(name='HR').exists() or request.user.groups.filter(name='SMT').exists()):
-            return redirect('contract:submission')
+            return redirect('contract:view_all_submissions')
         
         today = datetime.now().date()
         filter_param = request.GET.get('filter')
@@ -1322,6 +1536,7 @@ class ContractDetailView(LoginRequiredMixin, DetailView):
         
         context['appraiser_comments'] = appraiser_comments
         
+        
         return context
 
 @login_required
@@ -1426,14 +1641,10 @@ def review_contract(request, contract_id):
     fellowships_awards = []
     if contract.fellowships_awards_text:
         try:
-            print(f"DEBUG - fellowships_awards_text from contract: {contract.fellowships_awards_text}")
             fellowships_awards = json.loads(contract.fellowships_awards_text)
-            print(f"DEBUG - Parsed fellowships_awards data: {fellowships_awards}")
         except json.JSONDecodeError:
-            print("DEBUG - JSON decode error for fellowships_awards_text in review_contract")
             fellowships_awards = []
     else:
-        print("DEBUG - No fellowships_awards_text data found in contract")
         fellowships_awards = []
     
     context = {
@@ -1446,6 +1657,8 @@ def review_contract(request, contract_id):
         'ongoing_research': ongoing_research,
         'conference_papers': conference_papers,
         'fellowships_awards': fellowships_awards,
+        # Publications are now handled as text, no parsing needed
+        'publications': contract.publications,
         # ... rest of your context data ...
     }
     
@@ -1539,7 +1752,7 @@ class EditSubmissionView(LoginRequiredMixin, UpdateView):
     def get_queryset(self):
         return Contract.objects.filter(
             employee=self.request.user.employee,
-            status='sent_back'
+            status__in=['sent_back', 'draft']
         )
     
     def get_context_data(self, **kwargs):
@@ -1559,6 +1772,9 @@ class EditSubmissionView(LoginRequiredMixin, UpdateView):
         # Add contract table data to context
         contract = self.get_object()
         
+        # Define employee variable here to fix the UnboundLocalError
+        employee = contract.employee
+        
         # Get administrative positions and convert to JSON
         admin_positions = contract.administrative_positions.all().values('title', 'from_date', 'to_date', 'details')
         admin_positions_list = list(admin_positions)
@@ -1570,13 +1786,7 @@ class EditSubmissionView(LoginRequiredMixin, UpdateView):
                 position['to_date'] = position['to_date'].strftime('%Y-%m-%d')
             # Map title to position for consistency with the form
             position['position'] = position['title']
-        
-        # Print for debugging
-        print(f"Last research: {contract.last_research}")
-        print(f"Ongoing research: {contract.ongoing_research}")
-        print(f"Conference papers: {contract.conference_papers}")
-        print(f"Consultancy work: {contract.consultancy_work}")
-            
+    
         # Make sure JSON fields are handled correctly
         # Handle JSON fields that might already be strings or might be objects
         def ensure_json_string(field_value):
@@ -1622,25 +1832,121 @@ class EditSubmissionView(LoginRequiredMixin, UpdateView):
         
         context['contract_data_json'] = json.dumps(contract_data)
         
+        # Parse academic qualifications data
+        if contract.academic_qualifications_text:
+            context['academic_qualifications_text'] = ensure_json_string(contract.academic_qualifications_text)
+        
+        # Parse teaching modules data
+        if contract.teaching_modules_text:
+            context['teaching_modules_text'] = ensure_json_string(contract.teaching_modules_text)
+        
+        # Publications are now handled as text, no parsing needed
+        if contract.publications:
+            context['publications_text'] = contract.publications
+        else:
+            # If no publications in contract, try to get them from appraisals
+            # employee is already defined above
+            completed_appraisals = Appraisal.objects.filter(
+                employee=employee,
+                status='completed'
+            ).order_by('date_created')  # Changed from '-date_created' to 'date_created' for oldest first
+            
+            # Check if there are publications directly in the Appraisal model
+            all_publications_texts = []
+            for appraisal in completed_appraisals:
+                if appraisal.publications:
+                    all_publications_texts.append(appraisal.publications)
+            
+            if all_publications_texts:
+                context['publications_text'] = '\n\n'.join(all_publications_texts)
+        
+        # --- Auto-populate data from the 3 latest appraisals ---
+        latest_appraisals = Appraisal.objects.filter(
+            employee=employee,
+            status='completed'  # Only use completed appraisals
+        ).order_by('-date_created')[:3]
+        
+        # 1. Conference Attendance
+        conference_attendance = []
+        for appraisal in latest_appraisals:
+            attendance_entries = appraisal.conference_attendances.all()
+            for entry in attendance_entries:
+                conference_attendance.append({
+                    'event_name': entry.event_name,
+                    'type': entry.type,
+                    'date': entry.date.isoformat() if entry.date else '',
+                    'location': entry.location or '',
+                    'role': entry.role or '',
+                    'details': entry.details or ''
+                })
+        context['conference_attendance_data'] = json.dumps(conference_attendance)
+        
+        # 2. Administrative Positions
+        administrative_positions = []
+        for appraisal in latest_appraisals:
+            admin_posts = appraisal.admin_post_entries.all()
+            for post in admin_posts:
+                administrative_positions.append({
+                    'title': post.position,
+                    'from_date': post.from_date.isoformat() if post.from_date else '',
+                    'to_date': post.to_date.isoformat() if post.to_date else '',
+                    'details': post.details or ''
+                })
+        context['administrative_positions_data'] = json.dumps(administrative_positions)
+        
+        # 3. University Committees
+        university_committees = []
+        for appraisal in latest_appraisals:
+            committees = appraisal.university_committee_memberships.all()
+            for committee in committees:
+                university_committees.append({
+                    'committee_name': committee.committee_name,
+                    'position': committee.position,
+                    'from_date': committee.from_date.isoformat() if committee.from_date else '',
+                    'to_date': committee.to_date.isoformat() if committee.to_date else '',
+                    'details': committee.details or ''
+                })
+        context['university_committees_data'] = json.dumps(university_committees)
+        
+        # 4. External Committees
+        external_committees = []
+        for appraisal in latest_appraisals:
+            committees = appraisal.outside_committee_memberships.all()
+            for committee in committees:
+                external_committees.append({
+                    'organization': committee.organization,
+                    'position': committee.position,
+                    'from_date': committee.from_date.isoformat() if committee.from_date else '',
+                    'to_date': committee.to_date.isoformat() if committee.to_date else '',
+                    'details': committee.details or ''
+                })
+        context['external_committees_data'] = json.dumps(external_committees)
+        
         return context
     
     def form_valid(self, form):
-        # Set status back to pending
-        form.instance.status = 'pending'
+        form.instance.employee = self.request.user.employee
+        is_draft = self.request.POST.get('is_draft') == 'true'
+        if is_draft:
+            form.instance.status = 'draft'
+            form.instance.is_draft = True
+            form.instance.draft_saved_at = timezone.now()
+            form.instance.draft_saved_by = self.request.user.employee
+        else:
+            form.instance.status = 'pending'
+            form.instance.is_draft = False
         
+        # Handle publications (now as text)
+        publications = self.request.POST.get('publications')
+        form.instance.publications = publications if publications else ''
+
         # Handle consultancy work
         consultancy_data = self.request.POST.get('consultancy_work')
-        print(f"DEBUG - Consultancy work data from form: {consultancy_data}")
         
         if consultancy_data:
             try:
                 consultancy_json = json.loads(consultancy_data)
-                print(f"DEBUG - Parsed consultancy data: {consultancy_json}")
                 # Add field validation here to ensure the structure is correct
-                for item in consultancy_json:
-                    # Log structure of each item to help debugging
-                    print(f"DEBUG - Consultancy item fields: {list(item.keys())}")
-                
                 form.instance.consultancy_work = consultancy_data
             except json.JSONDecodeError:
                 print("DEBUG - JSON decode error for consultancy_work")
@@ -1775,46 +2081,45 @@ class EditSubmissionView(LoginRequiredMixin, UpdateView):
         
         # Handle fellowships and awards data
         fellowships_awards_data = self.request.POST.get('fellowships_awards_text')
-        print(f"DEBUG - Fellowships and awards data from form: {fellowships_awards_data}")
         if fellowships_awards_data:
             try:
                 fellowships_json = json.loads(fellowships_awards_data)
-                print(f"DEBUG - Parsed fellowships and awards data: {fellowships_json}")
                 self.object.fellowships_awards_text = fellowships_awards_data
             except json.JSONDecodeError:
-                print("DEBUG - JSON decode error for fellowships_awards_text")
                 self.object.fellowships_awards_text = '[]'
         else:
-            print("DEBUG - No fellowships_awards_text data found in form")
             self.object.fellowships_awards_text = '[]'
         
         # Save the object again with all the updated fields
         self.object.save()
         
-        # Create notification for HR users
-        try:
-            hr_group = Group.objects.get(name='HR')
-            hr_users = hr_group.user_set.all()
-            submission_date = timezone.now().strftime('%B %d, %Y')
-            message = f"{self.request.user.employee.get_full_name()} has resubmitted a contract renewal form on {submission_date}"
-            
-            for hr_user in hr_users:
-                try:
-                    hr_employee = Employee.objects.get(user=hr_user)
-                    ContractNotification.objects.create(
-                        employee=hr_employee,
-                        message=message,
-                        read=False,
-                        contract=self.object
-                    )
-                except Employee.DoesNotExist:
-                    continue
-        except Group.DoesNotExist:
-            print("HR group not found")
-        except Exception as e:
-            print(f"Error creating HR notification: {str(e)}")
-        
-        # Return the success URL response
+        # Only notify HR if not saving as draft
+        if not is_draft:
+            try:
+                hr_group = Group.objects.get(name='HR')
+                hr_users = hr_group.user_set.all()
+                submission_date = timezone.now().strftime('%B %d, %Y')
+                message = f"{self.request.user.employee.get_full_name()} has resubmitted a contract renewal form on {submission_date}"
+                for hr_user in hr_users:
+                    try:
+                        hr_employee = Employee.objects.get(user=hr_user)
+                        ContractNotification.objects.create(
+                            employee=hr_employee,
+                            message=message,
+                            read=False,
+                            contract=self.object
+                        )
+                    except Employee.DoesNotExist:
+                        continue
+            except Group.DoesNotExist:
+                print("HR group not found")
+            except Exception as e:
+                print(f"Error creating HR notification: {str(e)}")
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'redirect_url': '/contract/employee-contracts/'
+            })
         return HttpResponseRedirect(self.get_success_url())
 
 class DeanContractView(LoginRequiredMixin, View):
@@ -2658,6 +2963,19 @@ def print_contract_form(request, contract_id):
             'teaching_documents_name': contract.teaching_documents_name if contract.teaching_documents else None,
         }
         
+        # Add mentorship and graduate supervision data
+        try:
+            context['mentorship_data'] = json.loads(contract.mentorship_text) if contract.mentorship_text else []
+        except json.JSONDecodeError:
+            context['mentorship_data'] = []
+            logger.error(f"Error parsing mentorship data for contract {contract_id}")
+            
+        try:
+            context['grad_supervision_data'] = json.loads(contract.grad_supervision_text) if contract.grad_supervision_text else []
+        except json.JSONDecodeError:
+            context['grad_supervision_data'] = []
+            logger.error(f"Error parsing graduate supervision data for contract {contract_id}")
+        
         return render(request, 'contract/print_contract_form.html', context)
     
     except Contract.DoesNotExist:
@@ -2906,9 +3224,15 @@ class EmployeeContractsView(LoginRequiredMixin, View):
         ).first()
         contract_enabled = contract_status.is_enabled if contract_status else False
         
+        # Get draft contracts (not submitted yet)
+        draft_contracts = Contract.objects.filter(
+            employee=employee,
+            status='draft'
+        ).order_by('-submission_date')
         context = {
             'current_contracts': current_contracts,
             'previous_contracts': previous_contracts,
+            'draft_contracts': draft_contracts,
             'contract_enabled': contract_enabled
         }
         
@@ -3204,20 +3528,15 @@ def download_merged_contract_pdf(request, contract_id):
     """
     Create a merged PDF with contract form and all attached documents.
     """
-    # Check if user is HR or has appropriate permissions
     if not request.user.groups.filter(name__in=['HR', 'Dean', 'SMT']).exists():
         messages.error(request, "You don't have permission to perform this action.")
         return redirect('dashboard')
     
     try:
-        # Get the contract
         contract = get_object_or_404(Contract, id=contract_id)
-        
-        # Create a temporary directory for file operations
         with tempfile.TemporaryDirectory() as temp_dir:
-            # Create context for data
+            # --- Prepare context (same as before) ---
             context = {
-                # Copy all context from print_contract_form view
                 'contract': contract,
                 'employee': contract.employee,
                 'first_name': contract.employee.first_name,
@@ -3232,73 +3551,68 @@ def download_merged_contract_pdf(request, contract_id):
                 ).count() + 1,
                 'today': timezone.now().date(),
             }
-            
-            # Parse JSON fields
+            # Parse JSON fields (copy from download_contract_zip)
             try:
                 context['academic_qualifications'] = json.loads(contract.academic_qualifications_text) if contract.academic_qualifications_text else []
             except json.JSONDecodeError:
                 context['academic_qualifications'] = []
-            
             try:
                 context['teaching_modules'] = json.loads(contract.teaching_modules_text) if contract.teaching_modules_text else []
             except json.JSONDecodeError:
                 context['teaching_modules'] = []
-                
             try:
                 context['university_committees'] = json.loads(contract.university_committees_text) if contract.university_committees_text else []
             except json.JSONDecodeError:
                 context['university_committees'] = []
-                
             try:
                 context['external_committees'] = json.loads(contract.external_committees_text) if contract.external_committees_text else []
             except json.JSONDecodeError:
                 context['external_committees'] = []
-                
             try:
                 context['attendance_events'] = json.loads(contract.attendance) if contract.attendance else []
             except json.JSONDecodeError:
                 context['attendance_events'] = []
-                
             try:
                 context['consultancy_work'] = json.loads(contract.consultancy_work) if contract.consultancy_work else []
             except json.JSONDecodeError:
                 context['consultancy_work'] = []
-                
             try:
                 context['research_history'] = json.loads(contract.last_research) if contract.last_research else []
             except json.JSONDecodeError:
                 context['research_history'] = []
-                
             try:
                 context['ongoing_research'] = json.loads(contract.ongoing_research) if contract.ongoing_research else []
             except json.JSONDecodeError:
                 context['ongoing_research'] = []
-                
             try:
                 context['conference_papers'] = json.loads(contract.conference_papers) if contract.conference_papers else []
             except json.JSONDecodeError:
                 context['conference_papers'] = []
-            
-            # Add related records
+            try:
+                context['fellowships_awards'] = json.loads(contract.fellowships_awards) if contract.fellowships_awards else []
+            except Exception:
+                context['fellowships_awards'] = []
+            try:
+                context['mentorship_data'] = json.loads(contract.mentorship_data) if contract.mentorship_data else []
+            except Exception:
+                context['mentorship_data'] = []
+            try:
+                context['grad_supervision_data'] = json.loads(contract.grad_supervision_data) if contract.grad_supervision_data else []
+            except Exception:
+                context['grad_supervision_data'] = []
             context['administrative_positions'] = contract.administrative_positions.all()
             context['dean_reviews'] = contract.dean_reviews.all().order_by('created_at')
             context['peer_reviews'] = PeerReview.objects.filter(contract=contract).order_by('-created_at')
             context['smt_reviews'] = contract.smt_reviews.all().order_by('created_at')
             context['moe_reviews'] = contract.moe_reviews.all().order_by('created_at')
-            
-            # Add direct contract fields
             context['teaching_future_plan'] = contract.teaching_future_plan
             context['achievements_last_contract'] = contract.achievements_last_contract
             context['achievements_proposal'] = contract.achievements_proposal
             context['other_matters'] = contract.other_matters
             context['current_enrollment'] = contract.current_enrollment
             context['teaching_documents_name'] = contract.teaching_documents_name if contract.teaching_documents else None
-            
-            # Get appraisals for appraiser comments
-            appraisals = Appraisal.objects.filter(
-                employee=contract.employee
-            ).order_by('-date_of_last_appraisal')
-            
+            # Appraisals
+            appraisals = Appraisal.objects.filter(employee=contract.employee).order_by('-date_of_last_appraisal')
             appraiser_comments = []
             for appraisal in appraisals:
                 if appraisal.appraiser_comments and appraisal.appraiser_comments.strip():
@@ -3309,253 +3623,13 @@ def download_merged_contract_pdf(request, contract_id):
                     }
                     appraiser_comments.append(comment_data)
             context['appraiser_comments'] = appraiser_comments
-            
-            # Step 1: Create a simple PDF for the main contract form
+            # --- Generate contract form PDF using the new helper ---
             main_pdf_path = os.path.join(temp_dir, 'contract_form.pdf')
-            
-            # Create a PDF with ReportLab instead of WeasyPrint
-            doc = SimpleDocTemplate(main_pdf_path, pagesize=letter)
-            styles = getSampleStyleSheet()
-            elements = []
-            
-            # Add a custom style for headers
-            styles.add(ParagraphStyle(
-                name='Heading1',
-                parent=styles['Heading1'],
-                fontSize=16,
-                spaceAfter=12,
-                textColor=colors.navy
-            ))
-            
-            styles.add(ParagraphStyle(
-                name='Heading2',
-                parent=styles['Heading2'],
-                fontSize=14,
-                spaceAfter=10,
-                textColor=colors.darkblue
-            ))
-            
-            # Create a table style
-            table_style = TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ])
-            
-            # Add university header
-            elements.append(Paragraph("University Contract Renewal Form", styles['Heading1']))
-            elements.append(Paragraph("Human Resources Department", styles['Normal']))
-            elements.append(Paragraph(f"Contract ID: {contract.contract_id}", styles['Normal']))
-            elements.append(Paragraph(f"Submission Date: {contract.submission_date.strftime('%B %d, %Y')}", styles['Normal']))
-            elements.append(Spacer(1, 20))
-            
-            # Add employee name as document title
-            elements.append(Paragraph(f"{context['first_name']} {context['last_name']}", styles['Heading1']))
-            elements.append(Spacer(1, 10))
-            
-            # 1. Background Information
-            elements.append(Paragraph("1. Background Information", styles['Heading2']))
-            
-            # Create a list of background information
-            info_data = [
-                [f"Position:", f"{contract.present_post}"],
-                [f"Department:", f"{context['department']}"],
-                [f"IC Number:", f"{context['ic_no']} ({context['ic_colour']})"],
-                [f"Phone:", f"{context['phone_number']}"],
-                [f"Salary Scale:", f"{contract.salary_scale_division}"],
-                [f"Past Contracts:", f"{context['contract_count']}"],
-            ]
-            
-            info_table = Table(info_data, colWidths=[120, 350])
-            info_table.setStyle(TableStyle([
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-                ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
-                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                ('LEFTPADDING', (0, 0), (-1, -1), 6),
-                ('RIGHTPADDING', (0, 0), (-1, -1), 6),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-                ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ]))
-            
-            elements.append(info_table)
-            elements.append(Spacer(1, 15))
-            
-            # 2. Education
-            elements.append(Paragraph("2. Education", styles['Heading2']))
-            
-            if context['academic_qualifications']:
-                # Create header row
-                edu_data = [["Year", "Degree/Diploma", "Institution"]]
-                
-                # Add data rows
-                for qual in context['academic_qualifications']:
-                    edu_data.append([
-                        qual.get('to_date', ''),
-                        qual.get('degree_diploma', ''),
-                        qual.get('university_college', '')
-                    ])
-                
-                edu_table = Table(edu_data, colWidths=[80, 200, 200])
-                edu_table.setStyle(table_style)
-                elements.append(edu_table)
-            else:
-                elements.append(Paragraph("No academic qualifications provided", styles['Italic']))
-            
-            elements.append(Spacer(1, 15))
-            
-            # 3. Employment History
-            elements.append(Paragraph("3. Employment History", styles['Heading2']))
-            
-            # Process administrative positions for employment history
-            if context['administrative_positions']:
-                # Create header row
-                emp_data = [["Period", "Position", "Details"]]
-                
-                # Add data rows
-                for position in context['administrative_positions']:
-                    emp_data.append([
-                        f"{position.from_date} to {position.to_date}",
-                        position.title,
-                        position.details or ""
-                    ])
-                
-                emp_table = Table(emp_data, colWidths=[150, 150, 180])
-                emp_table.setStyle(table_style)
-                elements.append(emp_table)
-            else:
-                elements.append(Paragraph("No employment history provided", styles['Italic']))
-            
-            elements.append(Spacer(1, 15))
-            
-            # 4. Administrative Positions
-            elements.append(Paragraph("4. Administrative Positions & Appointments", styles['Heading2']))
-            
-            if context['administrative_positions']:
-                # Create header row
-                admin_data = [["Date", "Position"]]
-                
-                # Add data rows
-                for position in context['administrative_positions']:
-                    admin_data.append([
-                        position.from_date.strftime("%Y-%m-%d"),
-                        position.title
-                    ])
-                
-                admin_table = Table(admin_data, colWidths=[150, 330])
-                admin_table.setStyle(table_style)
-                elements.append(admin_table)
-            else:
-                elements.append(Paragraph("No administrative positions recorded", styles['Italic']))
-            
-            elements.append(Spacer(1, 15))
-            
-            # 5. Academic / Social / Community Service
-            elements.append(Paragraph("5. Academic, Social & Community Service", styles['Heading2']))
-            
-            # Process university committees
-            if context['university_committees']:
-                elements.append(Paragraph("University Committees", styles['Heading3']))
-                
-                # Create header row
-                uni_data = [["Date", "Committee", "Position"]]
-                
-                # Add data rows
-                for committee in context['university_committees']:
-                    uni_data.append([
-                        committee.get('from_date', ''),
-                        committee.get('name', ''),
-                        committee.get('position', '')
-                    ])
-                
-                uni_table = Table(uni_data, colWidths=[100, 230, 150])
-                uni_table.setStyle(table_style)
-                elements.append(uni_table)
-                elements.append(Spacer(1, 10))
-            
-            # Process external committees
-            if context['external_committees']:
-                elements.append(Paragraph("External Committees", styles['Heading3']))
-                
-                # Create header row
-                ext_data = [["Date", "Organization", "Position"]]
-                
-                # Add data rows
-                for committee in context['external_committees']:
-                    ext_data.append([
-                        committee.get('from_date', ''),
-                        committee.get('organization', ''),
-                        committee.get('position', '')
-                    ])
-                
-                ext_table = Table(ext_data, colWidths=[100, 230, 150])
-                ext_table.setStyle(table_style)
-                elements.append(ext_table)
-            
-            if not context['university_committees'] and not context['external_committees']:
-                elements.append(Paragraph("No committee positions recorded", styles['Italic']))
-            
-            elements.append(Spacer(1, 15))
-            
-            # Add the rest of the sections similarly
-            # Due to code length, we'll add just a few more key sections
-            
-            # Achievements Section
-            elements.append(Paragraph("Achievements and Future Plans", styles['Heading2']))
-            
-            if context['achievements_last_contract']:
-                elements.append(Paragraph("Achievements in Last Contract:", styles['Heading3']))
-                elements.append(Paragraph(context['achievements_last_contract'], styles['Normal']))
-                elements.append(Spacer(1, 10))
-            
-            if context['achievements_proposal']:
-                elements.append(Paragraph("Proposed Undertakings and Achievements if Renewed:", styles['Heading3']))
-                elements.append(Paragraph(context['achievements_proposal'], styles['Normal']))
-            
-            elements.append(Spacer(1, 15))
-            
-            # Other Matters
-            if context['other_matters']:
-                elements.append(Paragraph("Other Matters", styles['Heading2']))
-                elements.append(Paragraph(context['other_matters'], styles['Normal']))
-                elements.append(Spacer(1, 15))
-            
-            # Add dean reviews
-            if context['dean_reviews']:
-                elements.append(Paragraph("Dean's Comments", styles['Heading2']))
-                
-                for review in context['dean_reviews']:
-                    elements.append(Paragraph(f"Reviewer: {review.dean.get_full_name()}", styles['Heading3']))
-                    elements.append(Paragraph(f"Date: {review.created_at.strftime('%B %d, %Y')}", styles['Italic']))
-                    elements.append(Paragraph(review.comments, styles['Normal']))
-                    
-                    if review.document_name:
-                        elements.append(Paragraph(f"Supporting Document: {review.document_name}", styles['Italic']))
-                    
-                    elements.append(Spacer(1, 10))
-            
-            # Footer
-            elements.append(Spacer(1, 30))
-            elements.append(Paragraph("This document is automatically generated by the HR Contract Management System.", styles['Italic']))
-            elements.append(Paragraph(f"Printed on: {timezone.now().date().strftime('%B %d, %Y')}", styles['Italic']))
-            
-            # Build the PDF
-            doc.build(elements)
-            
-            # Initialize PDF merger
+            generate_contract_form_pdf(context, main_pdf_path)
+            # --- Continue with merging PDFs as before ---
             merger = PdfMerger()
-            
-            # Add the main contract PDF
             merger.append(main_pdf_path)
-            
-            # Track added documents in a list for the cover page
             added_documents = []
-            
-            # Step 2: Add teaching documents if available
             if contract.teaching_documents:
                 try:
                     if contract.teaching_documents_name.lower().endswith('.pdf'):
@@ -3566,8 +3640,6 @@ def download_merged_contract_pdf(request, contract_id):
                         added_documents.append(f"Teaching Document: {contract.teaching_documents_name}")
                 except Exception as e:
                     print(f"Error adding teaching document: {str(e)}")
-            
-            # Step 3: Add dean review documents
             for idx, review in enumerate(contract.dean_reviews.all()):
                 if review.document:
                     try:
@@ -3579,8 +3651,6 @@ def download_merged_contract_pdf(request, contract_id):
                             added_documents.append(f"Dean Review: {review.document_name}")
                     except Exception as e:
                         print(f"Error adding dean review document: {str(e)}")
-            
-            # Step 4: Add peer review documents
             for idx, review in enumerate(context['peer_reviews']):
                 if review.document:
                     try:
@@ -3592,8 +3662,6 @@ def download_merged_contract_pdf(request, contract_id):
                             added_documents.append(f"Peer Review: {review.document_name}")
                     except Exception as e:
                         print(f"Error adding peer review document: {str(e)}")
-            
-            # Step 5: Add SMT review documents
             for idx, review in enumerate(contract.smt_reviews.all()):
                 if review.document:
                     try:
@@ -3605,8 +3673,6 @@ def download_merged_contract_pdf(request, contract_id):
                             added_documents.append(f"SMT Review: {review.document_name}")
                     except Exception as e:
                         print(f"Error adding SMT review document: {str(e)}")
-            
-            # Step 6: Add MOE review documents
             for idx, review in enumerate(contract.moe_reviews.all()):
                 if review.document:
                     try:
@@ -3618,76 +3684,817 @@ def download_merged_contract_pdf(request, contract_id):
                             added_documents.append(f"MOE Review: {review.document_name}")
                     except Exception as e:
                         print(f"Error adding MOE review document: {str(e)}")
-            
-            # Create output document with table of contents
             output_path = os.path.join(temp_dir, 'merged_contract.pdf')
-            
-            # Create final document
             merger.write(output_path)
             merger.close()
-            
-            # Create a cover page with table of contents if there are added documents
             if added_documents:
-                # Create a new PDF that will contain cover + merged PDF
                 reader = PdfReader(output_path)
                 writer = PdfWriter()
-                
-                # Create a cover page listing all included documents
                 cover_buffer = io.BytesIO()
                 c = canvas.Canvas(cover_buffer, pagesize=A4)
-                
-                # Add title
                 c.setFont("Helvetica-Bold", 18)
                 c.drawString(72, 770, f"Contract Form: {contract.contract_id}")
                 c.setFont("Helvetica", 12)
                 c.drawString(72, 750, f"Employee: {contract.employee.get_full_name()}")
                 c.drawString(72, 730, f"Department: {contract.employee.department.name if contract.employee.department else 'N/A'}")
                 c.drawString(72, 710, f"Generated on: {timezone.now().strftime('%Y-%m-%d')}")
-                
-                # Add table of contents title
                 c.setFont("Helvetica-Bold", 14)
                 c.drawString(72, 650, "Table of Contents")
-                
-                # Add main document to TOC
                 c.setFont("Helvetica", 12)
                 c.drawString(72, 630, "1. Contract Form")
-                
-                # List all included documents
                 y_position = 610
                 for idx, doc_name in enumerate(added_documents):
                     c.drawString(72, y_position, f"{idx + 2}. {doc_name}")
                     y_position -= 20
-                
                 c.save()
-                
-                # Get the bytes from the buffer
                 cover_buffer.seek(0)
                 cover_pdf = PdfReader(cover_buffer)
-                
-                # Add cover page
                 writer.add_page(cover_pdf.pages[0])
-                
-                # Add all pages from the merged document
                 for page in reader.pages:
                     writer.add_page(page)
-                
-                # Write the final PDF
                 final_output_path = os.path.join(temp_dir, 'final_contract.pdf')
                 with open(final_output_path, 'wb') as f:
                     writer.write(f)
-                
-                # Return the final PDF as a response
                 with open(final_output_path, 'rb') as f:
                     response = FileResponse(f, content_type='application/pdf')
                     response['Content-Disposition'] = f'attachment; filename="Contract_{contract.contract_id}_with_documents.pdf"'
                     return response
             else:
-                # Return the merged PDF as a response (without cover page since no documents were added)
                 with open(output_path, 'rb') as f:
                     response = FileResponse(f, content_type='application/pdf')
                     response['Content-Disposition'] = f'attachment; filename="Contract_{contract.contract_id}.pdf"'
                     return response
-    
     except Exception as e:
         messages.error(request, f"Error generating PDF: {str(e)}")
         return redirect('contract:print_contract_form', contract_id=contract_id)
+
+@login_required
+def download_contract_zip(request, contract_id):
+    """
+    Download a zip file containing the contract form PDF and all attached documents.
+    """
+    if not request.user.groups.filter(name__in=['HR', 'Dean', 'SMT']).exists():
+        messages.error(request, "You don't have permission to perform this action.")
+        return redirect('dashboard')
+
+    try:
+        contract = get_object_or_404(Contract, id=contract_id)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # --- Prepare context (same as before) ---
+            context = {
+                'contract': contract,
+                'employee': contract.employee,
+                'first_name': contract.employee.first_name,
+                'last_name': contract.employee.last_name,
+                'ic_no': contract.employee.ic_no,
+                'ic_colour': {'Y': 'Yellow', 'P': 'Purple', 'G': 'Green', 'R': 'Red'}.get(contract.employee.ic_colour, contract.employee.ic_colour),
+                'phone_number': contract.employee.phone_number,
+                'department': contract.employee.department.name if contract.employee.department else '',
+                'contract_count': Contract.objects.filter(
+                    employee=contract.employee,
+                    submission_date__lt=contract.submission_date
+                ).count() + 1,
+                'today': timezone.now().date(),
+            }
+            # Parse JSON fields (copy from download_merged_contract_pdf)
+            try:
+                context['academic_qualifications'] = json.loads(contract.academic_qualifications_text) if contract.academic_qualifications_text else []
+            except json.JSONDecodeError:
+                context['academic_qualifications'] = []
+            try:
+                context['teaching_modules'] = json.loads(contract.teaching_modules_text) if contract.teaching_modules_text else []
+            except json.JSONDecodeError:
+                context['teaching_modules'] = []
+            try:
+                context['university_committees'] = json.loads(contract.university_committees_text) if contract.university_committees_text else []
+            except json.JSONDecodeError:
+                context['university_committees'] = []
+            try:
+                context['external_committees'] = json.loads(contract.external_committees_text) if contract.external_committees_text else []
+            except json.JSONDecodeError:
+                context['external_committees'] = []
+            try:
+                context['attendance_events'] = json.loads(contract.attendance) if contract.attendance else []
+            except json.JSONDecodeError:
+                context['attendance_events'] = []
+            try:
+                context['consultancy_work'] = json.loads(contract.consultancy_work) if contract.consultancy_work else []
+            except json.JSONDecodeError:
+                context['consultancy_work'] = []
+            try:
+                context['research_history'] = json.loads(contract.last_research) if contract.last_research else []
+            except json.JSONDecodeError:
+                context['research_history'] = []
+            try:
+                context['ongoing_research'] = json.loads(contract.ongoing_research) if contract.ongoing_research else []
+            except json.JSONDecodeError:
+                context['ongoing_research'] = []
+            try:
+                context['conference_papers'] = json.loads(contract.conference_papers) if contract.conference_papers else []
+            except json.JSONDecodeError:
+                context['conference_papers'] = []
+            try:
+                context['fellowships_awards'] = json.loads(contract.fellowships_awards) if contract.fellowships_awards else []
+            except Exception:
+                context['fellowships_awards'] = []
+            try:
+                context['mentorship_data'] = json.loads(contract.mentorship_data) if contract.mentorship_data else []
+            except Exception:
+                context['mentorship_data'] = []
+            try:
+                context['grad_supervision_data'] = json.loads(contract.grad_supervision_data) if contract.grad_supervision_data else []
+            except Exception:
+                context['grad_supervision_data'] = []
+            context['administrative_positions'] = contract.administrative_positions.all()
+            context['dean_reviews'] = contract.dean_reviews.all().order_by('created_at')
+            context['peer_reviews'] = PeerReview.objects.filter(contract=contract).order_by('-created_at')
+            context['smt_reviews'] = contract.smt_reviews.all().order_by('created_at')
+            context['moe_reviews'] = contract.moe_reviews.all().order_by('created_at')
+            context['teaching_future_plan'] = contract.teaching_future_plan
+            context['achievements_last_contract'] = contract.achievements_last_contract
+            context['achievements_proposal'] = contract.achievements_proposal
+            context['other_matters'] = contract.other_matters
+            context['current_enrollment'] = contract.current_enrollment
+            context['teaching_documents_name'] = contract.teaching_documents_name if contract.teaching_documents else None
+            # Appraisals
+            appraisals = Appraisal.objects.filter(employee=contract.employee).order_by('-date_of_last_appraisal')
+            appraiser_comments = []
+            for appraisal in appraisals:
+                if appraisal.appraiser_comments and appraisal.appraiser_comments.strip():
+                    comment_data = {
+                        'comment': appraisal.appraiser_comments.strip(),
+                        'date': appraisal.date_of_last_appraisal.strftime('%Y-%m-%d'),
+                        'appraiser_name': appraisal.appraiser.get_full_name() if appraisal.appraiser else 'Unknown Appraiser'
+                    }
+                    appraiser_comments.append(comment_data)
+            context['appraiser_comments'] = appraiser_comments
+            # --- Generate contract form PDF using the new helper ---
+            main_pdf_path = os.path.join(temp_dir, 'contract_form.pdf')
+            generate_contract_form_pdf(context, main_pdf_path)
+            # --- Collect all files to add to zip ---
+            files_to_zip = [(main_pdf_path, f"Contract_Form_{contract.contract_id}.pdf")]
+            # Teaching document
+            if contract.teaching_documents:
+                teach_ext = os.path.splitext(contract.teaching_documents_name)[1].lower()
+                teach_path = os.path.join(temp_dir, f'teaching_document{teach_ext}')
+                with open(teach_path, 'wb') as f:
+                    f.write(contract.teaching_documents)
+                files_to_zip.append((teach_path, contract.teaching_documents_name))
+            # Dean reviews
+            for idx, review in enumerate(contract.dean_reviews.all()):
+                if review.document:
+                    ext = os.path.splitext(review.document_name)[1].lower()
+                    dean_path = os.path.join(temp_dir, f'dean_review_{idx}{ext}')
+                    with open(dean_path, 'wb') as f:
+                        f.write(review.document)
+                    files_to_zip.append((dean_path, f"Dean_{idx+1}_{review.document_name}"))
+            # SMT reviews
+            for idx, review in enumerate(contract.smt_reviews.all()):
+                if review.document:
+                    ext = os.path.splitext(review.document_name)[1].lower()
+                    smt_path = os.path.join(temp_dir, f'smt_review_{idx}{ext}')
+                    with open(smt_path, 'wb') as f:
+                        f.write(review.document)
+                    files_to_zip.append((smt_path, f"SMT_{idx+1}_{review.document_name}"))
+            # MOE reviews
+            for idx, review in enumerate(contract.moe_reviews.all()):
+                if review.document:
+                    ext = os.path.splitext(review.document_name)[1].lower()
+                    moe_path = os.path.join(temp_dir, f'moe_review_{idx}{ext}')
+                    with open(moe_path, 'wb') as f:
+                        f.write(review.document)
+                    files_to_zip.append((moe_path, f"MOE_{idx+1}_{review.document_name}"))
+            # Peer reviews
+            for idx, review in enumerate(context['peer_reviews']):
+                if review.document:
+                    ext = os.path.splitext(review.document_name)[1].lower()
+                    peer_path = os.path.join(temp_dir, f'peer_review_{idx}{ext}')
+                    with open(peer_path, 'wb') as f:
+                        f.write(review.document)
+                    files_to_zip.append((peer_path, f"Peer_{idx+1}_{review.document_name}"))
+            # --- Create zip file ---
+            zip_path = os.path.join(temp_dir, f'Contract_{contract.contract_id}_with_documents.zip')
+            with ZipFile(zip_path, 'w') as zipf:
+                for file_path, arcname in files_to_zip:
+                    zipf.write(file_path, arcname)
+            # --- Return zip as response ---
+            with open(zip_path, 'rb') as f:
+                response = HttpResponse(f.read(), content_type='application/zip')
+                response['Content-Disposition'] = f'attachment; filename="Contract_{contract.contract_id}_with_documents.zip"'
+                return response
+    except Exception as e:
+        messages.error(request, f"Error generating ZIP: {str(e)}")
+        return redirect('contract:print_contract_form', contract_id=contract_id)
+
+# --- PDF generation helper for contract form, matching the HTML CV template ---
+@login_required
+def download_contract_zip(request, contract_id):
+    """
+    Download a zip file containing the contract form PDF and all attached documents.
+    """
+    if not request.user.groups.filter(name__in=['HR', 'Dean', 'SMT']).exists():
+        messages.error(request, "You don't have permission to perform this action.")
+        return redirect('dashboard')
+
+    try:
+        contract = get_object_or_404(Contract, id=contract_id)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # --- Prepare context (same as before) ---
+            context = {
+                'contract': contract,
+                'employee': contract.employee,
+                'first_name': contract.employee.first_name,
+                'last_name': contract.employee.last_name,
+                'ic_no': contract.employee.ic_no,
+                'ic_colour': {'Y': 'Yellow', 'P': 'Purple', 'G': 'Green', 'R': 'Red'}.get(contract.employee.ic_colour, contract.employee.ic_colour),
+                'phone_number': contract.employee.phone_number,
+                'department': contract.employee.department.name if contract.employee.department else '',
+                'contract_count': Contract.objects.filter(
+                    employee=contract.employee,
+                    submission_date__lt=contract.submission_date
+                ).count() + 1,
+                'today': timezone.now().date(),
+            }
+            # Parse JSON fields (copy from download_merged_contract_pdf)
+            try:
+                context['academic_qualifications'] = json.loads(contract.academic_qualifications_text) if contract.academic_qualifications_text else []
+            except json.JSONDecodeError:
+                context['academic_qualifications'] = []
+            try:
+                context['teaching_modules'] = json.loads(contract.teaching_modules_text) if contract.teaching_modules_text else []
+            except json.JSONDecodeError:
+                context['teaching_modules'] = []
+            try:
+                context['university_committees'] = json.loads(contract.university_committees_text) if contract.university_committees_text else []
+            except json.JSONDecodeError:
+                context['university_committees'] = []
+            try:
+                context['external_committees'] = json.loads(contract.external_committees_text) if contract.external_committees_text else []
+            except json.JSONDecodeError:
+                context['external_committees'] = []
+            try:
+                context['attendance_events'] = json.loads(contract.attendance) if contract.attendance else []
+            except json.JSONDecodeError:
+                context['attendance_events'] = []
+            try:
+                context['consultancy_work'] = json.loads(contract.consultancy_work) if contract.consultancy_work else []
+            except json.JSONDecodeError:
+                context['consultancy_work'] = []
+            try:
+                context['research_history'] = json.loads(contract.last_research) if contract.last_research else []
+            except json.JSONDecodeError:
+                context['research_history'] = []
+            try:
+                context['ongoing_research'] = json.loads(contract.ongoing_research) if contract.ongoing_research else []
+            except json.JSONDecodeError:
+                context['ongoing_research'] = []
+            try:
+                context['conference_papers'] = json.loads(contract.conference_papers) if contract.conference_papers else []
+            except json.JSONDecodeError:
+                context['conference_papers'] = []
+            try:
+                context['fellowships_awards'] = json.loads(contract.fellowships_awards) if contract.fellowships_awards else []
+            except Exception:
+                context['fellowships_awards'] = []
+            try:
+                context['mentorship_data'] = json.loads(contract.mentorship_data) if contract.mentorship_data else []
+            except Exception:
+                context['mentorship_data'] = []
+            try:
+                context['grad_supervision_data'] = json.loads(contract.grad_supervision_data) if contract.grad_supervision_data else []
+            except Exception:
+                context['grad_supervision_data'] = []
+            context['administrative_positions'] = contract.administrative_positions.all()
+            context['dean_reviews'] = contract.dean_reviews.all().order_by('created_at')
+            context['peer_reviews'] = PeerReview.objects.filter(contract=contract).order_by('-created_at')
+            context['smt_reviews'] = contract.smt_reviews.all().order_by('created_at')
+            context['moe_reviews'] = contract.moe_reviews.all().order_by('created_at')
+            context['teaching_future_plan'] = contract.teaching_future_plan
+            context['achievements_last_contract'] = contract.achievements_last_contract
+            context['achievements_proposal'] = contract.achievements_proposal
+            context['other_matters'] = contract.other_matters
+            context['current_enrollment'] = contract.current_enrollment
+            context['teaching_documents_name'] = contract.teaching_documents_name if contract.teaching_documents else None
+            # Appraisals
+            appraisals = Appraisal.objects.filter(employee=contract.employee).order_by('-date_of_last_appraisal')
+            appraiser_comments = []
+            for appraisal in appraisals:
+                if appraisal.appraiser_comments and appraisal.appraiser_comments.strip():
+                    comment_data = {
+                        'comment': appraisal.appraiser_comments.strip(),
+                        'date': appraisal.date_of_last_appraisal.strftime('%Y-%m-%d'),
+                        'appraiser_name': appraisal.appraiser.get_full_name() if appraisal.appraiser else 'Unknown Appraiser'
+                    }
+                    appraiser_comments.append(comment_data)
+            context['appraiser_comments'] = appraiser_comments
+            # --- Generate contract form PDF using the new helper ---
+            main_pdf_path = os.path.join(temp_dir, 'contract_form.pdf')
+            generate_contract_form_pdf(context, main_pdf_path)
+            # --- Collect all files to add to zip ---
+            files_to_zip = [(main_pdf_path, f"Contract_Form_{contract.contract_id}.pdf")]
+            # Teaching document
+            if contract.teaching_documents:
+                teach_ext = os.path.splitext(contract.teaching_documents_name)[1].lower()
+                teach_path = os.path.join(temp_dir, f'teaching_document{teach_ext}')
+                with open(teach_path, 'wb') as f:
+                    f.write(contract.teaching_documents)
+                files_to_zip.append((teach_path, contract.teaching_documents_name))
+            # Dean reviews
+            for idx, review in enumerate(contract.dean_reviews.all()):
+                if review.document:
+                    ext = os.path.splitext(review.document_name)[1].lower()
+                    dean_path = os.path.join(temp_dir, f'dean_review_{idx}{ext}')
+                    with open(dean_path, 'wb') as f:
+                        f.write(review.document)
+                    files_to_zip.append((dean_path, f"Dean_{idx+1}_{review.document_name}"))
+            # SMT reviews
+            for idx, review in enumerate(contract.smt_reviews.all()):
+                if review.document:
+                    ext = os.path.splitext(review.document_name)[1].lower()
+                    smt_path = os.path.join(temp_dir, f'smt_review_{idx}{ext}')
+                    with open(smt_path, 'wb') as f:
+                        f.write(review.document)
+                    files_to_zip.append((smt_path, f"SMT_{idx+1}_{review.document_name}"))
+            # MOE reviews
+            for idx, review in enumerate(contract.moe_reviews.all()):
+                if review.document:
+                    ext = os.path.splitext(review.document_name)[1].lower()
+                    moe_path = os.path.join(temp_dir, f'moe_review_{idx}{ext}')
+                    with open(moe_path, 'wb') as f:
+                        f.write(review.document)
+                    files_to_zip.append((moe_path, f"MOE_{idx+1}_{review.document_name}"))
+            # Peer reviews
+            for idx, review in enumerate(context['peer_reviews']):
+                if review.document:
+                    ext = os.path.splitext(review.document_name)[1].lower()
+                    peer_path = os.path.join(temp_dir, f'peer_review_{idx}{ext}')
+                    with open(peer_path, 'wb') as f:
+                        f.write(review.document)
+                    files_to_zip.append((peer_path, f"Peer_{idx+1}_{review.document_name}"))
+            # --- Create zip file ---
+            zip_path = os.path.join(temp_dir, f'Contract_{contract.contract_id}_with_documents.zip')
+            with ZipFile(zip_path, 'w') as zipf:
+                for file_path, arcname in files_to_zip:
+                    zipf.write(file_path, arcname)
+            # --- Return zip as response ---
+            with open(zip_path, 'rb') as f:
+                response = HttpResponse(f.read(), content_type='application/zip')
+                response['Content-Disposition'] = f'attachment; filename="Contract_{contract.contract_id}_with_documents.zip"'
+                return response
+    except Exception as e:
+        messages.error(request, f"Error generating ZIP: {str(e)}")
+        return redirect('contract:print_contract_form', contract_id=contract_id)
+
+# --- PDF generation helper for contract form, matching the HTML CV template ---
+@login_required
+def download_contract_zip(request, contract_id):
+    """
+    Download a zip file containing the contract form PDF and all attached documents.
+    """
+    if not request.user.groups.filter(name__in=['HR', 'Dean', 'SMT']).exists():
+        messages.error(request, "You don't have permission to perform this action.")
+        return redirect('dashboard')
+
+    try:
+        contract = get_object_or_404(Contract, id=contract_id)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # --- Prepare context (same as before) ---
+            context = {
+                'contract': contract,
+                'employee': contract.employee,
+                'first_name': contract.employee.first_name,
+                'last_name': contract.employee.last_name,
+                'ic_no': contract.employee.ic_no,
+                'ic_colour': {'Y': 'Yellow', 'P': 'Purple', 'G': 'Green', 'R': 'Red'}.get(contract.employee.ic_colour, contract.employee.ic_colour),
+                'phone_number': contract.employee.phone_number,
+                'department': contract.employee.department.name if contract.employee.department else '',
+                'contract_count': Contract.objects.filter(
+                    employee=contract.employee,
+                    submission_date__lt=contract.submission_date
+                ).count() + 1,
+                'today': timezone.now().date(),
+            }
+            # Parse JSON fields (copy from download_merged_contract_pdf)
+            try:
+                context['academic_qualifications'] = json.loads(contract.academic_qualifications_text) if contract.academic_qualifications_text else []
+            except json.JSONDecodeError:
+                context['academic_qualifications'] = []
+            try:
+                context['teaching_modules'] = json.loads(contract.teaching_modules_text) if contract.teaching_modules_text else []
+            except json.JSONDecodeError:
+                context['teaching_modules'] = []
+            try:
+                context['university_committees'] = json.loads(contract.university_committees_text) if contract.university_committees_text else []
+            except json.JSONDecodeError:
+                context['university_committees'] = []
+            try:
+                context['external_committees'] = json.loads(contract.external_committees_text) if contract.external_committees_text else []
+            except json.JSONDecodeError:
+                context['external_committees'] = []
+            try:
+                context['attendance_events'] = json.loads(contract.attendance) if contract.attendance else []
+            except json.JSONDecodeError:
+                context['attendance_events'] = []
+            try:
+                context['consultancy_work'] = json.loads(contract.consultancy_work) if contract.consultancy_work else []
+            except json.JSONDecodeError:
+                context['consultancy_work'] = []
+            try:
+                context['research_history'] = json.loads(contract.last_research) if contract.last_research else []
+            except json.JSONDecodeError:
+                context['research_history'] = []
+            try:
+                context['ongoing_research'] = json.loads(contract.ongoing_research) if contract.ongoing_research else []
+            except json.JSONDecodeError:
+                context['ongoing_research'] = []
+            try:
+                context['conference_papers'] = json.loads(contract.conference_papers) if contract.conference_papers else []
+            except json.JSONDecodeError:
+                context['conference_papers'] = []
+            try:
+                context['fellowships_awards'] = json.loads(contract.fellowships_awards) if contract.fellowships_awards else []
+            except Exception:
+                context['fellowships_awards'] = []
+            try:
+                context['mentorship_data'] = json.loads(contract.mentorship_data) if contract.mentorship_data else []
+            except Exception:
+                context['mentorship_data'] = []
+            try:
+                context['grad_supervision_data'] = json.loads(contract.grad_supervision_data) if contract.grad_supervision_data else []
+            except Exception:
+                context['grad_supervision_data'] = []
+            context['administrative_positions'] = contract.administrative_positions.all()
+            context['dean_reviews'] = contract.dean_reviews.all().order_by('created_at')
+            context['peer_reviews'] = PeerReview.objects.filter(contract=contract).order_by('-created_at')
+            context['smt_reviews'] = contract.smt_reviews.all().order_by('created_at')
+            context['moe_reviews'] = contract.moe_reviews.all().order_by('created_at')
+            context['teaching_future_plan'] = contract.teaching_future_plan
+            context['achievements_last_contract'] = contract.achievements_last_contract
+            context['achievements_proposal'] = contract.achievements_proposal
+            context['other_matters'] = contract.other_matters
+            context['current_enrollment'] = contract.current_enrollment
+            context['teaching_documents_name'] = contract.teaching_documents_name if contract.teaching_documents else None
+            # Appraisals
+            appraisals = Appraisal.objects.filter(employee=contract.employee).order_by('-date_of_last_appraisal')
+            appraiser_comments = []
+            for appraisal in appraisals:
+                if appraisal.appraiser_comments and appraisal.appraiser_comments.strip():
+                    comment_data = {
+                        'comment': appraisal.appraiser_comments.strip(),
+                        'date': appraisal.date_of_last_appraisal.strftime('%Y-%m-%d'),
+                        'appraiser_name': appraisal.appraiser.get_full_name() if appraisal.appraiser else 'Unknown Appraiser'
+                    }
+                    appraiser_comments.append(comment_data)
+            context['appraiser_comments'] = appraiser_comments
+            # --- Generate contract form PDF using the new helper ---
+            main_pdf_path = os.path.join(temp_dir, 'contract_form.pdf')
+            generate_contract_form_pdf(context, main_pdf_path)
+            # --- Collect all files to add to zip ---
+            files_to_zip = [(main_pdf_path, f"Contract_Form_{contract.contract_id}.pdf")]
+            # Teaching document
+            if contract.teaching_documents:
+                teach_ext = os.path.splitext(contract.teaching_documents_name)[1].lower()
+                teach_path = os.path.join(temp_dir, f'teaching_document{teach_ext}')
+                with open(teach_path, 'wb') as f:
+                    f.write(contract.teaching_documents)
+                files_to_zip.append((teach_path, contract.teaching_documents_name))
+            # Dean reviews
+            for idx, review in enumerate(contract.dean_reviews.all()):
+                if review.document:
+                    ext = os.path.splitext(review.document_name)[1].lower()
+                    dean_path = os.path.join(temp_dir, f'dean_review_{idx}{ext}')
+                    with open(dean_path, 'wb') as f:
+                        f.write(review.document)
+                    files_to_zip.append((dean_path, f"Dean_{idx+1}_{review.document_name}"))
+            # SMT reviews
+            for idx, review in enumerate(contract.smt_reviews.all()):
+                if review.document:
+                    ext = os.path.splitext(review.document_name)[1].lower()
+                    smt_path = os.path.join(temp_dir, f'smt_review_{idx}{ext}')
+                    with open(smt_path, 'wb') as f:
+                        f.write(review.document)
+                    files_to_zip.append((smt_path, f"SMT_{idx+1}_{review.document_name}"))
+            # MOE reviews
+            for idx, review in enumerate(contract.moe_reviews.all()):
+                if review.document:
+                    ext = os.path.splitext(review.document_name)[1].lower()
+                    moe_path = os.path.join(temp_dir, f'moe_review_{idx}{ext}')
+                    with open(moe_path, 'wb') as f:
+                        f.write(review.document)
+                    files_to_zip.append((moe_path, f"MOE_{idx+1}_{review.document_name}"))
+            # Peer reviews
+            for idx, review in enumerate(context['peer_reviews']):
+                if review.document:
+                    ext = os.path.splitext(review.document_name)[1].lower()
+                    peer_path = os.path.join(temp_dir, f'peer_review_{idx}{ext}')
+                    with open(peer_path, 'wb') as f:
+                        f.write(review.document)
+                    files_to_zip.append((peer_path, f"Peer_{idx+1}_{review.document_name}"))
+            # --- Create zip file ---
+            zip_path = os.path.join(temp_dir, f'Contract_{contract.contract_id}_with_documents.zip')
+            with ZipFile(zip_path, 'w') as zipf:
+                for file_path, arcname in files_to_zip:
+                    zipf.write(file_path, arcname)
+            # --- Return zip as response ---
+            with open(zip_path, 'rb') as f:
+                response = HttpResponse(f.read(), content_type='application/zip')
+                response['Content-Disposition'] = f'attachment; filename="Contract_{contract.contract_id}_with_documents.zip"'
+                return response
+    except Exception as e:
+        messages.error(request, f"Error generating ZIP: {str(e)}")
+        return redirect('contract:print_contract_form', contract_id=contract_id)
+
+# --- PDF generation helper for contract form, matching the HTML CV template ---
+def generate_contract_form_pdf(context, output_path):
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib import colors
+    doc = SimpleDocTemplate(output_path, pagesize=letter)
+    styles = getSampleStyleSheet()
+    elements = []
+    custom_styles = {
+        'CustomHeading1': ParagraphStyle(name='CustomHeading1', parent=styles['Heading1'], fontSize=16, spaceAfter=12, textColor=colors.navy),
+        'CustomHeading2': ParagraphStyle(name='CustomHeading2', parent=styles['Heading2'], fontSize=14, spaceAfter=10, textColor=colors.darkblue),
+        'CustomHeading3': ParagraphStyle(name='CustomHeading3', parent=styles['Heading3'], fontSize=12, spaceAfter=8, textColor=colors.darkblue),
+        'CustomItalic': ParagraphStyle(name='CustomItalic', parent=styles['Italic'], fontSize=10),
+        'CustomNormal': ParagraphStyle(name='CustomNormal', parent=styles['Normal'], fontSize=10, spaceAfter=6)
+    }
+    for style_name, style in custom_styles.items():
+        if style_name not in styles:
+            styles.add(style)
+    table_style = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ])
+    # University Header
+    elements.append(Paragraph("University Contract Renewal Form", custom_styles['CustomHeading1']))
+    elements.append(Paragraph("Human Resources Department", custom_styles['CustomNormal']))
+    elements.append(Paragraph(f"Contract ID: {context['contract'].contract_id}", custom_styles['CustomNormal']))
+    elements.append(Paragraph(f"Submission Date: {context['contract'].submission_date.strftime('%B %d, %Y')}", custom_styles['CustomNormal']))
+    elements.append(Spacer(1, 20))
+    # Document Title
+    elements.append(Paragraph(f"{context['first_name']} {context['last_name']}", custom_styles['CustomHeading1']))
+    elements.append(Paragraph("Contract Renewal Application", custom_styles['CustomHeading2']))
+    elements.append(Spacer(1, 10))
+    # Basic Information Summary Card
+    elements.append(Paragraph("Basic Information", custom_styles['CustomHeading2']))
+    info_data = [
+        ["Position:", f"{context['contract'].present_post}"],
+        ["Department:", f"{context['department']}"] ,
+        ["IC Number:", f"{context['ic_no']} ({context['ic_colour']})"],
+        ["Phone:", f"{context['phone_number']}"] ,
+        ["Salary Scale:", f"{context['contract'].salary_scale_division}"],
+        ["Past Contracts:", f"{context['contract_count']}"]
+    ]
+    info_table = Table(info_data, colWidths=[120, 350])
+    info_table.setStyle(TableStyle([
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(info_table)
+    elements.append(Spacer(1, 15))
+    # 2. Education
+    elements.append(Paragraph("Education", custom_styles['CustomHeading2']))
+    if context.get('academic_qualifications'):
+        edu_data = [["Year", "Degree/Diploma", "Institution"]]
+        for qual in context['academic_qualifications']:
+            edu_data.append([
+                qual.get('to_date', ''),
+                qual.get('degree_diploma', ''),
+                qual.get('university_college', '')
+            ])
+        edu_table = Table(edu_data, colWidths=[80, 200, 200])
+        edu_table.setStyle(table_style)
+        elements.append(edu_table)
+    else:
+        elements.append(Paragraph("No academic qualifications provided", custom_styles['CustomItalic']))
+    if context.get('current_enrollment'):
+        elements.append(Paragraph(f"Currently Enrolled: {context['current_enrollment']}", custom_styles['CustomNormal']))
+    elements.append(Spacer(1, 15))
+    # 3. Employment History
+    elements.append(Paragraph("Employment History", custom_styles['CustomHeading2']))
+    if context.get('administrative_positions'):
+        emp_data = [["Period", "Position", "Details"]]
+        for position in context['administrative_positions']:
+            emp_data.append([
+                f"{position.from_date} to {position.to_date}",
+                position.title,
+                position.details or ""
+            ])
+        emp_table = Table(emp_data, colWidths=[150, 150, 180])
+        emp_table.setStyle(table_style)
+        elements.append(emp_table)
+    else:
+        elements.append(Paragraph("No employment history provided", custom_styles['CustomItalic']))
+    elements.append(Spacer(1, 15))
+    # 4. Administrative Positions
+    elements.append(Paragraph("Administrative Positions & Appointments", custom_styles['CustomHeading2']))
+    if context.get('administrative_positions'):
+        admin_data = [["Date", "Position"]]
+        for position in context['administrative_positions']:
+            admin_data.append([
+                position.from_date.strftime("%Y-%m-%d"),
+                position.title
+            ])
+        admin_table = Table(admin_data, colWidths=[150, 330])
+        admin_table.setStyle(table_style)
+        elements.append(admin_table)
+    else:
+        elements.append(Paragraph("No administrative positions recorded", custom_styles['CustomItalic']))
+    elements.append(Spacer(1, 15))
+    # 5. Academic, Social & Community Service
+    elements.append(Paragraph("Academic, Social & Community Service", custom_styles['CustomHeading2']))
+    if context.get('university_committees'):
+        elements.append(Paragraph("University Committees", custom_styles['CustomHeading3']))
+        uni_data = [["Date", "Committee", "Position"]]
+        for committee in context['university_committees']:
+            uni_data.append([
+                committee.get('from_date', ''),
+                committee.get('name', ''),
+                committee.get('position', '')
+            ])
+        uni_table = Table(uni_data, colWidths=[100, 230, 150])
+        uni_table.setStyle(table_style)
+        elements.append(uni_table)
+    if context.get('external_committees'):
+        elements.append(Paragraph("External Committees", custom_styles['CustomHeading3']))
+        ext_data = [["Date", "Organization", "Position"]]
+        for committee in context['external_committees']:
+            ext_data.append([
+                committee.get('from_date', ''),
+                committee.get('organization', ''),
+                committee.get('position', '')
+            ])
+        ext_table = Table(ext_data, colWidths=[100, 230, 150])
+        ext_table.setStyle(table_style)
+        elements.append(ext_table)
+    if not context.get('university_committees') and not context.get('external_committees'):
+        elements.append(Paragraph("No committee positions recorded", custom_styles['CustomItalic']))
+    elements.append(Spacer(1, 15))
+    # 6. Fellowships and Awards
+    elements.append(Paragraph("Fellowships and Awards", custom_styles['CustomHeading2']))
+    if context.get('fellowships_awards'):
+        award_data = [["Date", "Award", "Organization"]]
+        for award in context['fellowships_awards']:
+            award_data.append([
+                award.get('date', ''),
+                award.get('title', ''),
+                award.get('organization', '')
+            ])
+        award_table = Table(award_data, colWidths=[100, 200, 180])
+        award_table.setStyle(table_style)
+        elements.append(award_table)
+    else:
+        elements.append(Paragraph("No fellowships or awards provided", custom_styles['CustomItalic']))
+    elements.append(Spacer(1, 15))
+    # 7. Current Research Areas & Interests
+    elements.append(Paragraph("Current Research Areas & Interests", custom_styles['CustomHeading2']))
+    if context.get('ongoing_research'):
+        research_data = [["Research Title"]]
+        for research in context['ongoing_research']:
+            research_data.append([research.get('title', '')])
+        research_table = Table(research_data, colWidths=[400])
+        research_table.setStyle(table_style)
+        elements.append(research_table)
+    else:
+        elements.append(Paragraph("No current research areas provided", custom_styles['CustomItalic']))
+    elements.append(Spacer(1, 15))
+    # 8. Research Experience & Grants
+    elements.append(Paragraph("Research Experience & Grants", custom_styles['CustomHeading2']))
+    if context.get('research_history'):
+        rh_data = [["Period", "Project", "Funding Agency"]]
+        for research in context['research_history']:
+            rh_data.append([
+                f"{research.get('startDate', '')} - {research.get('endDate', '')}",
+                research.get('title', ''),
+                research.get('fundingAgency', '')
+            ])
+        rh_table = Table(rh_data, colWidths=[120, 180, 180])
+        rh_table.setStyle(table_style)
+        elements.append(rh_table)
+    else:
+        elements.append(Paragraph("No research experience records provided", custom_styles['CustomItalic']))
+    elements.append(Spacer(1, 15))
+    # 9. Teaching Areas & Interests
+    elements.append(Paragraph("Teaching Areas & Interests", custom_styles['CustomHeading2']))
+    if context.get('teaching_modules'):
+        tm_data = [["Module"]]
+        for module in context['teaching_modules']:
+            tm_data.append([module.get('title', '')])
+        tm_table = Table(tm_data, colWidths=[400])
+        tm_table.setStyle(table_style)
+        elements.append(tm_table)
+    else:
+        elements.append(Paragraph("No teaching areas provided", custom_styles['CustomItalic']))
+    if context.get('teaching_future_plan'):
+        elements.append(Paragraph("Future Teaching Plans", custom_styles['CustomHeading3']))
+        elements.append(Paragraph(context['teaching_future_plan'], custom_styles['CustomNormal']))
+    elements.append(Spacer(1, 15))
+    # 10. Teaching History & Modules Taught
+    elements.append(Paragraph("Teaching History & Modules Taught", custom_styles['CustomHeading2']))
+    if context.get('teaching_modules'):
+        tmh_data = [["Module", "Level", "Language"]]
+        for module in context['teaching_modules']:
+            tmh_data.append([
+                module.get('title', ''),
+                module.get('level', ''),
+                module.get('language', '')
+            ])
+        tmh_table = Table(tmh_data, colWidths=[180, 110, 110])
+        tmh_table.setStyle(table_style)
+        elements.append(tmh_table)
+    else:
+        elements.append(Paragraph("No teaching modules provided", custom_styles['CustomItalic']))
+    elements.append(Spacer(1, 15))
+    # 11. Consultancy
+    elements.append(Paragraph("Consultancy", custom_styles['CustomHeading2']))
+    if context.get('consultancy_work'):
+        cons_data = [["Date", "Company", "Project"]]
+        for work in context['consultancy_work']:
+            cons_data.append([
+                work.get('startDate', ''),
+                work.get('company', ''),
+                work.get('title', '')
+            ])
+        cons_table = Table(cons_data, colWidths=[100, 180, 180])
+        cons_table.setStyle(table_style)
+        elements.append(cons_table)
+    else:
+        elements.append(Paragraph("No consultancy work records provided", custom_styles['CustomItalic']))
+    elements.append(Spacer(1, 15))
+    # 12. Publications (Conference Papers)
+    elements.append(Paragraph("Publications", custom_styles['CustomHeading2']))
+    elements.append(Paragraph("Conference Papers", custom_styles['CustomHeading3']))
+    if context.get('conference_papers'):
+        pub_list = []
+        for paper in context['conference_papers']:
+            author = paper.get('author', '')
+            title = paper.get('title', '')
+            year = paper.get('year', '')
+            pub_list.append(f"{author}, \"{title}\", {year}")
+        for pub in pub_list:
+            elements.append(Paragraph(pub, custom_styles['CustomNormal']))
+    else:
+        elements.append(Paragraph("No conference papers provided", custom_styles['CustomItalic']))
+    elements.append(Spacer(1, 15))
+    # 13. Mentorship
+    elements.append(Paragraph("Mentorship", custom_styles['CustomHeading2']))
+    if context.get('mentorship_data'):
+        ment_data = [["Name", "Programme", "Period"]]
+        for mentorship in context['mentorship_data']:
+            ment_data.append([
+                mentorship.get('name', ''),
+                mentorship.get('programme', ''),
+                f"{mentorship.get('startDate', '')} to {mentorship.get('endDate', '')}"
+            ])
+        ment_table = Table(ment_data, colWidths=[150, 150, 150])
+        ment_table.setStyle(table_style)
+        elements.append(ment_table)
+    else:
+        elements.append(Paragraph("No mentorship information provided", custom_styles['CustomItalic']))
+    elements.append(Spacer(1, 15))
+    # 14. Supervision of Graduate Students
+    elements.append(Paragraph("Supervision of Graduate Students", custom_styles['CustomHeading2']))
+    if context.get('grad_supervision_data'):
+        grad_data = [["Name", "Programme", "Status"]]
+        for supervision in context['grad_supervision_data']:
+            grad_data.append([
+                supervision.get('name', ''),
+                supervision.get('programme', ''),
+                supervision.get('status', '')
+            ])
+        grad_table = Table(grad_data, colWidths=[150, 150, 150])
+        grad_table.setStyle(table_style)
+        elements.append(grad_table)
+    else:
+        elements.append(Paragraph("No graduate student supervision information provided", custom_styles['CustomItalic']))
+    elements.append(Spacer(1, 15))
+    # Achievements and Future Plans
+    elements.append(Paragraph("Achievements and Future Plans", custom_styles['CustomHeading2']))
+    elements.append(Paragraph("Achievements in Last Contract (Teaching / Research / Admin)", custom_styles['CustomHeading3']))
+    elements.append(Paragraph(context.get('achievements_last_contract', 'N/A') or 'N/A', custom_styles['CustomNormal']))
+    elements.append(Paragraph("Proposed Undertakings and Achievements if Renewed", custom_styles['CustomHeading3']))
+    elements.append(Paragraph(context.get('achievements_proposal', 'N/A') or 'N/A', custom_styles['CustomNormal']))
+    elements.append(Spacer(1, 15))
+    # Other Matters
+    elements.append(Paragraph("Other Matters", custom_styles['CustomHeading2']))
+    elements.append(Paragraph(context.get('other_matters', 'N/A') or 'N/A', custom_styles['CustomNormal']))
+    elements.append(Spacer(1, 15))
+    # Footer
+    elements.append(Spacer(1, 30))
+    elements.append(Paragraph("This document is automatically generated by the HR Contract Management System.", custom_styles['CustomItalic']))
+    elements.append(Paragraph(f"Printed on: {context['today'].strftime('%B %d, %Y')}", custom_styles['CustomItalic']))
+    doc.build(elements)
+    return output_path

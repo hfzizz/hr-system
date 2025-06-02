@@ -516,9 +516,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (response.ok) {
+                const data = await response.json();
                 // Send notification only when enabling contract renewal
-                if (action === 'enable') {
-                    // Send a single notification for all enabled employees
+                if (action === 'enable' && data.newly_enabled && data.newly_enabled.length > 0) {
                     try {
                         const notifyResponse = await fetch('{% url "contract:send_notification" %}', {
                             method: 'POST',
@@ -526,7 +526,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 'Content-Type': 'application/json',
                                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
                             },
-                            body: JSON.stringify({ employee_ids: selectedEmployees })
+                            body: JSON.stringify({ employee_ids: data.newly_enabled })
                         });
 
                         const notifyData = await notifyResponse.json();

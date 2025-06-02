@@ -527,18 +527,55 @@ class EmployeeCreateView(LoginRequiredMixin, HRRequiredMixin, CreateView):
     template_name = 'employees/employee_create.html'
     success_url = reverse_lazy('employees:employee_list')
 
+    def get_form(self, form_class=None):
+        """Pre-populate the employee ID field with a generated value."""
+        form = super().get_form(form_class)
+        if form.fields.get('employee_id'):
+            # Generate a new employee ID
+            next_id = self.generate_employee_id()
+            form.initial['employee_id'] = next_id
+        return form
+    
+    def generate_employee_id(self):
+        """Generate a unique employee ID in 0000 format (e.g., 0001, 0002)."""
+        # Find the highest existing employee ID
+        latest_employee = Employee.objects.order_by('-employee_id').first()
+        
+        if latest_employee:
+            try:
+                # Extract the number from the ID and increment
+                current_id = int(latest_employee.employee_id)
+                next_id = current_id + 1
+            except (ValueError, TypeError):
+                # If conversion fails, start from 1
+                next_id = 1
+        else:
+            # First employee starts at 1
+            next_id = 1
+            
+        # Format as a 4-digit string (e.g., "0001")
+        return f"{next_id:04d}"
+        
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Create Employee'
         context['button_label'] = 'Create'
         
         if self.request.POST:
+            context['qualification_formset'] = QualificationFormSet(
+                self.request.POST,
+                self.request.FILES,
+                prefix='qualification_set'
+            )
             context['document_formset'] = DocumentFormSet(
                 self.request.POST,
                 self.request.FILES,
                 prefix='document_set'
             )
         else:
+            context['qualification_formset'] = QualificationFormSet(
+                prefix='qualification_set'
+            )
             context['document_formset'] = DocumentFormSet(
                 prefix='document_set'
             )
@@ -547,8 +584,9 @@ class EmployeeCreateView(LoginRequiredMixin, HRRequiredMixin, CreateView):
     def form_valid(self, form):
         context = self.get_context_data()
         document_formset = context['document_formset']
+        qualification_formset = context['qualification_formset']
         
-        if document_formset.is_valid():
+        if qualification_formset.is_valid() and document_formset.is_valid():
             try:
                 # Generate a random password if none provided
                 password = form.cleaned_data.get('password')
@@ -588,7 +626,10 @@ class EmployeeCreateView(LoginRequiredMixin, HRRequiredMixin, CreateView):
                 messages.error(self.request, f"Error creating employee: {str(e)}")
                 return super().form_invalid(form)
         else:
-            messages.error(self.request, "Please correct the errors in the documents section.")
+            if not qualification_formset.is_valid():
+                messages.error(self.request, "Please correct the errors in the qualifications section.")
+            if not document_formset.is_valid():
+                messages.error(self.request, "Please correct the errors in the documents section.")
             return self.form_invalid(form)
 
     def generate_random_password(self, length=12):

@@ -7,10 +7,22 @@
         <div class="flex items-center justify-between mb-6">
             <h1 class="text-2xl font-bold text-gray-900">Review Contract Renewal</h1>
             {% if user.groups.all.0.name == 'HR' %}
+                {% if user.groups.all.0.name == 'HR' %}
                 <a href="{% url 'contract:view_submissions' employee_id=contract.employee.id %}" 
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700">
+                        Back to Submissions
+                    </a>
+            {% elif user.groups.all.0.name == 'Dean'%}
+                <a href="{% url 'contract:dean_department_contracts' %}" 
                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700">
-                    Back to Submissions
+                    Back to Department Contracts
                 </a>
+                {% elif user.groups.all.0.name == 'Dean' or user.groups.all.0.name == 'SMT' %}
+                <a href="{% url 'contract:smt_contracts' %}" 
+                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700">
+                    Back to SMT Review
+                </a>
+            {% endif %}
             {% elif user.groups.all.0.name == 'Dean'%}
                 <a href="{% url 'contract:dean_department_contracts' %}" 
                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700">
@@ -24,67 +36,78 @@
             {% endif %}
         </div>
 
+        {% if contract.smt_reviews.exists and contract.smt_reviews.last.decision == 'smt_approved' %}
+        <div class="flex items-center justify-between mb-4">
+            <button id="toggleAllSectionsBtn" type="button" 
+            class="inline-flex items-center px-4 py-2 border border-blue-500 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150 shadow-sm">
+            View Full Details
+            </button>
+        </div>
+        {% endif %}
+
         <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+            <!-- Collapsible Sections Start -->
+            {% if contract.smt_reviews.exists and contract.smt_reviews.last.decision == 'smt_approved' %}
+            <div class="collapsible-section">
+            {% endif %}
             <!-- Personal Details Section -->
-            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8 section-content">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Personal Details</h2>
-                <div class="grid grid-cols-2 gap-6">
+                <!-- Summary grid always visible -->
+                <div class="grid grid-cols-2 gap-6 mb-4" id="personalDetailsSummary">
                     <div>
                         <label class="block text-sm font-medium text-gray-700">First Name</label>
                         <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ first_name }}</div>
                     </div>
-                    
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Last Name</label>
                         <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ last_name }}</div>
                     </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">IC Number</label>
-                        <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ ic_no }}</div>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">IC Colour</label>
-                        <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ ic_colour }}</div>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Phone Number</label>
-                        <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ phone_number }}</div>
-                    </div>
-                    
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Department</label>
                         <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ department }}</div>
                     </div>
-
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Number of Past Contracts</label>
                         <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ contract_count }}</div>
                     </div>
-
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Type of contract applied</label>
                         <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">
                             {{ contract.get_contract_type_display }}
                         </div>
                     </div>
-
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Present Post</label>
                         <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ contract.present_post }}</div>
                     </div>
-
+                </div>
+                <!-- Extra details collapsible -->
+                <div class="grid grid-cols-2 gap-6" id="personalDetailsFull">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">IC Number</label>
+                        <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ ic_no }}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">IC Colour</label>
+                        <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ ic_colour }}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Phone Number</label>
+                        <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ phone_number }}</div>
+                    </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Salary Scale/Division</label>
                         <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200">{{ contract.salary_scale_division }}</div>
                     </div>
                 </div>
             </div>
-
+            {% if contract.smt_reviews.exists and contract.smt_reviews.last.decision == 'smt_approved' %}
+            </div>
+            <div class="collapsible-section">
+            {% endif %}
             <!-- Academic Qualifications Section -->
-            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8 section-content">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Academic Information</h2>
                 <div class="space-y-6">
                     <!-- Qualifications Table -->
@@ -128,9 +151,12 @@
                     </div>
                 </div>
             </div>
-
+            {% if contract.smt_reviews.exists and contract.smt_reviews.last.decision == 'smt_approved' %}
+            </div>
+            <div class="collapsible-section">
+            {% endif %}
             <!-- Research and Publications Section -->
-            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8 section-content">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Research, Consultancy and Publications</h2>
                 <div class="space-y-6">
                     <!-- Consultancy Work Table -->
@@ -290,9 +316,12 @@
                     </div>
                 </div>
             </div>
-
+            {% if contract.smt_reviews.exists and contract.smt_reviews.last.decision == 'smt_approved' %}
+            </div>
+            <div class="collapsible-section">
+            {% endif %}
             <!-- Fellowships and Awards Section -->
-            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8 section-content">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Fellowships and Awards</h2>
                 <p class="text-gray-600 mb-4">Awards, fellowships, grants, and recognitions received by the applicant.</p>
                 <div class="overflow-x-auto">
@@ -324,9 +353,12 @@
                     </table>
                 </div>
             </div>
-
+            {% if contract.smt_reviews.exists and contract.smt_reviews.last.decision == 'smt_approved' %}
+            </div>
+            <div class="collapsible-section">
+            {% endif %}
             <!-- Administrative Duties Section -->
-            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8 section-content">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Administrative Duties</h2>
 
                 <!-- Conference Attendance Table -->
@@ -501,9 +533,12 @@
                     </div>
                 </div>
             </div>
-
+            {% if contract.smt_reviews.exists and contract.smt_reviews.last.decision == 'smt_approved' %}
+            </div>
+            <div class="collapsible-section">
+            {% endif %}
             <!-- Others Activities Section -->
-            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8 section-content">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Other Activities</h2>
                 
                 <!-- Participation Within University -->
@@ -576,9 +611,12 @@
                     </div>
                 </div>
             </div>
-
+            {% if contract.smt_reviews.exists and contract.smt_reviews.last.decision == 'smt_approved' %}
+            </div>
+            <div class="collapsible-section">
+            {% endif %}
             <!-- Teaching Section -->
-            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8 section-content">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Teaching</h2>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -729,33 +767,17 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Appraiser Comments Section -->
-            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Previous Appraisal Comments</h2>
-                <div class="space-y-4">
-                    {% if appraiser_comments %}
-                        {% for comment in appraiser_comments %}
-                            <div class="border-l-4 border-gray-200 pl-4 mb-4">
-                                <div class="text-sm text-gray-500 mb-2">
-                                    <span class="font-medium">{{ comment.appraiser_name }}</span> 
-                                    on {{ comment.date }}
-                                </div>
-                                <div class="bg-gray-50 rounded p-4 border border-gray-200">
-                                    <p class="text-sm text-gray-900 whitespace-pre-line">{{ comment.comment }}</p>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="bg-gray-50 rounded p-4 border border-gray-200">
-                            <p class="text-sm text-gray-500">No appraiser comments available.</p>
-                        </div>
-                    {% endif %}
-                </div>
+            {% if contract.smt_reviews.exists and contract.smt_reviews.last.decision == 'smt_approved' %}
             </div>
+            <div class="collapsible-section">
+            {% endif %}
 
+            {% if contract.smt_reviews.exists and contract.smt_reviews.last.decision == 'smt_approved' %}
+            </div>
+            <div class="collapsible-section">
+            {% endif %}
             <!-- Achievements Section -->
-            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8 section-content">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Achievements</h2>
                 <div class="space-y-6">
                     <div>
@@ -773,9 +795,12 @@
                     </div>
                 </div>
             </div>
-
+            {% if contract.smt_reviews.exists and contract.smt_reviews.last.decision == 'smt_approved' %}
+            </div>
+            <div class="collapsible-section">
+            {% endif %}
             <!-- Others Section -->
-            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8 section-content">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b">Others</h2>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Any other matters you wish to highlight?</label>
@@ -784,6 +809,10 @@
                     </div>
                 </div>
             </div>
+            {% if contract.smt_reviews.exists and contract.smt_reviews.last.decision == 'smt_approved' %}
+            </div>
+            {% endif %}
+            <!-- Collapsible Sections End -->
 
             <!-- Dean's Comments Section -->
             {% if contract.dean_reviews.exists %}
@@ -792,7 +821,14 @@
                 
                 {% for review in contract.dean_reviews.all %}
                 <div class="mb-4 p-4 border rounded-lg border-indigo-200 bg-indigo-50 {% if not forloop.last %}mb-6{% endif %}">
-                    <p class="font-semibold text-indigo-900">{{ review.dean.get_full_name }} ({{ review.created_at|date:"F d, Y" }})</p>
+                    <div class="flex justify-between items-center gap-2">
+                        <p class="font-semibold text-indigo-900">{{ review.dean.get_full_name }} ({{ review.created_at|date:"F d, Y" }})</p>
+                        {% if review.comments or review.document_name %}
+                        <span class="px-3 py-1 inline-flex text-sm font-semibold rounded-full bg-green-100 text-green-800 border border-green-300">
+                            Reviewed by Dean
+                        </span>
+                        {% endif %}
+                    </div>
                     <p class="mt-2 whitespace-pre-line text-gray-800">{{ review.comments }}</p>
                     
                     {% if review.document_name %}
@@ -825,7 +861,14 @@
                     
                     {% for review in peer_reviews %}
                     <div class="mb-4 p-4 border rounded-lg border-indigo-200 bg-indigo-50 {% if not forloop.last %}mb-6{% endif %}">
-                        <p class="font-semibold text-indigo-900">{{ review.name }}</p>
+                        <div class="flex justify-between items-center gap-2">
+                            <p class="font-semibold text-indigo-900">{{ review.name }}</p>
+                            {% if review.comments or review.document_name %}
+                            <span class="px-3 py-1 inline-flex text-sm font-semibold rounded-full bg-green-100 text-green-800 border border-green-300">
+                                Reviewed by {{ review.name }}
+                            </span>
+                            {% endif %}
+                        </div>
                         <p class="text-sm text-gray-500 mt-1">Uploaded on {{ review.created_at|date:"F d, Y" }}</p>
                         
                         <div class="mt-4 flex flex-wrap gap-2">
@@ -899,15 +942,28 @@
             <!-- MOE Decision Section - Only visible if contract has been approved by SMT -->
             <div class="my-8 border-t border-gray-200"></div>
 
+            {# Step-by-step banner for MOE process #}
+            {% if user.groups.all.0.name == 'HR' and contract.status == 'pending' and smt_approved%}
+            <div class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 rounded">
+                <h3 class="font-semibold text-blue-800 mb-2">MOE Submission Process</h3>
+                <ol class="list-decimal list-inside text-blue-700 space-y-1">
+                    <li>
+                        <strong>Step 1:</strong> <strong>Print the contract form</strong> and submit it to the Ministry of Education (MOE).
+                    </li>
+                    <li>
+                        <strong>Step 2:</strong> <strong>After receiving the MOE's decision</strong>, return to this page and submit the MOE decision below, including any comments and uploading the official MOE document.
+                    </li>
+                </ol>
+            </div>
+            {% endif %}
+
             {% if user.groups.all.0.name == 'HR' and contract.status == 'pending' %}
                 <!-- Check if any SMT review has an 'smt_approved' decision -->
                 {% for review in contract.smt_reviews.all %}
                     {% if review.decision == 'smt_approved' %}
                         <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
-                            <h2 class="text-xl font-semibold mb-4 text-indigo-800">Ministry of Education Decision</h2>
-                            
-                            <!-- Print Contract Form Button -->
-                            <div class="mb-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-xl font-semibold mb-0 text-indigo-800">Ministry of Education Decision</h2>
                                 <a href="{% url 'contract:print_contract_form' contract.id %}"
                                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                                     <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -916,7 +972,7 @@
                                     Print Contract Form for MOE Submission
                                 </a>
                             </div>
-                            
+                            <hr class="my-4 border-blue-200">
                             <!-- MOE Decision Form -->
                             <form id="moe-decision-form" method="post" action="{% url 'contract:moe_decision' contract.id %}" enctype="multipart/form-data">
                                 {% csrf_token %}
@@ -953,7 +1009,7 @@
                                 
                                 <div class="flex items-center justify-end">
                                     <button type="submit" 
-                                            class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                                         Submit MOE Decision
                                     </button>
                                 </div>
@@ -1249,7 +1305,12 @@ async function forwardToSMT(contractId) {
         });
 
         if (response.ok) {
-            window.location.href = "{% url 'contract:view_submissions' employee_id=contract.employee.id %}";
+            const data = await response.json();
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                window.location.href = "{% url 'contract:view_submissions' employee_id=contract.employee.id %}";
+            }
         } else {    
             const data = await response.json();
             alert(data.error || 'Failed to forward contract to SMT');
@@ -1476,5 +1537,90 @@ document.addEventListener('keydown', function(e) {
     </pre>
 </div>
 {% endif %}
+
+{% if contract.smt_reviews.exists and contract.smt_reviews.last.decision == 'smt_approved' %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sections = document.querySelectorAll('.collapsible-section .section-content');
+        const toggleBtn = document.getElementById('toggleAllSectionsBtn');
+        let expanded = false;
+
+        // Collapse all sections by default
+        sections.forEach(section => {
+            // Only hide the extra details for personal details
+            if(section.querySelector('#personalDetailsFull')) {
+                section.querySelector('#personalDetailsFull').style.display = 'none';
+            } else {
+                section.style.display = 'none';
+            }
+        });
+
+        toggleBtn.addEventListener('click', function() {
+            expanded = !expanded;
+            sections.forEach(section => {
+                if(section.querySelector('#personalDetailsFull')) {
+                    section.querySelector('#personalDetailsFull').style.display = expanded ? 'grid' : 'none';
+                } else {
+                    section.style.display = expanded ? 'block' : 'none';
+                }
+            });
+            toggleBtn.textContent = expanded ? 'Collapse All' : 'View Full Details';
+        });
+
+        // Add click to section header to expand/collapse individual section
+        document.querySelectorAll('.collapsible-section .section-content > h2').forEach(header => {
+            header.style.cursor = 'pointer';
+            header.addEventListener('click', function() {
+                const content = this.parentElement;
+                if(content.querySelector('#personalDetailsFull')) {
+                    const details = content.querySelector('#personalDetailsFull');
+                    details.style.display = (details.style.display === 'none') ? 'grid' : 'none';
+                } else {
+                    content.style.display = (content.style.display === 'none') ? 'block' : 'none';
+                }
+            });
+        });
+    });
+</script>
+{% endif %}
+
+<!-- Print Confirmation Modal -->
+<div id="printConfirmationModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-lg">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Print Contract for MOE Submission</h3>
+        <p class="mb-6 text-gray-700">
+            Please print and submit this contract form to the Ministry of Education (MOE). After you receive the MOE's decision, return to this page to submit the MOE decision.
+        </p>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closePrintModal()"
+                class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                Cancel
+            </button>
+            <a id="printContractLink" href="#" target="_blank"
+                class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                Print Contract Form
+            </a>
+        </div>
+    </div>
+</div>
+<script>
+function openPrintModal(printUrl) {
+    document.getElementById('printContractLink').href = printUrl;
+    document.getElementById('printConfirmationModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+function closePrintModal() {
+    document.getElementById('printConfirmationModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+document.getElementById('printConfirmationModal').addEventListener('click', function(e) {
+    if (e.target === this) closePrintModal();
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !document.getElementById('printConfirmationModal').classList.contains('hidden')) {
+        closePrintModal();
+    }
+});
+</script>
 </div>
 {% endblock %}
