@@ -41,8 +41,15 @@ class Employee(models.Model):
         DAILY_RATED = 'Daily-Rated', _('Daily-Rated')
 
     POST_CHOICES = [
-        ('prof', 'Professor'),
-        ('assoc_prof', 'Associate Professor'),
+        ('professor', 'Professor'),
+        ('associate_professor', 'Associate Professor'),
+        ('assistant_registrar', 'Assistant Registrar'),
+        ('lecturer', 'Lecturer'),
+        ('administrative_officer', 'Administrative Officer'),
+        ('education_officer', 'Education Officer'),
+        ('program_coordinator', 'Program Coordinator'),
+        ('research_assistant', 'Research Assistant'),
+        ('senior_lecturer', 'Senior Lecturer'),
         # ... other choices ...
     ]
 
