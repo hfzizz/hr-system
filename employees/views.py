@@ -305,10 +305,20 @@ class EmployeeListView(LoginRequiredMixin, HRRequiredMixin, ListView):
             'enable_reorder': True,  # Enable/disable column reordering
         }
 
-        # Filter options - only include if they exist in your database
-        context['departments'] = Department.objects.all()
-        context['posts'] = Employee.objects.values_list('post', flat=True).distinct()
-        context['appointment_types'] = Employee.objects.values_list('appointment_type', flat=True).distinct()
+        # Filter options - cache these queries to avoid repeated DB hits
+        departments = Department.objects.all()
+        # Use values_list with distinct to get unique posts efficiently
+        posts = Employee.objects.exclude(
+            Q(post__isnull=True) | Q(post__exact='')
+        ).values_list('post', flat=True).distinct().order_by('post')
+        # Use values_list with distinct to get unique appointment types efficiently
+        appointment_types = Employee.objects.exclude(
+            Q(appointment_type__isnull=True) | Q(appointment_type__exact='')
+        ).values_list('appointment_type', flat=True).distinct().order_by('appointment_type')
+        
+        context['departments'] = departments
+        context['posts'] = list(posts)  # Convert to list to evaluate once
+        context['appointment_types'] = list(appointment_types)  # Convert to list to evaluate once
         context['ic_colours'] = dict(Employee.ICColour.choices)
         context['statuses'] = dict(Employee.Status.choices)
 
@@ -389,7 +399,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         
         context.update({
             'department_data': department_data,
-            'department_count': Department.objects.count(),
+            'department_count': department_data.count(),  # Use cached queryset instead of re-querying
             'positions': positions,
             'position_count': positions.count(),
             'appointments': appointments,

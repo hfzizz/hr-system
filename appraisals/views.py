@@ -99,22 +99,25 @@ class AppraisalListView(LoginRequiredMixin, ListView):
         context['departments'] = Department.objects.all()
         
         # My Appraisals tab - show only appraisals where user is the employee
+        # Fix: Use status__in for proper filtering and add select_related for optimization
         context['my_appraisals'] = Appraisal.objects.filter(
             employee__user=user,
-            status='pending' or 'pending_response',
-        ).select_related('employee__user', 'appraiser__user', 'appraiser_secondary')  # Add select_related
+            status__in=['pending', 'pending_response'],
+        ).select_related('employee__user', 'appraiser__user', 'appraiser_secondary')
         
         # Review tab - show appraisals where user is the primary or secondary appraiser
+        # Fix: Add select_related to prevent N+1 queries
         context['review_appraisals'] = Appraisal.objects.filter(
             Q(appraiser__user=user) | Q(appraiser_secondary__user=user),
             status__in=['primary_review', 'secondary_review']
-        )
+        ).select_related('employee__user', 'appraiser__user', 'appraiser_secondary')
         
         # Completed tab - show completed appraisals for the user
+        # Fix: Add select_related to prevent N+1 queries
         context['completed_appraisals'] = Appraisal.objects.filter(
             Q(employee__user=user) | Q(appraiser__user=user) | Q(appraiser_secondary__user=user),
             status='completed'
-        )
+        ).select_related('employee__user', 'appraiser__user', 'appraiser_secondary')
 
         # Only add all_appraisals to the context if the user is HR or staff
         if user.groups.filter(name=HR_GROUP_NAME).exists():
@@ -725,7 +728,9 @@ class AppraiserListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
             'department'
         )
 
-        context['employee_roles'] = Employee.objects.all()
+        context['employee_roles'] = Employee.objects.filter(
+            roles__name='Appraiser'
+        ).select_related('user', 'department').distinct()
         
         # Common data
         context['departments'] = Department.objects.all()
