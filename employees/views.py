@@ -305,10 +305,20 @@ class EmployeeListView(LoginRequiredMixin, HRRequiredMixin, ListView):
             'enable_reorder': True,  # Enable/disable column reordering
         }
 
-        # Filter options - only include if they exist in your database
-        context['departments'] = Department.objects.all()
-        context['posts'] = Employee.objects.values_list('post', flat=True).distinct()
-        context['appointment_types'] = Employee.objects.values_list('appointment_type', flat=True).distinct()
+        # Filter options - cache these queries to avoid repeated DB hits
+        departments = Department.objects.all()
+        # Use values_list with distinct to get unique posts efficiently
+        posts = Employee.objects.exclude(
+            Q(post__isnull=True) | Q(post__exact='')
+        ).values_list('post', flat=True).distinct().order_by('post')
+        # Use values_list with distinct to get unique appointment types efficiently
+        appointment_types = Employee.objects.exclude(
+            Q(appointment_type__isnull=True) | Q(appointment_type__exact='')
+        ).values_list('appointment_type', flat=True).distinct().order_by('appointment_type')
+        
+        context['departments'] = departments
+        context['posts'] = list(posts)  # Convert to list to evaluate once
+        context['appointment_types'] = list(appointment_types)  # Convert to list to evaluate once
         context['ic_colours'] = dict(Employee.ICColour.choices)
         context['statuses'] = dict(Employee.Status.choices)
 
@@ -363,6 +373,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         """
         context = super().get_context_data(**kwargs)
         
+        # Cache HR group check to avoid repeated database queries
+        is_hr = self.request.user.groups.filter(name='HR').exists()
+        
         # Core statistics
         context['total_employees'] = Employee.objects.count()
         context['total_departments'] = Department.objects.count()
@@ -389,7 +402,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         
         context.update({
             'department_data': department_data,
-            'department_count': Department.objects.count(),
+            'department_count': department_data.count(),  # Use cached queryset instead of re-querying
             'positions': positions,
             'position_count': positions.count(),
             'appointments': appointments,
@@ -412,8 +425,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         # Get recent employees (last 5)
         context['recent_employees'] = Employee.objects.select_related('department').order_by('-hire_date')[:5]
 
-        # Get recent appraisals - Removed period from select_related
-        if self.request.user.groups.filter(name='HR').exists():
+        # Get recent appraisals - Use cached is_hr variable
+        if is_hr:
             # HR sees all recent appraisals
             context['recent_appraisals'] = Appraisal.objects.select_related(
                 'employee', 'appraiser'
@@ -432,18 +445,13 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             count=Count('id')
         )
 
-        # Format status data as list of dictionaries
+        # Format status data as list of dictionaries - Optimized with dictionary lookup
+        status_count_dict = {item['employee_status']: item['count'] for item in status_counts}
         status_data = [
-            {'status': 'active', 'count': 0},
-            {'status': 'on_leave', 'count': 0},
-            {'status': 'inactive', 'count': 0}
+            {'status': 'active', 'count': status_count_dict.get('active', 0)},
+            {'status': 'on_leave', 'count': status_count_dict.get('on_leave', 0)},
+            {'status': 'inactive', 'count': status_count_dict.get('inactive', 0)}
         ]
-
-        # Update with actual counts
-        for item in status_counts:
-            for status in status_data:
-                if status['status'] == item['employee_status']:
-                    status['count'] = item['count']
 
         # Add to context
         context['status_data'] = status_data
@@ -687,10 +695,22 @@ class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMes
             for obj in qualification_formset.deleted_objects:
                 obj.delete()
             
-            # Save new/updated qualifications
+            # Separate new and existing qualifications to avoid duplicate saves
+            new_qualifications = []
+            existing_qualifications = []
             for qualification in qualification_instances:
                 qualification.employee = self.object
-                qualification.save()
+                if qualification.pk is None:
+                    new_qualifications.append(qualification)
+                else:
+                    existing_qualifications.append(qualification)
+            
+            # Bulk create new qualifications
+            if new_qualifications:
+                Qualification.objects.bulk_create(new_qualifications)
+            # Save existing qualifications individually
+            for q in existing_qualifications:
+                q.save()
             
             # Save documents
             document_formset.instance = self.object
@@ -700,23 +720,47 @@ class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMes
             for obj in document_formset.deleted_objects:
                 obj.delete()
             
-            # Save new/updated documents
+            # Separate new and existing documents to avoid duplicate saves
+            new_documents = []
+            existing_documents = []
             for document in document_instances:
                 document.employee = self.object
-                document.save()
+                if document.pk is None:
+                    new_documents.append(document)
+                else:
+                    existing_documents.append(document)
+            
+            # Bulk create new documents
+            if new_documents:
+                Document.objects.bulk_create(new_documents)
+            # Save existing documents individually
+            for d in existing_documents:
+                d.save()
 
             # Save publications
             publication_formset.instance = self.object
             publication_instances = publication_formset.save(commit=False)
 
-             # Delete marked qualifications
+             # Delete marked publications
             for obj in publication_formset.deleted_objects:
                 obj.delete()
             
-            # Save new/updated qualifications
+            # Separate new and existing publications to avoid duplicate saves
+            new_publications = []
+            existing_publications = []
             for publication in publication_instances:
                 publication.employee = self.object
-                publication.save()
+                if publication.pk is None:
+                    new_publications.append(publication)
+                else:
+                    existing_publications.append(publication)
+            
+            # Bulk create new publications
+            if new_publications:
+                Publication.objects.bulk_create(new_publications)
+            # Save existing publications individually
+            for p in existing_publications:
+                p.save()
             
             
             return super().form_valid(form)

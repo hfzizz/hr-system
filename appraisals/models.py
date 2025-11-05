@@ -18,6 +18,11 @@ class AppraisalPeriod(models.Model):
         permissions = [
             ("can_manage_periods", "Can manage appraisal periods"),
         ]
+        indexes = [
+            models.Index(fields=['is_active']),
+            models.Index(fields=['is_default']),
+            models.Index(fields=['-start_date']),
+        ]
 
     def __str__(self):
         return f"Appraisal Period ({self.start_date} - {self.end_date})"
@@ -126,6 +131,14 @@ class Appraisal(models.Model):
         permissions = [
             ("can_view_all_appraisals", "Can view all appraisals"),
             ("can_create_appraisal", "Can create appraisal"),
+        ]
+        indexes = [
+            models.Index(fields=['status']),
+            models.Index(fields=['employee', 'status']),
+            models.Index(fields=['appraiser', 'status']),
+            models.Index(fields=['appraiser_secondary', 'status']),
+            models.Index(fields=['-date_created']),
+            models.Index(fields=['appraisal_year']),
         ]
 
     def __str__(self):

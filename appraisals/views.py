@@ -77,7 +77,11 @@ class AppraisalListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_staff or user.groups.filter(name='HR').exists():
+        # Cache the HR check result for reuse - use consistent constant
+        is_hr = user.is_staff or user.groups.filter(name=HR_GROUP_NAME).exists()
+        self._is_hr = is_hr  # Store for use in get_context_data
+        
+        if is_hr:
             # HR users can see all appraisals
             return Appraisal.objects.all().select_related(
                 'employee__user',
@@ -85,39 +89,49 @@ class AppraisalListView(LoginRequiredMixin, ListView):
                 'employee__department'
             ).order_by('-date_created')
         else:
-            # Regular users see only their appraisals
+            # Regular users see only their appraisals - Add select_related for optimization
             return Appraisal.objects.filter(
                 Q(employee__user=user) |  # User's own appraisals
                 Q(appraiser__user=user)   # Appraisals where user is appraiser
+            ).select_related(
+                'employee__user',
+                'appraiser__user',
+                'employee__department'
             ).order_by('-date_created')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         
+        # Use cached HR check from get_queryset
+        is_hr = getattr(self, '_is_hr', user.groups.filter(name=HR_GROUP_NAME).exists())
+        
         # Common data
         context['departments'] = Department.objects.all()
         
         # My Appraisals tab - show only appraisals where user is the employee
+        # Fix: Use status__in for proper filtering and add select_related for optimization
         context['my_appraisals'] = Appraisal.objects.filter(
             employee__user=user,
-            status='pending' or 'pending_response',
-        ).select_related('employee__user', 'appraiser__user', 'appraiser_secondary')  # Add select_related
+            status__in=['pending', 'pending_response'],
+        ).select_related('employee__user', 'appraiser__user', 'appraiser_secondary')
         
         # Review tab - show appraisals where user is the primary or secondary appraiser
+        # Fix: Add select_related to prevent N+1 queries
         context['review_appraisals'] = Appraisal.objects.filter(
             Q(appraiser__user=user) | Q(appraiser_secondary__user=user),
             status__in=['primary_review', 'secondary_review']
-        )
+        ).select_related('employee__user', 'appraiser__user', 'appraiser_secondary')
         
         # Completed tab - show completed appraisals for the user
+        # Fix: Add select_related to prevent N+1 queries
         context['completed_appraisals'] = Appraisal.objects.filter(
             Q(employee__user=user) | Q(appraiser__user=user) | Q(appraiser_secondary__user=user),
             status='completed'
-        )
+        ).select_related('employee__user', 'appraiser__user', 'appraiser_secondary')
 
-        # Only add all_appraisals to the context if the user is HR or staff
-        if user.groups.filter(name=HR_GROUP_NAME).exists():
+        # Only add all_appraisals to the context if the user is HR or staff - Use cached is_hr
+        if is_hr:
             context['all_appraisals'] = Appraisal.objects.all().select_related(
                 'employee__user', 'appraiser__user', 'appraiser_secondary'
             ).order_by('-date_created')
@@ -725,7 +739,9 @@ class AppraiserListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
             'department'
         )
 
-        context['employee_roles'] = Employee.objects.all()
+        context['employee_roles'] = Employee.objects.filter(
+            roles__name='Appraiser'
+        ).select_related('user', 'department').distinct()
         
         # Common data
         context['departments'] = Department.objects.all()
@@ -753,8 +769,8 @@ class AppraiserListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 def get_appraisers(request):
     exclude_employee_id = request.GET.get('exclude_employee_id')
     
-    # Get all employees that can be appraisers
-    appraisers_queryset = Employee.objects.all()
+    # Get all employees that can be appraisers - Add select_related to optimize
+    appraisers_queryset = Employee.objects.select_related('department').all()
     
     # Exclude the current employee if ID is provided
     if exclude_employee_id:
