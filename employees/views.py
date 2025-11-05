@@ -695,19 +695,22 @@ class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMes
             for obj in qualification_formset.deleted_objects:
                 obj.delete()
             
-            # Save new/updated qualifications - Set employee for all instances
+            # Separate new and existing qualifications to avoid duplicate saves
+            new_qualifications = []
+            existing_qualifications = []
             for qualification in qualification_instances:
                 qualification.employee = self.object
-            # Use bulk operations if there are new instances to create
-            if qualification_instances:
-                Qualification.objects.bulk_create(
-                    [q for q in qualification_instances if q.pk is None],
-                    ignore_conflicts=False
-                )
-                # Save existing instances individually (they already have PKs)
-                for q in qualification_instances:
-                    if q.pk is not None:
-                        q.save()
+                if qualification.pk is None:
+                    new_qualifications.append(qualification)
+                else:
+                    existing_qualifications.append(qualification)
+            
+            # Bulk create new qualifications
+            if new_qualifications:
+                Qualification.objects.bulk_create(new_qualifications)
+            # Save existing qualifications individually
+            for q in existing_qualifications:
+                q.save()
             
             # Save documents
             document_formset.instance = self.object
@@ -717,19 +720,22 @@ class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMes
             for obj in document_formset.deleted_objects:
                 obj.delete()
             
-            # Save new/updated documents - Set employee for all instances
+            # Separate new and existing documents to avoid duplicate saves
+            new_documents = []
+            existing_documents = []
             for document in document_instances:
                 document.employee = self.object
-            # Use bulk operations if there are new instances to create
-            if document_instances:
-                Document.objects.bulk_create(
-                    [d for d in document_instances if d.pk is None],
-                    ignore_conflicts=False
-                )
-                # Save existing instances individually (they already have PKs)
-                for d in document_instances:
-                    if d.pk is not None:
-                        d.save()
+                if document.pk is None:
+                    new_documents.append(document)
+                else:
+                    existing_documents.append(document)
+            
+            # Bulk create new documents
+            if new_documents:
+                Document.objects.bulk_create(new_documents)
+            # Save existing documents individually
+            for d in existing_documents:
+                d.save()
 
             # Save publications
             publication_formset.instance = self.object
@@ -739,19 +745,22 @@ class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMes
             for obj in publication_formset.deleted_objects:
                 obj.delete()
             
-            # Save new/updated publications - Set employee for all instances
+            # Separate new and existing publications to avoid duplicate saves
+            new_publications = []
+            existing_publications = []
             for publication in publication_instances:
                 publication.employee = self.object
-            # Use bulk operations if there are new instances to create
-            if publication_instances:
-                Publication.objects.bulk_create(
-                    [p for p in publication_instances if p.pk is None],
-                    ignore_conflicts=False
-                )
-                # Save existing instances individually (they already have PKs)
-                for p in publication_instances:
-                    if p.pk is not None:
-                        p.save()
+                if publication.pk is None:
+                    new_publications.append(publication)
+                else:
+                    existing_publications.append(publication)
+            
+            # Bulk create new publications
+            if new_publications:
+                Publication.objects.bulk_create(new_publications)
+            # Save existing publications individually
+            for p in existing_publications:
+                p.save()
             
             
             return super().form_valid(form)

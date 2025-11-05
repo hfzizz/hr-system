@@ -77,8 +77,8 @@ class AppraisalListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         user = self.request.user
-        # Cache the HR check result for reuse
-        is_hr = user.is_staff or user.groups.filter(name='HR').exists()
+        # Cache the HR check result for reuse - use consistent constant
+        is_hr = user.is_staff or user.groups.filter(name=HR_GROUP_NAME).exists()
         self._is_hr = is_hr  # Store for use in get_context_data
         
         if is_hr:
