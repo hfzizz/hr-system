@@ -88,7 +88,7 @@ A comprehensive Human Resources Management System built with Django 5.1.3, desig
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/hfzizz/hr-system.git
+git clone https://github.com/hfzizz/hr-system.git  # Replace with your repository URL
 cd hr-system
 ```
 
@@ -173,7 +173,9 @@ For production deployment, consider using environment variables for sensitive se
 # In settings.py
 import os
 
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'your-default-key')
+# SECURITY WARNING: Never use the default value in production!
+# Generate a new secret key: python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'CHANGE-ME-IN-PRODUCTION-USE-ENV-VARIABLE')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 SCOPUS_API_KEY = os.environ.get('SCOPUS_API_KEY', '')
@@ -342,14 +344,18 @@ This project is part of a Final Year Project (FYP).
 
 **Important**: Before deploying to production:
 
-1. Change the `SECRET_KEY` in settings.py
+1. **CRITICAL**: Generate and set a new `SECRET_KEY` using environment variables (NEVER commit it to version control)
+   ```bash
+   python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
+   ```
 2. Set `DEBUG = False`
 3. Configure `ALLOWED_HOSTS` properly
-4. Remove or secure API keys (OpenAI, Scopus)
-5. Use environment variables for sensitive data
+4. Remove or secure API keys (OpenAI, Scopus) - use environment variables only
+5. Use environment variables for ALL sensitive data (database credentials, API keys, etc.)
 6. Enable HTTPS
 7. Configure proper database backups
 8. Review and update security middleware settings
+9. Remove hardcoded credentials from settings.py
 
 ## 📧 Support
 
